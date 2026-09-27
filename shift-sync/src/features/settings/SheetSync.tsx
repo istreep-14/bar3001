@@ -21,7 +21,7 @@ export function SheetSync() {
   return (
     <div class={styles.stack}>
       <section class={styles.sec} aria-labelledby="conn">
-        <h2 id="conn" class="label">Google Sheet</h2>
+        <h3 id="conn" class="label">Connection</h3>
         <p class={styles.status} role="status">
           <Icon name={s === 'idle' ? 'check' : s === 'syncing' ? 'refresh' : 'alert'} />
           {s === 'unconfigured' && 'Not connected. Shifts are saved on this device only.'}

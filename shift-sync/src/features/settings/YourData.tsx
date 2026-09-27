@@ -38,7 +38,7 @@ export function YourData() {
   return (
     <div class={styles.stack}>
       <section class={styles.sec} aria-labelledby="data">
-        <h2 id="data" class="label">Your data</h2>
+        <h3 id="data" class="label">Export and import</h3>
         <p class={styles.p}>{liveViews.value.length} shifts on this device.</p>
         <div class={styles.actions}>
           <button class="btn" type="button" onClick={exportCsv} disabled={!liveViews.value.length}><Icon name="download" /> Export CSV</button>

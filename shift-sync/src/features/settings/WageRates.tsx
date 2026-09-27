@@ -1,6 +1,10 @@
 import { useState } from 'preact/hooks';
-import { liveWages, removeWage, saveWage } from '../../data/store.ts';
-import { today } from '../../lib/dates.ts';
+import { liveViews, liveWages, removeWage, saveWage } from '../../data/store.ts';
+import { monthKey, today } from '../../lib/dates.ts';
+import { moneyWhole } from '../../lib/format.ts';
+import { partsOf } from '../../lib/groups.ts';
+import { summarize } from '../../lib/stats.ts';
+import { MixBar } from '../../ui/MixBar.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { toast } from '../../ui/toast.tsx';
 import styles from './SettingsScreen.module.css';
@@ -47,7 +51,23 @@ export function WageRates() {
         )}
       </div>
       {rates.length === 0 && !draft && <p class={styles.p}>No wage set yet, so shifts show no wage.</p>}
+      <WageEffect />
       {!draft && <div class={styles.actions}><button type="button" class="btn" onClick={() => setDraft({ date: today(), rate: '' })}><Icon name="plus" /> Add a wage</button></div>}
     </section>
+  );
+}
+
+/** What the wage adds up to this month, as a share of everything earned: the same mix bar a shift uses. */
+function WageEffect() {
+  const key = monthKey(today());
+  const s = summarize(liveViews.value.filter(v => v.shift.date.startsWith(key)));
+  if (!s.total) return null;
+  const month = new Date(key + '-01T12:00:00').toLocaleDateString(undefined, { month: 'long' });
+  const pct = Math.round((s.wage / s.total) * 100);
+  return (
+    <div class={styles.effect} aria-live="polite">
+      <p class={styles.p}>{s.wage ? <>Wage is <b>{pct}%</b> of your {month} total ({moneyWhole(s.wage)} of {moneyWhole(s.total)}).</> : <>No wage counted in {month} yet.</>}</p>
+      <MixBar parts={partsOf(s.tips, s.wage, [], s.extra || null)} />
+    </div>
   );
 }

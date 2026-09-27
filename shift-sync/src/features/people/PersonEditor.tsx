@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Staff } from '../../core/core.generated.js';
 import { knownRoles } from '../../data/roles.ts';
-import { personById, ready, removeStaff, saveStaff, undoRemoveStaff } from '../../data/store.ts';
-import { DASH } from '../../lib/format.ts';
-import { closeDrawer, guard } from '../../router.ts';
+import { liveViews, personById, ready, removeStaff, saveStaff, undoRemoveStaff } from '../../data/store.ts';
+import { DASH, clockPlain } from '../../lib/format.ts';
+import { groupShifts, rowDay } from '../../lib/groups.ts';
+import { closeDrawer, guard, openSheet } from '../../router.ts';
 import { DrawerFrame } from '../../ui/DrawerFrame.tsx';
 import type { FrameApi } from '../../ui/DrawerFrame.tsx';
 import { Icon } from '../../ui/Icon.tsx';
@@ -113,6 +114,7 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
         </dl>
       </section>
       {p.notes && <section class={styles.section}><p class={styles.notes}>{p.notes}</p></section>}
+      <WorkedTogether id={p.id} me={p.is_user} />
       {p._dirty && <p class={styles.sync}>Not synced yet. It will sync when you're online.</p>}
     </div>
   ) : null;
@@ -177,5 +179,32 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
     <DrawerFrame host={host} labelledBy="person-title" requestClose={requestClose} apiRef={frame}>
       {header}{viewing ? view : edit}
     </DrawerFrame>
+  );
+}
+
+/** The shifts this person was on, newest first, the month said once. Times only: no counts, hours or money, so the
+ *  roster still can't be read as a leaderboard. You are on every shift you log, so your own card points to the Log. */
+const TOGETHER_SHOWN = 10;
+function WorkedTogether({ id, me }: { id: string; me: boolean }) {
+  if (me) return <section class={styles.section}><h3 class="label">Shifts</h3><p class={styles.legacy}>Your shifts are all in the <a href="#/log">Log</a>.</p></section>;
+  const views = liveViews.value.filter(v => v.crew.some(c => c.staff_id === id)).slice(0, TOGETHER_SHOWN);
+  return (
+    <section class={styles.section}>
+      <h3 class="label">Worked together</h3>
+      {views.length === 0 ? <p class={styles.legacy}>Not on any logged shift yet.</p> : groupShifts(views, 'month').map(g => (
+        <div key={g.key} class={styles.together}>
+          <h4 class={styles.togetherMonth}>{g.label}</h4>
+          {g.views.map(v => {
+            const c = v.crew.find(x => x.staff_id === id)!;
+            return (
+              <button type="button" key={v.shift.id} class={styles.togetherRow} onClick={() => openSheet(v.shift.id)}>
+                <span class={styles.togetherDay}>{rowDay(v.shift.date, 'month')}</span>
+                <span class="num">{clockPlain(c.start)} – {clockPlain(c.end)}</span>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </section>
   );
 }

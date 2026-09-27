@@ -19,7 +19,7 @@ export function Appearance() {
   return (
     <div class={styles.stack}>
       <section class={styles.sec} aria-labelledby="ap-mode">
-        <h2 id="ap-mode" class="label">Light or dark</h2>
+        <h3 id="ap-mode" class="label">Light or dark</h3>
         <div class="seg" role="radiogroup" aria-label="Theme">
           {THEMES.map(t => (
             <label key={t.id}><input type="radio" name="theme" checked={s.theme === t.id} onChange={() => saveSettings({ theme: t.id })} /><span>{t.label}</span></label>
@@ -29,7 +29,7 @@ export function Appearance() {
       </section>
 
       <section class={styles.sec} aria-labelledby="ap-acc">
-        <h2 id="ap-acc" class="label">Primary colour</h2>
+        <h3 id="ap-acc" class="label">Primary colour</h3>
         <div class={styles.swatches} role="radiogroup" aria-label="Primary colour">
           {ACCENTS.map(a => (
             <label key={a.id} class={styles.swatch} title={a.label}>
@@ -46,7 +46,7 @@ export function Appearance() {
       </section>
 
       <section class={styles.sec} aria-labelledby="ap-tint">
-        <h2 id="ap-tint" class="label">Background</h2>
+        <h3 id="ap-tint" class="label">Background</h3>
         <div class={styles.swatches} role="radiogroup" aria-label="Background tint">
           {TINTS.map(t => (
             <label key={t.id} class={styles.swatch} title={t.label}>
@@ -59,7 +59,7 @@ export function Appearance() {
       </section>
 
       <section class={styles.sec} aria-labelledby="ap-con">
-        <h2 id="ap-con" class="label">Contrast</h2>
+        <h3 id="ap-con" class="label">Contrast</h3>
         <div class="seg" role="radiogroup" aria-label="Contrast">
           {CONTRASTS.map(c => (
             <label key={c.id}><input type="radio" name="contrast" checked={s.contrast === c.id} onChange={() => saveSettings({ contrast: c.id })} /><span>{c.label}</span></label>
@@ -69,7 +69,7 @@ export function Appearance() {
       </section>
 
       <section class={styles.sec} aria-labelledby="ap-prev">
-        <h2 id="ap-prev" class="label">Preview</h2>
+        <h3 id="ap-prev" class="label">Preview</h3>
         <div class={styles.preview}>
           <div class={styles.pvHead}><b>Shift</b><span>Earned</span></div>
           <div class={styles.pvRow}><span><b>Jul 30</b><span class={styles.pvFaint}>Wed · 6:00p–2:10a</span></span><span><b>$448</b><span>Tips $380</span></span></div>
