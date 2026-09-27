@@ -1,0 +1,44 @@
+/* The grouped Log. One grid for the head, the bands and the rows, so every column lines up down the page.
+   Grouped: a first 1.75rem column indents the rows under their band, with a guide line down it. Flat: no indent. */
+.log { --indent: 0; background: var(--surface); padding: 0 var(--s-4) var(--s-5); min-width: 0; }
+.log[data-grouped] { --indent: 1.75rem; }
+.grid { display: grid; grid-template-columns: var(--indent) 7.5rem minmax(14rem, 1.5fr) 4.5rem 5.5rem 5.5rem 6rem minmax(6rem, 1fr) 2rem; align-items: center; }
+.grid > span { padding: 0 var(--s-3); min-width: 0; }
+.grid > span:first-child { padding: 0; }
+.grid :global(.r) { text-align: right; }
+
+.head { position: sticky; top: 0; z-index: 1; min-height: 2.5rem; background: var(--surface); font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink-2); }
+
+.group + .group { margin-top: var(--s-5); }
+/* The band: its own grey block, bigger type, a count chip, and the one figure it carries (the total) in the Total column. */
+.band { min-height: 3.25rem; margin: var(--s-1) 0 var(--s-2); border-radius: var(--r-md); background: var(--surface-2); }
+.bandLabel { grid-column: 1 / 7; display: flex; align-items: center; gap: var(--s-3); padding-left: var(--s-4) !important; }
+.bandName { font-size: var(--fs-hero); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
+.bandTotal { font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); }
+
+.log[data-grouped] .rows { background: linear-gradient(var(--line-strong), var(--line-strong)) calc(var(--indent) / 2) 0 / 1.5px 100% no-repeat; }
+.log:not([data-grouped]) .item + .item, .log:not([data-grouped]) .item + .pending, .log:not([data-grouped]) .pending + .item { border-top: 1px solid var(--line-soft); }
+
+.row { width: 100%; min-height: 2.875rem; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-lead); text-align: left; border-radius: var(--r-md); cursor: pointer; }
+.row:hover { background: var(--surface-2); }
+.day { font-weight: var(--fw-semi); white-space: nowrap; }
+.time { display: flex; align-items: center; gap: var(--s-2); color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.strong { font-weight: var(--fw-semi); }
+.muted { color: var(--ink-2); }
+.chev { display: flex; justify-content: center; color: var(--ink-3); }
+.chev :global(.icon) { width: 1rem; height: 1rem; transform: rotate(90deg); transition: transform var(--dur) var(--ease); }
+
+.pending { cursor: default; }
+.pending:hover { background: transparent; }
+.fillCell { grid-column: 4 / 8; display: flex; justify-content: flex-end; }
+
+/* Opened: the row and its card are one white block with the accent ring, lifted off the list. */
+.item[data-open] { margin: var(--s-2) 0 var(--s-3) var(--indent); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }
+.item[data-open] .row { grid-template-columns: 0 7.5rem minmax(14rem, 1.5fr) 4.5rem 5.5rem 5.5rem 6rem minmax(6rem, 1fr) 2rem; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.item[data-open] .row:hover { background: transparent; }
+.item[data-open] .day { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+.item[data-open] .chev :global(.icon) { transform: rotate(-90deg); color: var(--ink); }
+.card { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-5) var(--s-5); }
+.actions { display: flex; gap: var(--s-2); }
+.spacer { flex: 1; }
+.sync { margin: 0; font-size: var(--fs-meta); color: var(--ink-2); }

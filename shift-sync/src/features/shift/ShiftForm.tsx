@@ -2,21 +2,26 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { CATEGORIES, defaultShiftType, hoursWorked, tipsPerHour, toHHMM, toMin, wageFor, wageRateFor } from '../../core/core.generated.js';
 import type { Category, ShiftType } from '../../core/core.generated.js';
 import { liveStaff, liveViews, liveWages, personById, ready, removeShift, saveShift, undoRemove, viewById } from '../../data/store.ts';
-import { today } from '../../lib/dates.ts';
-import { DASH, clock, dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { today, weekday } from '../../lib/dates.ts';
+import { DASH, clockPlain, dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { partsOf } from '../../lib/groups.ts';
 import { summarize } from '../../lib/stats.ts';
 import { closeDrawer, go, guard, sheetDate } from '../../router.ts';
 import { Facts, Ribbon } from '../../ui/charts.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { MixBar, MixKey } from '../../ui/MixBar.tsx';
 import { MonthCalendar } from '../../ui/MonthCalendar.tsx';
 import { toast } from '../../ui/toast.tsx';
 import styles from './ShiftForm.module.css';
 
-/* The shift form: add or edit one shift in a dialog over the page. Pages in three groups (Info: Date, Time, Type ·
- * Income: Tips, Wage, Other · Details: Crew, Party, Notes), each with a live one-line summary and a dot when a field on it
- * needs fixing. Every page's input lives in one form object, so nothing typed is lost by moving between pages. */
-type PageId = 'date' | 'time' | 'type' | 'tips' | 'wage' | 'misc' | 'crew' | 'party' | 'notes';
+/* The shift form: add or edit one shift in a dialog over the page. It opens on Overview, which holds the three things
+ * every shift needs (date on a calendar that already shows your shifts, start and end, tips) and what the shift adds up
+ * to. The pages after it (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew, Party, Notes) each give one
+ * part a full panel, with a live one-line summary and a dot when a field on it needs fixing. Every page's input lives in
+ * one form object, so nothing typed is lost by moving between pages. */
+type PageId = 'home' | 'date' | 'time' | 'type' | 'tips' | 'wage' | 'misc' | 'crew' | 'party' | 'notes';
 const GROUPS: { name: string; pages: { id: PageId; label: string }[] }[] = [
+  { name: 'Shift', pages: [{ id: 'home', label: 'Overview' }] },
   { name: 'Info', pages: [{ id: 'date', label: 'Date' }, { id: 'time', label: 'Time' }, { id: 'type', label: 'Type' }] },
   { name: 'Income', pages: [{ id: 'tips', label: 'Tips' }, { id: 'wage', label: 'Wage' }, { id: 'misc', label: 'Other' }] },
   { name: 'Details', pages: [{ id: 'crew', label: 'Crew' }, { id: 'party', label: 'Party' }, { id: 'notes', label: 'Notes' }] }
@@ -33,6 +38,7 @@ let lineKey = 0, memberKey = 0;
 const newLine = (over: Partial<Line> = {}): Line => ({ key: 'l' + ++lineKey, category: CATEGORIES[0]!, amount: '', note: '', ...over });
 const newMember = (over: Pick<Member, 'staff_id' | 'name'> & Partial<Member>): Member => ({ key: 'm' + ++memberKey, start: '', end: '', follow: true, ...over });
 const meOnRoster = () => liveStaff.value.find(p => p.is_user);
+const weekdayLong = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long' });
 const num = (s: string) => (s.trim() === '' ? null : Number(s));
 const minutes = (s: string): number | null => { try { return toMin(s); } catch { return null; } };
 
@@ -59,10 +65,9 @@ export function ShiftForm({ id }: { id: string }) {
   const panes = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<Form | null>(() => (ready.value ? initial(id) : null));
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [page, setPage] = useState<PageId>('date');
+  const [page, setPage] = useState<PageId>('home');
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);     // Close turned into "Discard changes?" for a moment
-  const [armed, setArmed] = useState(false);         // Delete turned into "Delete?" for a moment
   const baseline = useRef(JSON.stringify(form));
   const typeTouched = useRef(!isNew);
   const dirty = form !== null && JSON.stringify(form) !== baseline.current;
@@ -71,7 +76,6 @@ export function ShiftForm({ id }: { id: string }) {
   useEffect(() => { dlg.current?.showModal(); }, []);
   useEffect(() => { guard.dirty = dirty; return () => { guard.dirty = false; }; }, [dirty]);
   useEffect(() => { if (closing) { const t = setTimeout(() => setClosing(false), 4000); return () => clearTimeout(t); } }, [closing]);
-  useEffect(() => { if (armed) { const t = setTimeout(() => setArmed(false), 4000); return () => clearTimeout(t); } }, [armed]);
   if (!form) return null;
 
   const existing = isNew ? undefined : viewById(id);
@@ -114,10 +118,14 @@ export function ShiftForm({ id }: { id: string }) {
   const inCrew = new Set(form.crew.map(m => m.staff_id));
   const roster = [...liveStaff.value].filter(p => p.status === 'active' || inCrew.has(p.id)).sort((a, b) => Number(b.is_user) - Number(a.is_user) || a.name.localeCompare(b.name));
   const sameDay = others.filter(v => v.shift.date === form.date);
+  const parts = partsOf(tipsNum, wageEst, form.lines.map(l => ({ category: l.category, amount: Number(l.amount) || 0 })), legacy || null);
+  // The last few shifts on the same weekday, drawn under this one on the Time page instead of offering presets.
+  const pastSame = form.date ? others.filter(v => v.shift.date < form.date && weekday(v.shift.date) === weekday(form.date) && v.shift.start != null && v.shift.end != null).slice(0, 4) : [];
 
   const summaries: Record<PageId, string> = {
+    home: `${form.date ? `${weekdayShort(form.date)} ${shortDate(form.date)}` : 'No date'} · ${moneyWhole(total)}`,
     date: form.date ? `${weekdayShort(form.date)}, ${shortDate(form.date)}` : 'Not set',
-    time: start != null && end != null ? `${clock(start)} → ${clock(end)}` : 'Not set',
+    time: start != null && end != null ? `${clockPlain(start)} – ${clockPlain(end)}` : 'Not set',
     type: form.type ? (form.type === 'day' ? 'Day' : 'Night') : 'Not set',
     tips: tipsNum != null ? moneyWhole(tipsNum) : 'None',
     wage: wageEst != null ? moneyWhole(wageEst) : 'No rate set',
@@ -169,8 +177,8 @@ export function ShiftForm({ id }: { id: string }) {
     }
   }
 
+  /** Deletes at once; the toast's Undo is the safety net, so there is no second click to arm. */
   async function remove() {
-    if (!armed) return setArmed(true);
     const gone = await removeShift(id);
     finish();
     if (gone) toast('Shift deleted', { label: 'Undo', run: () => void undoRemove(gone) });
@@ -179,6 +187,25 @@ export function ShiftForm({ id }: { id: string }) {
   const typeLabel = form.type ? (form.type === 'day' ? 'Day' : 'Night') : null;
   const meta = [form.date ? `${weekdayShort(form.date)}, ${shortDate(form.date)}` : null, typeLabel, `${money(total)} total`].filter(Boolean).join(' · ');
   const err = (k: string) => errors[k] && <span class="error">{errors[k]}</span>;
+  const timeFields = (
+    <div class={styles.two}>
+      <label class="field"><span class="label-text">Start</span>
+        <input class="input" type="time" value={form.start} aria-invalid={!!errors.start}
+          onInput={e => { const v = e.currentTarget.value; set({ start: v, ...(typeTouched.current ? {} : { type: defaultShiftType(minutes(v)) ?? '' }) }); }} />
+        {err('start')}
+      </label>
+      <label class="field"><span class="label-text">End</span>
+        <input class="input" type="time" value={form.end} aria-invalid={!!errors.end} onInput={e => set({ end: e.currentTarget.value })} />
+        {err('end')}
+      </label>
+    </div>
+  );
+  const tipsField = (
+    <label class="field"><span class="label-text">Tips</span>
+      <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={form.tips} placeholder="0.00" aria-invalid={!!errors.tips} onInput={e => set({ tips: e.currentTarget.value })} />
+      {err('tips')}
+    </label>
+  );
 
   return (
     <dialog ref={dlg} class={styles.modal} aria-labelledby="form-title" onCancel={e => { e.preventDefault(); requestClose(); }}>
@@ -209,6 +236,37 @@ export function ShiftForm({ id }: { id: string }) {
           </nav>
 
           <div class={styles.panes} ref={panes}>
+            {page === 'home' && (
+              <div class={`${styles.pane} ${styles.home}`} role="tabpanel">
+                <div class={styles.homeCal}>
+                  <h3 class={styles.subhead}>Date{form.date && <span class={styles.homeSub}> · {longDate(form.date)}</span>}</h3>
+                  <MonthCalendar mode="pick" views={liveViews.value} selected={form.date} exclude={isNew ? null : id} onPick={d => set({ date: d })} />
+                  {sameDay.length > 0 && <p class={`${styles.datenote} ${styles.warn}`}>This day already has a shift. A second one is fine.</p>}
+                  {err('date')}
+                </div>
+                <div class={styles.homeSide}>
+                  <div class={styles.homeBlock}>
+                    <h3 class={styles.subhead}>Time{h != null && <span class={styles.homeSub}> · {hours(h)}</span>}</h3>
+                    {timeFields}
+                    <button type="button" class="linkbtn" onClick={() => show('time')}>Compare with your past {form.date ? weekdayLong(form.date) : ''} shifts</button>
+                  </div>
+                  <div class={styles.homeBlock}>
+                    <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {money(tph)}/hr</span>}</h3>
+                    {tipsField}
+                    <button type="button" class="linkbtn" onClick={() => show('misc')}>Add other income</button>
+                  </div>
+                  <div class={styles.summary} aria-live="polite">
+                    <span class="label">This shift adds up to</span>
+                    <MixBar parts={parts} labels={false} />
+                    <dl class={styles.sumList}>
+                      {parts.map(p => <div key={p.key}><dt><MixKey token={p.token} />{p.label}{p.estimated && <small>estimated</small>}</dt><dd class="num">{money(p.amount)}</dd></div>)}
+                      <div class={styles.sumTotal}><dt>Total</dt><dd class="num">{money(total)}</dd></div>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {page === 'date' && (
               <div class={styles.pane} role="tabpanel">
                 <div class={styles.dateline}>
@@ -226,20 +284,10 @@ export function ShiftForm({ id }: { id: string }) {
 
             {page === 'time' && (
               <div class={styles.pane} role="tabpanel">
-                <div class={styles.two}>
-                  <label class="field"><span class="label-text">Start</span>
-                    <input class="input" type="time" value={form.start} aria-invalid={!!errors.start}
-                      onInput={e => { const v = e.currentTarget.value; set({ start: v, ...(typeTouched.current ? {} : { type: defaultShiftType(minutes(v)) ?? '' }) }); }} />
-                    {err('start')}
-                  </label>
-                  <label class="field"><span class="label-text">End</span>
-                    <input class="input" type="time" value={form.end} aria-invalid={!!errors.end} onInput={e => set({ end: e.currentTarget.value })} />
-                    {err('end')}
-                  </label>
-                </div>
+                {timeFields}
                 <Facts items={[h != null && { label: 'Worked', value: hours(h) }, h != null && end != null && start != null && end <= start && { label: 'Ends', value: 'the next day' }]} />
-                <Ribbon lanes={[{ name: 'Shift', start, end, cls: 'seg-work' }]} />
-                <p class={styles.hint}>An end at or before the start means the shift ends the next day.</p>
+                <Ribbon lanes={[{ name: 'This shift', start, end, cls: 'seg-work' }, ...pastSame.map(v => ({ name: `${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}`, start: v.shift.start, end: v.shift.end, cls: 'seg-past' as const }))]} />
+                <p class={styles.hint}>{pastSame.length ? `Under it: your last ${pastSame.length === 1 ? '' : pastSame.length + ' '}${form.date ? weekdayLong(form.date) : ''} shift${pastSame.length === 1 ? '' : 's'}. ` : ''}An end at or before the start means the shift ends the next day.</p>
               </div>
             )}
 
@@ -264,10 +312,7 @@ export function ShiftForm({ id }: { id: string }) {
 
             {page === 'tips' && (
               <div class={styles.pane} role="tabpanel">
-                <label class="field"><span class="label-text">Tips</span>
-                  <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={form.tips} placeholder="0.00" aria-invalid={!!errors.tips} onInput={e => set({ tips: e.currentTarget.value })} />
-                  {err('tips')}
-                </label>
+                {tipsField}
                 <Facts items={[
                   tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${moneyWhole(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${moneyWhole(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
                   { label: 'Total income', value: money(total) }
@@ -373,7 +418,7 @@ export function ShiftForm({ id }: { id: string }) {
         </div>
 
         <footer class={styles.foot}>
-          {!isNew && <button type="button" class="btn btn-danger" onClick={() => void remove()}>{armed ? 'Delete?' : 'Delete'}</button>}
+          {!isNew && <button type="button" class="btn btn-danger" onClick={() => void remove()}>Delete</button>}
           <span class={styles.spacer} />
           <button type="button" class="btn" disabled={page === ORDER[0]} onClick={() => step(-1)}><Icon name="left" /> Back</button>
           <button type="button" class="btn" disabled={page === ORDER.at(-1)} onClick={() => step(1)}>Next <Icon name="chevron" /></button>

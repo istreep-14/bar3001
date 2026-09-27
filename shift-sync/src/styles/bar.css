@@ -34,7 +34,7 @@
 .ribbon.slim .ltrack > i { border-radius: 4px; }
 .ribbon.slim .ltrack .seg-break { top: -2px; bottom: -2px; }
 .ribbon.slim .ltrack .seg-party { top: -3px; bottom: -3px; padding: 0 var(--s-1); font-size: 10px; }
-.ribbon.slim .ltrack .seg-crew { top: 0; bottom: 0; }
+.ribbon.slim .ltrack .seg-crew, .ribbon.slim .ltrack .seg-past { top: 0; bottom: 0; }
 .ribbon.slim .lname, .ribbon.slim .tick { font-size: 10px; }
 .ribbon.slim .lane.ticks .ltrack { height: 12px; }
 .ribbon.slim .lanes { padding-bottom: 0; }
@@ -123,6 +123,7 @@
 .ltrack .seg-break { top: -3px; bottom: -3px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--line-strong) 0 2px, var(--surface) 2px 4px); box-shadow: 0 0 0 2px var(--surface); }
 .ltrack .seg-party { display: flex; align-items: center; overflow: hidden; padding: 0 var(--s-2); background: var(--party); color: #fff; font-size: 11px; font-style: normal; font-weight: 600; white-space: nowrap; }
 .ltrack .seg-crew { top: 5px; bottom: 5px; background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
+.ltrack .seg-past { top: 5px; bottom: 5px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line-strong); }
 
 /* ---- the Date page: a calendar, and a line saying what the chosen day is ------------------------------------- */
 .dateline { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); align-items: end; gap: var(--s-3); }
@@ -288,9 +289,6 @@
 .meter i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
 .meter.empty { background: transparent; }
 /* a 24-hour track; the filled span is where in the day the shift sat, not how long it was */
-.timebar { position: relative; display: block; width: 100%; min-width: 3.5rem; height: 4px; margin-top: 3px; border-radius: 2px; background: var(--surface-3); }
-.timebar i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--night); }
-.timebar.empty { background: transparent; }
 .ministat { display: inline-flex; align-items: center; gap: var(--s-2); white-space: nowrap; font-size: var(--fs-meta); }
 .ministat .mk { color: var(--ink-2); }
 .ministat .mv { font-size: var(--fs-body); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }

@@ -33,8 +33,12 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   badge for the type, a star for a party; shade = earnings, never a type fill) or one
   "log a shift" button. The month and its nav are the panel head; more than one shift in a day stacks compact cards.
 - `ui/Table.tsx`: the one grid (sort, bands, paging, group headers). `ui/PanelHead.tsx`, `ui/DrawerFrame.tsx`, `ui/toast.tsx`.
-- `features/shift/ShiftForm.tsx`: pages in three groups (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew, Party,
-  Notes), each with a live summary and a problem dot. Close and Delete confirm in place ("Discard changes?", "Delete?").
+- `features/shift/ShiftForm.tsx`: opens on **Overview** (the calendar that already shows your shifts, start and end, tips, and what the
+  shift adds up to with the mix bar), then pages in three groups (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew,
+  Party, Notes), each with a live summary and a problem dot. No time presets: the Time page draws your last few same-weekday shifts
+  under this one. Close confirms in place ("Discard changes?"); Delete acts at once with Undo.
+- `features/shift/ShiftDetails.tsx`: the one read-only shift block (mix bar + Time / Crew / Money stacked lists), used by the drawer and
+  the Log's opened row. `ui/MixBar.tsx`: the income stacked bar, coloured from the `--cat-*` tokens, always named in the list beside it.
 
 ## Rail, groups and pages
 Rail one is four groups: **Shift** (Overview, Calendar, Journal, Log, Summary), **Hub** (Crew week, Crew log, Other income), **People**, **Settings**
@@ -79,20 +83,20 @@ in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of 
 - **Wage** is estimated (hours × the hourly wage in effect that day, from Settings), never stored, and counts toward **Total**.
 - **$/HR** in the Log is everything earned per hour; it is a figure, not a ranking.
 
-## The Log table
-- Every column sits in a group (Shift · Time · Tips · Income · Staff · Details); the group band is the top header tier, the heads
-  under it the second. Heads are 2 to 5 characters; the full name is the tooltip. A repeated head (HR) means what its group says.
-- Cells are bare numbers, centred: no `$`, no `/hr`. Tips and income whole; hours and rates one decimal. Dates are `Sep 9`.
-- Bar2.000's table: a quiet head, one hairline between rows, no vertical rules, no fills or tints. Two type levels only:
-  **bold** (Date, HR, Tips, Total) and **muted** (Day, Start, End, both RATEs, Staff, Notes); Wage and Other are plain ink.
-  Pairs read as one figure, so the pair's inner padding is tight (`pl`/`pr`: Day+Date; `pl0`/`pr0`: Start–End, touching; `pl2`/`pr2`: Tips+RATE, Total+RATE, a little air). Day and Date are left-aligned; in Start–End, Tips+RATE and Total+RATE the left
-  half is right-aligned and the right half left-aligned so they meet in the middle (Start carries the small "–"); a column with a known
-  widest value (Day, CT) has a fixed width (`narrow`).
-  Never size, tint or highlight a column. A faint hairline opens each column group (body and both header tiers); the head is quiet (muted, light). Tips and Total and their
-  RATEs are centred with little padding (`tight`). Date is the row's title: wider, larger face. A group's first column just gets a little extra room. Notes is the only left-aligned, muted column.
-- Type (Day/Night) and Party are **pills** (`.badge`, soft fill, word only in the table). Nothing else in a row is decorated.
-- The year shows only where nothing nearby says it and only when it isn't this year (`isPastYear`, `DateCell`).
-- Bands (year > month > week) are collapsible and carry their own totals; they show while sorted by date.
+## The Log
+- **Grouped, not banded:** `lib/groups.ts` groups the period's shifts by month or week (or Flat), chosen in the panel head and
+  remembered per device. A group's **band** is its own grey block (`--surface-2`, hero type) that names the month or week once,
+  with a count chip ("12 shifts · 1 waiting on tips") and one figure, the group total, lined up in the Total column. No per-column
+  sums. Rows under a band are indented with a guide line and only say the day ("Thu 24"); Flat drops the indent and shows the full date.
+- **Columns:** Day · Time · Hours · Tips · Tips / hr · Total · Crew. Times read "6:00 PM – 2:30 AM" (`clockPlain`), never 24-hour.
+  Wage, other income and crew times are not columns: they are in the opened card.
+- **Opening a row** turns it into a card in place (`?shift=<id>`, so it is a link and Back closes it; the floating drawer stays shut
+  on this page). The card is `ShiftDetails`: the income **mix bar** over three stacked lists (Time, Crew, Money), the same block the
+  drawer shows, then Edit and Delete. Delete acts at once; the toast's Undo is the safety net.
+- **Waiting on tips:** a shift with no tips and no other income (`isPending`) is one line with a "Waiting on tips" chip and a
+  "Fill in tips" button, not a row of dashes. It counts in the band's chip, not its total.
+- The mix bar lives only where a shift is opened (card, drawer, form Overview), never in a row or band.
+- Chips (`.chip`) are words in small solid blocks, sentence case: count, Party, Waiting on tips. No mono caps.
 
 ## People
 An identity-only roster (no shift counts, so it can't read as a leaderboard). Name is the unique handle, one person is "me", roles

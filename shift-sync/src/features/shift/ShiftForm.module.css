@@ -93,3 +93,22 @@
   .foot :global(.btn) { min-width: 0; }
 }
 .warn { color: var(--warn); font-weight: var(--fw-med); }
+
+/* Overview: the calendar on the left, time, tips and what the shift adds up to on the right. */
+.home { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+.homeCal, .homeSide { display: grid; gap: var(--s-3); min-width: 0; }
+.homeSide { gap: var(--s-4); }
+.homeBlock { display: grid; gap: var(--s-2); justify-items: start; }
+.homeBlock > * { width: 100%; }
+.homeBlock > .linkbtn, .homeBlock > :global(.linkbtn) { width: auto; }
+.subhead { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-bold); color: var(--ink); }
+.homeSub { font-weight: var(--fw-normal); color: var(--ink-2); }
+.summary { display: grid; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-panel); border: 1px solid var(--line); }
+.sumList { display: grid; margin: 0; }
+.sumList > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); }
+.sumList dt { display: flex; align-items: center; gap: var(--s-2); color: var(--ink-2); }
+.sumList dt small { font-size: var(--fs-meta); color: var(--ink-3); }
+.sumList dd { margin: 0; font-weight: var(--fw-semi); }
+.sumList .sumTotal { border-bottom: 0; }
+.sumList .sumTotal dt, .sumList .sumTotal dd { color: var(--ink); font-weight: var(--fw-bold); }
+@media (max-width: 48rem) { .home { grid-template-columns: minmax(0, 1fr); } }

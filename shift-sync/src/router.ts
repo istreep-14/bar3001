@@ -5,12 +5,12 @@ import { computed, signal } from '@preact/signals';
  *   ?shift=<id>                          the shift drawer (a read-only look), over ANY screen
  *   ?form=<id|new>[&date=YYYY-MM-DD]     the shift form dialog (add or edit); `date` pre-fills a new shift
  *   ?person=<id|new>                     the person drawer (one drawer at a time) */
-export type Screen = 'overview' | 'calendar' | 'journal' | 'log' | 'log/multi' | 'summary' | 'hub/week' | 'hub/crew' | 'hub/income' | 'people'
+export type Screen = 'overview' | 'calendar' | 'journal' | 'log' | 'summary' | 'hub/week' | 'hub/crew' | 'hub/income' | 'people'
   | 'settings/look' | 'settings/wages' | 'settings/sync' | 'settings/data';
-export const SCREENS: Screen[] = ['overview', 'calendar', 'journal', 'log', 'log/multi', 'summary', 'hub/week', 'hub/crew', 'hub/income', 'people',
+export const SCREENS: Screen[] = ['overview', 'calendar', 'journal', 'log', 'summary', 'hub/week', 'hub/crew', 'hub/income', 'people',
   'settings/look', 'settings/wages', 'settings/sync', 'settings/data'];
 /** Links from before a page moved still land somewhere sensible. */
-const LEGACY: Record<string, Screen> = { earnings: 'overview', rate: 'overview', settings: 'settings/sync', hub: 'hub/week' };
+const LEGACY: Record<string, Screen> = { earnings: 'overview', rate: 'overview', settings: 'settings/sync', hub: 'hub/week', 'log/multi': 'log' };
 
 const read = () => location.hash.replace(/^#\/?/, '');
 const raw = signal(read());

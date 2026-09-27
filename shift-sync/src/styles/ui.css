@@ -148,3 +148,15 @@ select.input { appearance: none; padding-right: var(--s-6);
 .yr { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
 
 @media (max-width: 40rem) { .tbl .hide-sm { display: none; } }   /* a column the phone can do without */
+
+/* ── chips: a word in a small solid block (sentence case, never mono caps). count, party, pending, sample. ── */
+.chip { display: inline-flex; align-items: center; gap: var(--s-1); min-height: 1.375rem; padding: 0 var(--s-2); border-radius: var(--r-sm); font-size: var(--fs-meta); font-weight: var(--fw-semi); line-height: 1; white-space: nowrap; background: var(--surface-3); color: var(--ink-2); }
+.chip[data-kind='party'] { background: var(--party-soft); color: var(--party); }
+.chip[data-kind='pending'] { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); color: var(--ink-2); }
+.chip[data-kind='accent'] { background: var(--accent-soft); color: var(--accent); }
+
+/* ── mix bar: what a total is made of. Opened shifts only (card, drawer, form); never in a table row. ── */
+.mixbar { display: flex; gap: 2px; height: 1.75rem; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-3); }
+.mixbar-part { display: flex; align-items: center; min-width: 3px; padding-left: var(--s-2); overflow: hidden; }
+.mixbar-label { font-size: var(--fs-meta); font-weight: var(--fw-semi); white-space: nowrap; color: var(--on-accent); }  /* the part colours are all deep in light mode and pale in dark, like the accent */
+.mixkey { width: 0.625rem; height: 0.625rem; border-radius: 3px; flex: none; }
