@@ -1,0 +1,116 @@
+/* ═══ Design tokens ═══════════════════════════════════════════════════════════
+   The single place a raw color, size or radius is allowed. Components use only these names.
+   The palette, type ladder, spacing and radii come from Bar2.000's dashboard (its styles.css header).
+
+   Levels (depth):   page (--bg)  <  panel (--surface, 1px line, soft shadow)  <  raised (dialog, drawer, tooltip)
+   Levels (type):    title 16  >  heading 14 semi  >  eyebrow 11 caps  >  body 14 / small 12
+   Spacing scale:    --s-1 4 · 2 8 · 3 12 · 4 16 · 5 24 · 6 32 · 7 48
+   Two densities share one set of names: comfortable on touch, dense with a mouse (tables mostly).
+   ═══════════════════════════════════════════════════════════════════════════ */
+@font-face { font-family: 'Poppins'; font-weight: 400; font-style: normal; font-display: swap; src: url('../assets/fonts/poppins-400.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-weight: 500; font-style: normal; font-display: swap; src: url('../assets/fonts/poppins-500.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-weight: 600; font-style: normal; font-display: swap; src: url('../assets/fonts/poppins-600.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-weight: 700; font-style: normal; font-display: swap; src: url('../assets/fonts/poppins-700.woff2') format('woff2'); }
+
+:root {
+  --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* type: 4 weights (400 body, 500 figures, 600 labels, 700 hero) */
+  --fs-micro: 0.6875rem; --fs-meta: 0.75rem; --fs-body: 0.875rem; --fs-lead: 0.875rem;
+  --fs-title: 1rem; --fs-hero: 1.25rem; --fs-display: 1.875rem;
+  --fw-normal: 400; --fw-med: 500; --fw-semi: 600; --fw-bold: 700;
+
+  /* spacing: 4px base */
+  --s-1: 0.25rem; --s-2: 0.5rem; --s-3: 0.75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem;
+  --r-sm: 0.5rem; --r-md: 0.75rem; --r-lg: 1rem; --r-pill: 999px;
+
+  /* geometry */
+  --ctl-h: 2.75rem; --row-h: 3.5rem; --row-h-head: 2rem;
+  --rail1: 5rem; --rail2: 13.25rem; --topbar-h: 3.75rem; --drawer-w: 21rem;
+  --dur: 150ms; --ease: cubic-bezier(0.2, 0, 0, 1);
+  --z-nav: 20; --z-drawer: 30; --z-toast: 60;
+
+  /* surfaces + lines: page < panel (surface) ; field = an input's or tile's own fill ; hover = a hovered row */
+  --bg: #eef2f1; --surface: #ffffff; --surface-2: #f5f8f7; --surface-3: #eaf3f1;
+  --line: #dce4e2; --line-soft: #e8eeed; --line-strong: #c3cfcc;
+  /* ink: --ink-3 is for non-essential labels only; --ink-4 never carries meaning. */
+  --ink: #0f1f1e; --ink-2: #5a6b68; --ink-3: #7b8b87; --ink-4: #a9b6b2;
+
+  --accent: #0d7a70; --accent-hover: #0a625a; --accent-soft: #dff1ee; --accent-wash: #edf6f4; --on-accent: #ffffff;
+  --good: #15803d; --warn: #b45309; --bad: #b91c1c;
+
+  /* the shift types and party. -ink is for text; the base is for drawn marks (bars, dots). */
+  --day: #a15c07; --day-ink: #a15c07; --day-soft: #fdf0d8;
+  --night: #4f46e5; --night-soft: #e9e8fd;
+  --party: #b4235f; --party-soft: #fde6ef;
+
+  /* income sources, one token each */
+  --cat-tips: var(--accent);
+  --cat-chump: #c2410c; --cat-cash: #15803d; --cat-venmo: #0e7490; --cat-consideration: #7c3aed; --cat-overtime: #be185d;
+  --cat-wage: #2563eb;
+  --cat-other: var(--ink-3);
+
+  --danger: var(--bad); --danger-soft: #fdeeee; --danger-line: #f1cccc;
+  --warning-soft: #fdf0d8;
+
+  /* rate: a diverging pair */
+  --rate-good: var(--good); --rate-bad: var(--bad);
+
+  /* the two-tier rail: dark chrome that stays constant across the light/dark page */
+  --rail-bg: #0a1817; --rail-ink: #93aaa5; --rail-ink-hi: #ffffff;
+
+  --overlay: rgb(10 25 24 / 0.58);
+  --shadow-panel: 0 1px 2px rgb(15 31 30 / 0.05), 0 4px 16px rgb(15 31 30 / 0.04);
+  --shadow: 0 24px 60px rgb(10 25 24 / 0.28), 0 4px 12px rgb(10 25 24 / 0.12);
+  --shadow-sm: 0 1px 2px rgb(15 31 30 / 0.06);
+  color-scheme: light;
+}
+
+/* Dense scale for a precise pointer. Layout breakpoints are separate: they only look at width. */
+@media (hover: hover) and (pointer: fine) {
+  :root {
+    --fs-micro: 0.625rem; --fs-meta: 0.6875rem; --fs-body: 0.8125rem; --fs-lead: 0.8125rem;
+    --fs-title: 0.9375rem; --fs-hero: 1.125rem;
+    --ctl-h: 2.125rem; --row-h: 1.875rem; --row-h-head: 1.625rem;
+  }
+}
+
+/* Dark: written twice (OS preference, manual override). Keep the two blocks identical. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0b1110; --surface: #131b1a; --surface-2: #0e1514; --surface-3: #18242a;
+    --line: #243230; --line-soft: #1c2826; --line-strong: #34463f;
+    --ink: #e8f0ee; --ink-2: #93a6a2; --ink-3: #6f827e; --ink-4: #4a5a56;
+    --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
+    --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
+    --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
+    --night: #7570e6; --night-soft: #23214d;
+    --party: #f58bb3; --party-soft: #3a1727;
+    --cat-chump: #fb923c; --cat-cash: #4ade80; --cat-venmo: #67e8f9; --cat-consideration: #c4b5fd; --cat-overtime: #f472b6; --cat-wage: #60a5fa;
+    --danger-soft: rgb(248 113 113 / 0.1); --danger-line: rgb(248 113 113 / 0.3);
+    --warning-soft: rgb(251 191 36 / 0.16);
+    --overlay: rgb(0 0 0 / 0.62);
+    --shadow-panel: 0 0 0 rgb(0 0 0 / 0);
+    --shadow: 0 24px 60px rgb(0 0 0 / 0.6);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #0b1110; --surface: #131b1a; --surface-2: #0e1514; --surface-3: #18242a;
+  --line: #243230; --line-soft: #1c2826; --line-strong: #34463f;
+  --ink: #e8f0ee; --ink-2: #93a6a2; --ink-3: #6f827e; --ink-4: #4a5a56;
+  --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
+  --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
+  --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
+  --night: #7570e6; --night-soft: #23214d;
+  --party: #f58bb3; --party-soft: #3a1727;
+  --cat-chump: #fb923c; --cat-cash: #4ade80; --cat-venmo: #67e8f9; --cat-consideration: #c4b5fd; --cat-overtime: #f472b6; --cat-wage: #60a5fa;
+  --danger-soft: rgb(248 113 113 / 0.1); --danger-line: rgb(248 113 113 / 0.3);
+  --warning-soft: rgb(251 191 36 / 0.16);
+  --overlay: rgb(0 0 0 / 0.62);
+  --shadow-panel: 0 0 0 rgb(0 0 0 / 0);
+  --shadow: 0 24px 60px rgb(0 0 0 / 0.6);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}

@@ -1,0 +1,51 @@
+.range { font-weight: var(--fw-med); color: var(--ink-2); font-size: var(--fs-body); }
+.nav { display: flex; align-items: center; gap: var(--s-2); }
+.scroll { overflow-x: auto; }
+.grid { table-layout: fixed; min-width: 46rem; }
+.grid th, .grid td { width: auto; }
+.grid th:first-child { width: 11rem; text-align: left; padding-left: var(--s-5); }
+.grid th:last-child, .grid td:last-child { width: 5rem; padding-right: var(--s-5); }
+.grid td { height: 3.25rem; padding: 3px 4px; }
+.grid tfoot th, .grid tfoot td { position: static; height: var(--row-h); background: var(--surface-2); box-shadow: inset 0 1px var(--line-soft); }
+.dhead b { font-weight: var(--fw-semi); color: var(--ink); }
+.dshift { display: flex; justify-content: center; gap: 2px; min-height: 1.5rem; margin-top: 2px; }
+.today { color: var(--accent); }
+.you { margin-left: var(--s-2); font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-2); }
+.none { padding: var(--s-5); color: var(--ink-2); text-align: center; }
+.cell { display: grid; gap: 3px; }
+.cell button, .off { display: flex; align-items: center; justify-content: center; gap: var(--s-2); width: 100%; min-height: 2.5rem; border-radius: var(--r-sm); font: inherit; font-size: var(--fs-meta); }
+.off { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--line-soft) 5px 6px); opacity: 0.6; }
+.on { border: 0; background: var(--accent-wash); color: var(--ink); cursor: pointer; flex-direction: column; gap: 0 !important; }
+.on b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.times { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.on:hover { background: var(--accent-soft); }
+.empty { border: 1px dashed var(--line-strong); background: transparent; color: var(--ink-3); cursor: pointer; }
+.empty:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+.on:focus-visible, .empty:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.addbar { display: flex; padding: var(--s-3) var(--s-5); border-top: 1px solid var(--line); }
+.add { display: grid; gap: var(--s-1); min-width: 14rem; }
+
+.dialog { width: min(24rem, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.dialog::backdrop { background: var(--overlay); }
+.dform { display: grid; gap: var(--s-4); padding: var(--s-5); }
+.dform h2 { margin: 0; font-size: var(--fs-title); }
+.dform header p { margin: 2px 0 0; color: var(--ink-2); font-size: var(--fs-meta); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.calc { margin: 0; color: var(--ink-2); font-size: var(--fs-body); }
+.dform footer { display: flex; align-items: center; gap: var(--s-2); }
+.spacer { flex: 1; }
+
+/* the flat editable tables (crew log, other income) */
+.bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
+.bar .field { min-width: 0; }
+.cellin { width: 100%; min-width: 5.5rem; min-height: 1.75rem; padding: 0 var(--s-2); border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: inherit; font: inherit; text-align: center; }
+.cellin:hover { border-color: var(--line-strong); }
+.cellin:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 2px var(--accent-soft); }
+.cellin.left { text-align: left; }
+.body { min-height: 0; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-4); margin-right: auto; }
+@media (min-width: 56rem) {
+  .fillscreen { display: flex; flex-direction: column; height: calc(100dvh - 2 * var(--s-4)); }
+  .fillscreen .body { flex: 1; display: flex; flex-direction: column; }
+}
+.filter { display: inline-flex; } .filter .input { width: auto; min-width: 9rem; }

@@ -1,0 +1,149 @@
+/* Shared primitives: exactly one definition of each. Feature CSS never restyles these. */
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: var(--ctl-h); padding: 0 var(--s-4); border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  font-size: var(--fs-lead); font-weight: var(--fw-semi); white-space: nowrap;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-primary { background: var(--accent); border-color: transparent; color: var(--on-accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-danger { color: var(--danger); border-color: var(--danger-line); background: transparent; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-soft); }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn-icon { width: var(--ctl-h); padding: 0; }
+
+/* ── form controls ── */
+.field { display: grid; gap: var(--s-1); min-width: 0; }
+.field > .label-text { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink-2); }
+.field > .hint { font-size: var(--fs-meta); color: var(--ink-2); }
+.input {
+  width: 100%; min-height: var(--ctl-h); padding: 0 var(--s-3);
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  font-size: var(--fs-lead);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+textarea.input { padding: var(--s-2) var(--s-3); min-height: 4.5rem; resize: vertical; }
+.input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input[aria-invalid='true'] { border-color: var(--danger); }
+input.input { font-variant-numeric: tabular-nums; }
+select.input { appearance: none; padding-right: var(--s-6);
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%), linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
+  background-position: calc(100% - 1rem) 50%, calc(100% - 0.7rem) 50%; background-size: 0.3rem 0.3rem; background-repeat: no-repeat; }
+.error { color: var(--danger); font-size: var(--fs-meta); font-weight: var(--fw-med); }
+
+/* ── segmented control (radio group): view modes, scope unit, theme ── */
+.seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; background: var(--surface-3); border-radius: var(--r-md); }
+.seg label { position: relative; }
+.seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.seg span { display: flex; align-items: center; justify-content: center; gap: var(--s-2); min-height: calc(var(--ctl-h) - 6px); padding: 0 var(--s-3); border-radius: var(--r-sm); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); white-space: nowrap; transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+.seg input:checked + span { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); }
+
+.icon { width: 1.125em; height: 1.125em; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── tags: plain colored text, no pill. Type = icon + word; source = dot + word. ── */
+.badge { --c: var(--ink-2); display: inline-flex; align-items: center; gap: 5px; color: var(--c); font-size: inherit; font-weight: var(--fw-med); line-height: 1.3; white-space: nowrap; }
+.badge { vertical-align: middle; }
+.badge .icon { width: 1em; height: 1em; }
+.badge .dot { width: 0.5em; height: 0.5em; border-radius: 50%; background: var(--c); flex: none; }
+.badge[data-kind='day'] { --c: var(--day-ink); --bg: var(--day-soft); }
+.badge[data-kind='night'] { --c: var(--night); --bg: var(--night-soft); }
+.badge[data-kind='Chump'] { --c: var(--cat-chump); }
+.badge[data-kind='Cash'] { --c: var(--cat-cash); }
+.badge[data-kind='Venmo'] { --c: var(--cat-venmo); }
+.badge[data-kind='Consideration'] { --c: var(--cat-consideration); }
+.badge[data-kind='Overtime'] { --c: var(--cat-overtime); }
+.badge[data-kind='party'] { --c: var(--party); --bg: var(--party-soft); }
+/* type and party are pills (as in Bar2.000); income sources stay a dot and a word */
+.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 2px var(--s-2); border-radius: var(--r-pill); background: var(--bg); font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.04em; }
+.badge[data-kind='Tips'] { --c: var(--cat-tips); }
+.badge[data-kind='Wage'] { --c: var(--cat-wage); }
+
+/* ── rate: plain figure; good/bad gets an arrow and a color, never color alone ── */
+.rate { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+.rate .icon { width: 0.85em; height: 0.85em; stroke-width: 2.5; }
+.rate[data-tone='good'] { color: var(--rate-good); }
+.rate[data-tone='bad'] { color: var(--rate-bad); }
+
+/* ── table: one component for every grid, after Bar2.000's Log: a quiet header, plain uniform cells, one hairline
+   between rows, no fills or per-column styling. Everything is centered and sized to its content; only a free-text
+   column (.trunc) takes the leftover width. Status (Day/Night, Party) is a pill; everything else is plain text. ── */
+.tbl-wrap { overflow: auto; background: var(--surface); }
+.tbl-wrap.fill { flex: 1; min-height: 0; }
+.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
+.tbl th, .tbl td { width: 1%; padding: 0 0.5rem; text-align: center; white-space: nowrap; }
+.tbl th {
+  position: sticky; top: 0; z-index: 1; height: var(--row-h-head); background: var(--surface); box-shadow: inset 0 -1px var(--line-soft);
+  font-size: var(--fs-meta); font-weight: var(--fw-normal); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-2);
+}
+.flush .tbl :is(th, td):first-child { padding-left: var(--s-5); }
+.flush .tbl :is(th, td):last-child { padding-right: var(--s-5); }
+.tbl :is(th, td).pl { padding-right: 0.125rem; }      /* a pair (Day+Date, Tips+RATE, Total+RATE) reads as one figure: */
+.tbl :is(th, td).pr { padding-left: 0.125rem; }       /* the left half is tight on its right, the right half on its left */
+.tbl :is(th, td).pl0 { padding-right: 0; }
+.tbl :is(th, td).pr0 { padding-left: 0; }
+.tbl :is(th, td).pl2 { padding-right: 0.375rem; }   /* a figure and its rate: a little air, so they don't run together */
+.tbl :is(th, td).pr2 { padding-left: 0.375rem; }
+.tbl :is(th, td).l { text-align: left; }
+.tbl :is(th, td).r { text-align: right; }
+.tbl .to { margin: 0 0.05em 0 0.15em; font-style: normal; color: var(--ink-3, var(--ink-2)); opacity: 0.6; }   /* the small dash between Start and End */
+.tbl :is(th, td).tight { padding-right: 0.25rem; }             /* a figure and its rate, centred in their cells with little padding */
+.tbl :is(th, td).tight:not(.gs) { padding-left: 0.25rem; }
+.tbl :is(th, td).narrow { width: 2.25rem; }             /* a column whose widest value is known (Wed, 12) is fixed, not stretched */
+.tbl td.mute { color: var(--ink-2); }
+.tbl td.strong { font-weight: var(--fw-semi); }
+.tbl td { height: var(--row-h); box-shadow: inset 0 -1px var(--line-soft); }
+.tbl th.trunc, .tbl td.trunc { width: 100%; min-width: 5.5rem; max-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; padding-left: var(--s-3); color: var(--ink-2); }
+.tbl tbody tr[data-row] { cursor: pointer; }
+.tbl tbody tr[data-row]:hover { background: var(--accent-wash); }
+.tbl tbody tr[aria-selected='true'] { background: var(--accent-soft); }
+.tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 2px 0 0 var(--accent), inset 0 -1px var(--line-soft); }
+/* Column groups: a label over its columns (Time, Income, Staff...), one tier above the heads. Repeated heads (HR in
+   Time, HR in Staff) mean what their group says. A group's first column gets a little extra room on its left. */
+.tbl thead tr.gh th { box-shadow: none; color: var(--ink-2); font-weight: var(--fw-med); letter-spacing: 0.08em; }
+.tbl thead[data-grouped] tr + tr th { top: var(--row-h-head); }
+.tbl .gs { padding-left: var(--s-4); border-left: 1px solid var(--line-soft); }   /* a faint hairline where each group starts */
+.tbl thead tr.gh th.gs { padding-left: 0; }
+.tbl :is(th, td).datecol { min-width: 6.5rem; }   /* Date is the row's title: it gets the room and the larger face */
+.tbl td.datecol { font-size: var(--fs-title); }
+.tbl th.gs.trunc, .tbl td.gs.trunc { padding-left: var(--s-3); }
+/* collapsible bands (year > month > week): a tinted row with the band's own summary under the columns */
+.tbl tr.band td { height: var(--row-h); background: var(--accent-wash); font-weight: var(--fw-med); box-shadow: none; }
+.tbl td.band-lead, .tbl tr.band td:first-child { text-align: left; }
+.band-toggle { display: inline-flex; align-items: center; gap: var(--s-2); padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: var(--fw-semi); cursor: pointer; }
+.band-toggle .icon { width: 1em; height: 1em; stroke-width: 2.25; transition: transform var(--dur) var(--ease); }
+.band-toggle[aria-expanded='true'] .icon { transform: rotate(90deg); }
+.band-count { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
+.tbl tr.band[data-level='1'] .band-toggle { margin-left: var(--s-4); }
+.tbl tr.band[data-level='2'] .band-toggle { margin-left: var(--s-6); }
+/* toggle chips (independent on/off, unlike .seg) */
+.tog { min-height: var(--ctl-h); padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-med); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+.tog:hover { background: var(--surface-3); }
+.tog[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+/* sortable heads: a real button, arrow reserved so centered labels don't jump */
+.th-sort { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.th-sort .icon { width: 0.8em; height: 0.8em; stroke-width: 2.5; opacity: 0; }
+.th-sort:hover { color: var(--ink); }
+.th-sort:hover .icon { opacity: 0.35; }
+.tbl th[aria-sort='ascending'] .icon, .tbl th[aria-sort='descending'] .icon { opacity: 1; color: var(--accent); }
+.tbl th[aria-sort='ascending'], .tbl th[aria-sort='descending'] { color: var(--ink); }
+/* pager */
+.flush .pager { padding: var(--s-2) var(--s-5); border-top: 1px solid var(--line); }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: var(--s-3); padding: var(--s-2) 0; font-size: var(--fs-meta); color: var(--ink-2); }
+.pager-size { display: inline-flex; align-items: center; gap: var(--s-2); }
+.pager .input { width: auto; min-height: var(--ctl-h); }
+.pager-count { min-width: 6rem; text-align: right; font-variant-numeric: tabular-nums; }
+/* ── card + empty state ── */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); }
+.empty { display: grid; justify-items: start; gap: var(--s-3); padding: var(--s-5) 0; color: var(--ink-2); }
+.empty h2 { font-size: var(--fs-title); font-weight: var(--fw-semi); color: var(--ink); }
+
+/* a year that isn't this one: present but quiet */
+.yr { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
+
+@media (max-width: 40rem) { .tbl .hide-sm { display: none; } }   /* a column the phone can do without */

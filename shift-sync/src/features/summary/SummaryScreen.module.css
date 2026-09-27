@@ -1,0 +1,7 @@
+.body { min-height: 0; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-4); margin-right: auto; }
+/* one viewport tall on desktop; the table scrolls inside with its head pinned (as in the Log) */
+@media (min-width: 56rem) {
+  .screen { display: flex; flex-direction: column; height: calc(100dvh - 2 * var(--s-4)); }
+  .screen .body { flex: 1; display: flex; flex-direction: column; }
+}

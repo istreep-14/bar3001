@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17231d">
+<link rel="manifest" href="manifest.json">
+<title>Shifts</title>
+<style>
+  :root {
+    --bg: #17231d; --surface: #20312a; --line: #2f463c;
+    --paper: #ece3cf; --muted: #8c9f93; --brass: #c9a24a; --warn: #d0725f;
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    color: var(--paper); background: var(--bg); color-scheme: dark;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 46rem; padding: 1rem; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+  header .right { display: flex; align-items: center; gap: .75rem; }
+  h1 { font-size: 1.4rem; margin: 0; font-weight: 600; letter-spacing: .01em; }
+  #status { color: var(--muted); font-size: .85rem; background: none; border: 0; padding: .25rem 0; }
+  #status.bad { color: var(--warn); }
+  form, #settings { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: 1.5rem; }
+  label { display: grid; gap: .25rem; font-size: .8rem; color: var(--muted); }
+  .wide { grid-column: 1 / -1; }
+  input, select { font: inherit; font-size: 1rem; color: var(--paper); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 6px; padding: .6rem; width: 100%; min-height: 2.75rem; }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  .actions { display: flex; gap: .6rem; }
+  button { font: inherit; border-radius: 6px; padding: .7rem 1rem; cursor: pointer; min-height: 2.75rem; }
+  .primary { flex: 1; background: var(--brass); color: #1a1408; border: 0; font-weight: 600; }
+  .ghost { background: none; color: var(--muted); border: 1px solid var(--line); }
+  .ghost.danger { color: var(--warn); border-color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .75rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  th, td { padding: .7rem .5rem; border-top: 1px solid var(--line); vertical-align: top; }
+  th { border-top: 0; border-bottom: 1px solid var(--line); }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover, tbody tr:focus-visible { background: var(--surface); outline: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.tips { color: var(--brass); }
+  td.notes { color: var(--muted); font-size: .85rem; }
+  tfoot td { font-weight: 600; border-top: 2px solid var(--line); }
+  .pending::after { content: " •"; color: var(--brass); }
+  #drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(24rem, 100%); background: var(--bg);
+    border-left: 1px solid var(--line); padding: 1rem; padding-top: max(1rem, env(safe-area-inset-top));
+    transform: translateX(100%); visibility: hidden; transition: transform .2s, visibility .2s; z-index: 20; overflow-y: auto; }
+  #drawer.open { transform: none; visibility: visible; }
+  #drawer h2 { margin: 0 0 1rem; font-size: 1.1rem; font-weight: 600; }
+  #backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 10; }
+  .inc { display: grid; grid-template-columns: 1fr 6rem; gap: .4rem; padding: .5rem 0; border-top: 1px solid var(--line); }
+  .inc .row2 { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; gap: .4rem; }
+  #incomeHead { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--muted); }
+  #incomeHead button { min-height: 2rem; padding: .2rem .6rem; }
+  .legacy { font-size: .8rem; color: var(--muted); margin: 0; }
+  @media (max-width: 30rem) { th.opt, td.opt { display: none; } }
+  @media (prefers-reduced-motion: reduce) { #drawer { transition: none; } }
+  #errors { color: var(--warn); font-size: .85rem; white-space: pre-line; margin: 0 0 1rem; }
+  .empty { color: var(--muted); padding: 1rem .25rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Shifts</h1>
+  <div class="right">
+    <button id="status" type="button" title="Sync now">Loading</button>
+    <button class="primary" type="button" id="add" style="flex:none">+ Add shift</button>
+  </div>
+</header>
+
+<div id="settings" hidden>
+  <label class="wide">Web app URL<input id="api" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
+  <label class="wide">Token<input id="token" type="password" autocomplete="off"></label>
+  <div class="actions wide"><button class="primary" type="button" id="saveSettings">Save connection</button></div>
+</div>
+
+<div id="backdrop" hidden></div>
+<aside id="drawer" aria-label="Shift entry" aria-hidden="true">
+<h2 id="drawerTitle">Log shift</h2>
+<form id="form">
+  <label class="wide">Date<input name="date" type="date" required></label>
+  <label>Start<input name="start" type="time"></label>
+  <label>End<input name="end" type="time"></label>
+  <label>Tips<input name="tips" type="number" inputmode="decimal" step="0.01" min="0"></label>
+  <label class="wide">Shift type<select name="shift_type">
+    <option value="">—</option><option value="day">Day</option><option value="night">Night</option></select></label>
+  <div class="wide">
+    <div id="incomeHead"><span>Other income</span><button class="ghost" type="button" id="addIncome">+ Add</button></div>
+    <div id="incomeList"></div>
+    <p class="legacy" id="legacy" hidden></p>
+  </div>
+  <label class="wide">Notes<input name="notes" type="text"></label>
+  <div class="actions wide">
+    <button class="primary" type="submit" id="submit">Log shift</button>
+    <button class="ghost" type="button" id="cancel">Cancel</button>
+    <button class="ghost danger" type="button" id="del" hidden>Delete</button>
+  </div>
+</form>
+</aside>
+
+<p id="errors" hidden></p>
+<table>
+  <thead><tr><th>Date</th><th class="opt">Time</th><th>Type</th><th class="num">Hrs</th><th class="num">Tips</th><th class="num">Tips/hr</th><th class="num opt">Other</th><th class="num">Total</th><th class="opt">Notes</th></tr></thead>
+  <tbody id="list"></tbody>
+  <tfoot id="totals"></tfoot>
+</table>
+<p id="empty" class="empty" hidden>No shifts yet. Tap “+ Add shift”.</p>
+<p><button class="ghost" type="button" id="openSettings">Connection settings</button></p>
+
+<script src="core.js"></script>
+<script>
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+/* ---------- IndexedDB (tiny wrapper) ---------- */
+const dbp = new Promise((res, rej) => {
+  const r = indexedDB.open('shifts', 2);
+  r.onupgradeneeded = () => {
+    for (const name of ['rows', 'income'])
+      if (!r.result.objectStoreNames.contains(name)) r.result.createObjectStore(name, { keyPath: 'id' });
+  };
+  r.onsuccess = () => res(r.result);
+  r.onerror = () => rej(r.error);
+});
+const tx = async (name, mode, fn) => {
+  const db = await dbp;
+  return new Promise((res, rej) => {
+    const t = db.transaction(name, mode), store = t.objectStore(name);
+    const out = fn(store);
+    t.oncomplete = () => res(out && out.result);
+    t.onerror = () => rej(t.error);
+  });
+};
+const loadAll = (name) => tx(name, 'readonly', s => s.getAll());
+const putOne = (name, row) => tx(name, 'readwrite', s => s.put(row));
+const replaceAll = (name, rows) => tx(name, 'readwrite', s => { s.clear(); rows.forEach(r => s.put(r)); });
+
+/* ---------- Settings (per-device convenience) ---------- */
+const conf = () => { try { return JSON.parse(localStorage.getItem('conf')) || {}; } catch { return {}; } };
+const $ = (id) => document.getElementById(id);
+
+/* ---------- State ---------- */
+let rows = {};          // id -> shift row (with _dirty)
+let income = {};        // id -> income row (child of a shift via shift_id)
+let draft = [], origIncome = {};   // income entries in the open drawer / as they were when it opened
+let editing = null;     // id being edited
+let syncing = false, again = false;
+
+const form = $('form');
+const today = () => new Date().toLocaleDateString('en-CA');
+
+function status(text, bad) { $('status').textContent = text; $('status').classList.toggle('bad', !!bad); }
+
+function render() {
+  const live = Object.values(rows).filter(r => !r.deleted)
+    .sort((a, b) => b.date.localeCompare(a.date) || (b.start ?? 0) - (a.start ?? 0));
+  $('list').innerHTML = ''; $('empty').hidden = live.length > 0;
+  const byShift = {};
+  for (const i of Object.values(income)) if (!i.deleted) (byShift[i.shift_id] ||= []).push(i);
+  const money = (n) => n == null ? '' : '$' + n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const cols = ['date', 'time opt', 'type', 'num hrs', 'num tips', 'num tph', 'num other opt', 'num total', 'notes opt'];
+  let totH = 0, totT = 0, totO = 0, tipH = 0, tipOnly = 0;
+  for (const r of live) {
+    const h = hoursWorked(r.start, r.end), tph = tipsPerHour(r);
+    const inc = byShift[r.id] || [], oth = (r.other || 0) + sumIncome(inc);
+    totH += h || 0; totT += r.tips || 0; totO += oth;
+    if (tph != null) { tipH += h; tipOnly += r.tips; }
+    const tr = document.createElement('tr');
+    tr.tabIndex = 0;
+    tr.innerHTML = cols.map(c => `<td class="${c}"></td>`).join('');
+    const td = tr.children;
+    td[0].textContent = new Date(r.date + 'T12:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    td[0].classList.toggle('pending', !!r._dirty);
+    td[1].textContent = r.start != null && r.end != null ? `${toHHMM(r.start)}–${toHHMM(r.end)}` : '';
+    td[2].textContent = r.shift_type ? r.shift_type[0].toUpperCase() + r.shift_type.slice(1) : '';
+    td[3].textContent = h != null ? +h.toFixed(2) : '';
+    td[4].textContent = money(r.tips);
+    td[5].textContent = money(tph);
+    td[6].textContent = inc.length || r.other ? money(oth) : '';
+    td[7].textContent = money(totalIncome(r, inc));
+    if (inc.length) tr.title = inc.map(i => `${i.category} ${money(i.amount)}${i.note ? ' (' + i.note + ')' : ''}`).join(', ');
+    td[8].textContent = r.notes || '';
+    tr.onclick = () => startEdit(r.id);
+    tr.onkeydown = (e) => { if (e.key === 'Enter') startEdit(r.id); };
+    $('list').append(tr);
+  }
+  $('totals').innerHTML = live.length ? '<tr>' + ['', 'opt', '', 'num', 'num', 'num', 'num opt', 'num', 'opt'].map(c => `<td class="${c}"></td>`).join('') + '</tr>' : '';
+  if (live.length) {
+    const c = $('totals').querySelectorAll('td');
+    c[0].textContent = 'Total'; c[3].textContent = +totH.toFixed(2); c[4].textContent = money(totT);
+    c[5].textContent = tipH ? money(tipOnly / tipH) : '';
+    c[6].textContent = money(totO); c[7].textContent = money(totT + totO);
+  }
+  const n = [...Object.values(rows), ...Object.values(income)].filter(r => r._dirty).length;
+  if (!syncing) status(n ? `${n} to sync` : 'Synced');
+}
+
+function openDrawer(title) {
+  $('drawerTitle').textContent = title;
+  $('drawer').classList.add('open'); $('drawer').setAttribute('aria-hidden', 'false'); $('backdrop').hidden = false;
+  form.date.focus();
+}
+function closeDrawer() {
+  $('drawer').classList.remove('open'); $('drawer').setAttribute('aria-hidden', 'true'); $('backdrop').hidden = true;
+  editing = null;
+}
+let typeTouched = false;   // true once the user picks a type (or is editing), so start-time changes stop overriding it
+function renderDraft() {
+  const box = $('incomeList'); box.innerHTML = '';
+  draft.forEach((d, idx) => {
+    const el = document.createElement('div'); el.className = 'inc';
+    el.innerHTML = `<select aria-label="Category">${CATEGORIES.map(c => `<option>${c}</option>`).join('')}</select>
+      <input type="number" inputmode="decimal" step="0.01" placeholder="$" aria-label="Amount">
+      <div class="row2"><input type="text" placeholder="Note" aria-label="Note"><button class="ghost" type="button" aria-label="Remove">×</button></div>`;
+    const [sel, amt] = el.querySelectorAll('select, input[type=number]'), note = el.querySelector('input[type=text]');
+    sel.value = d.category; amt.value = d.amount ?? ''; note.value = d.note ?? '';
+    sel.onchange = () => d.category = sel.value;
+    amt.oninput = () => d.amount = amt.value;
+    note.oninput = () => d.note = note.value;
+    el.querySelector('button').onclick = () => { draft.splice(idx, 1); renderDraft(); };
+    box.append(el);
+  });
+}
+$('addIncome').onclick = () => {
+  draft.push({ id: uid(), category: CATEGORIES[0], amount: '', note: '' }); renderDraft();
+  $('incomeList').querySelector('.inc:last-child input[type=number]').focus();
+};
+function loadDraft(shiftId) {
+  origIncome = {};
+  for (const i of Object.values(income)) if (!i.deleted && i.shift_id === shiftId) origIncome[i.id] = i;
+  draft = Object.values(origIncome).sort((a, b) => a.updated_at - b.updated_at).map(i => ({ ...i, amount: String(i.amount), note: i.note ?? '' }));
+  renderDraft();
+}
+function showLegacy(r) {
+  $('legacy').hidden = !(r && r.other);
+  if (r && r.other) $('legacy').textContent = `Earlier single "other" entry: $${r.other} (still counted)`;
+}
+function resetForm() {
+  editing = null; typeTouched = false; form.reset(); form.date.value = today();
+  loadDraft(null); showLegacy(null);
+  $('submit').textContent = 'Log shift'; $('del').hidden = true;
+}
+form.shift_type.onchange = () => { typeTouched = true; };
+form.start.oninput = () => { if (!typeTouched) form.shift_type.value = defaultShiftType(toMin(form.start.value)) ?? ''; };
+$('add').onclick = () => { resetForm(); openDrawer('Log shift'); };
+$('backdrop').onclick = $('cancel').onclick = closeDrawer;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+function startEdit(id) {
+  const r = rows[id]; editing = id;
+  form.date.value = r.date; form.start.value = toHHMM(r.start); form.end.value = toHHMM(r.end);
+  form.tips.value = r.tips ?? ''; form.shift_type.value = r.shift_type ?? defaultShiftType(r.start) ?? ''; typeTouched = true;
+  form.notes.value = r.notes ?? '';
+  loadDraft(id); showLegacy(r);
+  $('submit').textContent = 'Save changes'; $('del').hidden = false;
+  openDrawer('Edit shift');
+}
+
+async function save(row) {
+  row = { ...validateRow(row), _dirty: true };
+  rows[row.id] = row;
+  await putOne('rows', row);
+}
+async function saveIncome(row) {
+  row = { ...validateIncome(row), _dirty: true };
+  income[row.id] = row;
+  await putOne('income', row);
+}
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const f = form, id = editing || uid(), now = Date.now();
+    const shift = {
+      id, date: f.date.value,
+      start: toMin(f.start.value), end: toMin(f.end.value),
+      tips: f.tips.value === '' ? null : Number(f.tips.value),
+      shift_type: f.shift_type.value || null,
+      other: editing ? rows[editing].other : null,   // legacy single amount is preserved, not editable
+      notes: f.notes.value.trim() || null, updated_at: now, deleted: false
+    };
+    // Validate everything before writing anything, so a bad entry doesn't half-save.
+    validateRow(shift);
+    const kept = new Set(), toSave = [];
+    for (const d of draft) {
+      if (String(d.amount).trim() === '') continue;   // blank entry: ignore
+      kept.add(d.id);
+      const next = { id: d.id, shift_id: id, category: d.category, amount: Number(d.amount), note: String(d.note ?? '').trim() || null, updated_at: now, deleted: false };
+      const o = origIncome[d.id];
+      if (!o || o.category !== next.category || o.amount !== next.amount || o.note !== next.note) toSave.push(validateIncome(next));
+    }
+    for (const o of Object.values(origIncome)) if (!kept.has(o.id)) toSave.push({ ...stripLocal(o), deleted: true, updated_at: now });
+    await save(shift);
+    for (const i of toSave) await saveIncome(i);
+    render(); sync();
+    resetForm(); closeDrawer();
+  } catch (err) { showErrors([err.message]); }
+};
+$('del').onclick = async () => {
+  if (!editing || !confirm('Delete this shift and its other income? It will also be marked deleted in the Sheet.')) return;
+  const now = Date.now();
+  await save({ ...stripLocal(rows[editing]), deleted: true, updated_at: now });
+  for (const i of Object.values(income)) if (i.shift_id === editing && !i.deleted) await saveIncome({ ...stripLocal(i), deleted: true, updated_at: now });
+  render(); sync();
+  resetForm(); closeDrawer();
+};
+
+function showErrors(list) {
+  $('errors').hidden = !list.length;
+  $('errors').textContent = list.join('\n');
+}
+
+/* ---------- Sync ---------- */
+async function sync() {
+  const { api, token } = conf();
+  if (!api || !token) { status('Not connected', true); return; }
+  if (!navigator.onLine) { render(); return; }
+  if (syncing) { again = true; return; }
+  syncing = true; status('Syncing…');
+  try {
+    const dirty = Object.values(rows).filter(r => r._dirty).map(stripLocal);
+    const dirtyInc = Object.values(income).filter(r => r._dirty).map(stripLocal);
+    // No Content-Type header on purpose: text/plain avoids a CORS preflight Apps Script can't answer.
+    const res = await fetch(api, { method: 'POST', body: JSON.stringify({ token, rows: dirty, income: dirtyInc }) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error === 'auth' ? 'Token rejected, check connection settings' : data.error);
+    rows = reconcileClient(rows, data.rows, data.held);   // uses live `rows`, so mid-flight edits survive
+    await replaceAll('rows', Object.values(rows));
+    // An older Apps Script deployment won't return income; leave local income dirty until it's updated.
+    if (data.income) { income = reconcileClient(income, data.income, data.held_income); await replaceAll('income', Object.values(income)); }
+    showErrors((data.errors || []).map(e => {
+      const what = e.table === 'Income' ? 'Income' : 'Shift';
+      return e.source === 'sheet' ? `${what} sheet row ${e.row}: ${e.error}` : `${what} ${e.id}: ${e.error}`;
+    }));
+    syncing = false; render();
+  } catch (err) {
+    syncing = false; render(); status('Sync failed, tap to retry', true);
+    console.error(err);
+  }
+  if (again) { again = false; sync(); }
+}
+$('status').onclick = sync;
+window.addEventListener('online', sync);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+
+/* ---------- Settings UI ---------- */
+$('openSettings').onclick = () => {
+  const c = conf(); $('api').value = c.api || ''; $('token').value = c.token || '';
+  $('settings').hidden = !$('settings').hidden;
+};
+$('saveSettings').onclick = () => {
+  localStorage.setItem('conf', JSON.stringify({ api: $('api').value.trim(), token: $('token').value.trim() }));
+  $('settings').hidden = true; sync();
+};
+
+/* ---------- Boot ---------- */
+(async () => {
+  resetForm();
+  for (const r of await loadAll('rows')) rows[r.id] = r;
+  for (const r of await loadAll('income')) income[r.id] = r;
+  render();
+  if (!conf().api) $('settings').hidden = false;
+  sync();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+})();
+</script>
+</body>
+</html>

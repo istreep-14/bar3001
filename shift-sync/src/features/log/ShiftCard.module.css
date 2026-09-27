@@ -1,0 +1,18 @@
+.card { width: 100%; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-2); text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); transition: background var(--dur) var(--ease); }
+.card:hover { background: var(--surface-2); }
+.card[aria-current='true'] { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+/* The date, drawn rather than written: a shift IS its date. No box, so nothing nests. */
+.date { display: grid; justify-items: center; line-height: 1.1; }
+.month { font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.day { font-size: var(--fs-hero); font-weight: var(--fw-bold); }
+.body { display: grid; gap: 2px; min-width: 0; }
+.head { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lead); }
+.weekday { font-weight: var(--fw-semi); }
+.meta { font-size: var(--fs-meta); color: var(--ink-2); }
+.foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-1) var(--s-3); margin-top: 2px; min-width: 0; font-size: var(--fs-meta); }
+.note { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 100%; }
+.figures { display: grid; justify-items: end; gap: 2px; }
+.total { font-size: var(--fs-title); font-weight: var(--fw-semi); }
+.figures :global(.rate) { font-size: var(--fs-meta); }
+.pending { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--accent); }
+.head :global(.badge) { font-size: var(--fs-meta); }

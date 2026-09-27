@@ -1,0 +1,29 @@
+{
+  "name": "shift-sync",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "sync:core": "node scripts/sync-core.mjs",
+    "dev": "npm run sync:core && vite",
+    "build": "npm run sync:core && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "npm run sync:core && tsc --noEmit",
+    "test": "npm run sync:core && node --test \"tests/*.test.*\""
+  },
+  "dependencies": {
+    "@preact/signals": "^2.11.2",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^26.6.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vite-plugin-pwa": "^1.3.0",
+    "workbox-build": "^7.4.1",
+    "workbox-window": "^7.4.1"
+  }
+}

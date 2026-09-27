@@ -1,0 +1,95 @@
+/* The shift form: a dialog over the page, so entering a shift is one level down from browsing.
+   Tabbed pages in groups down the left, the selected page's input on the right, Back / Next / Save in the footer. */
+.modal { display: none; width: min(67.5rem, calc(100vw - 2rem)); height: min(50rem, calc(100dvh - 3rem)); max-width: none; max-height: none; margin: auto; padding: 0; overflow: hidden; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.modal[open] { display: block; }
+.modal::backdrop { background: var(--overlay); }
+.form { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
+.head { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
+.crumbs { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); min-width: 0; font-size: var(--fs-body); color: var(--ink-2); }
+.crumbs b { font-size: var(--fs-title); font-weight: var(--fw-semi); color: var(--ink); }
+.crumbs .page { font-weight: var(--fw-med); color: var(--accent); }
+.crumbs :global(.linkbtn) { font-size: var(--fs-body); }
+.meta { flex: 0 1 auto; overflow: hidden; font-size: var(--fs-meta); color: var(--ink-2); text-overflow: ellipsis; white-space: nowrap; }
+.head :global(.btn) { min-height: 2.125rem; padding: 0 var(--s-3); }
+.error { flex: none; margin: var(--s-3) var(--s-5) 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-sm); background: var(--danger-soft); border: 1px solid var(--danger-line); font-size: var(--fs-body); }
+
+.body { display: grid; flex: 1 1 auto; grid-template-columns: 14.75rem minmax(0, 1fr); min-height: 0; }
+.steps { overflow-y: auto; padding: var(--s-2) var(--s-2) var(--s-4); border-right: 1px solid var(--line); background: var(--surface-2); }
+.group { display: grid; gap: 2px; }
+.group + .group { margin-top: var(--s-2); }
+.gname { padding: var(--s-3) var(--s-4) var(--s-1); }
+.tab { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 var(--s-3); min-height: 2.125rem; padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4); border: 0; border-radius: var(--r-sm); background: none; color: var(--ink); text-align: left; font-size: var(--fs-body); transition: background-color var(--dur); }
+.tab:hover { background: var(--surface-3); }
+.tab[aria-selected='true'] { background: var(--accent-soft); }
+.tab[aria-selected='true']::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--accent); }
+.tabname { font-weight: var(--fw-semi); }
+.tab[aria-selected='true'] .tabname { color: var(--accent); }
+.tabsum { overflow: hidden; font-size: var(--fs-meta); color: var(--ink-2); text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.tabsum:empty { display: none; }
+.tab[data-flag]::after { content: ''; position: absolute; top: 9px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+
+.panes { min-width: 0; overflow-y: auto; }
+.pane { display: grid; gap: var(--s-4); align-content: start; max-width: 47.5rem; padding: var(--s-5) var(--s-6) var(--s-5); }
+.pane > h3 { color: var(--ink-2); }
+.hint { font-size: var(--fs-meta); color: var(--ink-2); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.dateline { display: grid; grid-template-columns: minmax(9.5rem, 14rem) minmax(0, 1fr); align-items: end; gap: var(--s-3); }
+.datenote { margin: 0; padding-bottom: 10px; font-size: var(--fs-meta); color: var(--ink-2); }
+.datenote.warn { color: var(--warn); font-weight: var(--fw-med); }
+
+/* the Type page: two cards, each with what that type has paid you */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.card { position: relative; display: grid; align-content: start; gap: 2px; min-height: 5.75rem; padding: var(--s-3) var(--s-4); border: 1px solid var(--line-strong); border-left: 4px solid var(--k); border-radius: var(--r-md); background: var(--surface-2); cursor: pointer; }
+.card input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.card b { font-size: var(--fs-title); font-weight: var(--fw-semi); }
+.card:has(input:checked) { border-color: var(--k); background: var(--k-soft); box-shadow: 0 0 0 1px var(--k); }
+.card:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.typehist { font-size: var(--fs-meta); line-height: 1.35; color: var(--ink-2); }
+
+/* the estimated wage: worked out, not typed, so it looks like a result rather than a field */
+.result { display: grid; gap: var(--s-1); padding: var(--s-4); border: 1px dashed var(--line-strong); border-radius: var(--r-md); background: var(--accent-soft); }
+.result .amt { font-size: var(--fs-hero); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; line-height: 1.3; }
+.result .why { font-size: var(--fs-meta); color: var(--ink-2); }
+
+/* rows that come and go: other income, and the people on the shift */
+.rows { display: grid; gap: var(--s-2); }
+.mrow { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: end; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
+.mrow .note { grid-column: 1 / -1; }
+.person { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
+.pname { display: flex; align-items: baseline; gap: var(--s-2); min-height: var(--ctl-h); align-self: center; font-weight: var(--fw-semi); }
+.pname small { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
+.pills { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.pill { min-height: 2rem; padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-body); transition: background-color var(--dur), border-color var(--dur); }
+.pill:hover { border-color: var(--accent); background: var(--surface-3); }
+.pill[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: var(--fw-semi); }
+.pill[aria-pressed='true']::after { content: ' ✕'; font-weight: var(--fw-normal); opacity: 0.8; }
+.check { display: flex; align-items: flex-start; gap: var(--s-3); padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface-2); cursor: pointer; }
+.check input { width: 1.25rem; height: 1.25rem; margin: 2px 0 0; accent-color: var(--accent); }
+.check:has(input:checked) { border-color: var(--party); background: var(--party-soft); }
+.check b { display: block; font-weight: var(--fw-semi); }
+
+.foot { display: flex; flex: none; align-items: center; gap: var(--s-2); padding: var(--s-3) var(--s-5); border-top: 1px solid var(--line); background: var(--surface); }
+.foot :global(.btn) { min-width: 5.25rem; }
+.foot :global(.btn-primary) { min-width: 7.5rem; }
+.spacer { flex: 1; }
+
+@media (max-width: 720px) {
+  .modal { width: 100vw; height: 100dvh; border-radius: 0; border: 0; }
+  .head { padding: var(--s-3); }
+  .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .steps { display: flex; overflow-x: auto; overflow-y: hidden; padding: var(--s-1) var(--s-2); border-right: 0; border-bottom: 1px solid var(--line); }   /* the groups run together as one row of tabs */
+  .group { display: flex; margin: 0; }
+  .group + .group { margin: 0; }
+  .gname { display: none; }
+  .tab { flex: none; padding-left: var(--s-3); }
+  .tab[aria-selected='true']::before { display: none; }
+  .tabsum { display: none; }
+  .pane { padding: var(--s-4) var(--s-3); }
+  .dateline, .two { grid-template-columns: minmax(0, 1fr); }
+  .person { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .person .pname { grid-column: 1 / -1; }
+  .foot { padding: var(--s-3); padding-bottom: calc(var(--s-3) + env(safe-area-inset-bottom)); }
+  .foot :global(.btn) { min-width: 0; }
+}
+.warn { color: var(--warn); font-weight: var(--fw-med); }
