@@ -7,6 +7,7 @@ import { HubCrew } from './features/hub/HubCrew.tsx';
 import { HubIncome } from './features/hub/HubIncome.tsx';
 import { HubWeek } from './features/hub/HubWeek.tsx';
 import { LogScreen } from './features/log/LogScreen.tsx';
+import { LogMultiScreen } from './features/log/LogMultiScreen.tsx';
 import { OverviewScreen } from './features/overview/OverviewScreen.tsx';
 import { PeopleScreen } from './features/people/PeopleScreen.tsx';
 import { PersonEditor } from './features/people/PersonEditor.tsx';
@@ -31,7 +32,7 @@ interface Group { id: string; label: string; icon: IconName; pages: Page[] }
 const GROUPS: Group[] = [
   { id: 'shift', label: 'Shift', icon: 'log', pages: [
     { id: 'overview', label: 'Overview', icon: 'chart' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' }, { id: 'journal', label: 'Journal', icon: 'cards' },
-    { id: 'log', label: 'Log', icon: 'table' }, { id: 'summary', label: 'Summary', icon: 'trend' }] },
+    { id: 'log', label: 'Log', icon: 'table' }, { id: 'log/multi', label: 'Log (multi)', icon: 'table' }, { id: 'summary', label: 'Summary', icon: 'trend' }] },
   { id: 'hub', label: 'Hub', icon: 'table', pages: [
     { id: 'hub/week', label: 'Crew week', icon: 'calendar' }, { id: 'hub/crew', label: 'Crew log', icon: 'users' }, { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
   { id: 'people', label: 'People', icon: 'users', pages: [{ id: 'people', label: 'People', icon: 'users' }] },
@@ -107,6 +108,7 @@ export function App() {
           {current === 'calendar' && <CalendarScreen />}
           {current === 'journal' && <JournalScreen />}
           {current === 'log' && <LogScreen />}
+          {current === 'log/multi' && <LogMultiScreen />}
           {current === 'summary' && <SummaryScreen />}
           {current === 'hub/week' && <HubWeek />}
           {current === 'hub/crew' && <HubCrew />}

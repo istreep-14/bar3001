@@ -31,8 +31,9 @@
   --dur: 150ms; --ease: cubic-bezier(0.2, 0, 0, 1);
   --z-nav: 20; --z-drawer: 30; --z-toast: 60;
 
-  /* surfaces + lines: page < panel (surface) ; field = an input's or tile's own fill ; hover = a hovered row */
-  --bg: #e3e8e6; --surface: #fbfcfb; --surface-2: #f3f6f5; --surface-3: #dce3e1;
+  /* surfaces + lines: canvas (--bg) < panel (--surface-2) < table/content, the prominent surface (--surface) ;
+     each step must read as a distinct grey, not just a hover tint. --surface-3 is the pressed/inset shade. */
+  --bg: #e3e8e6; --surface: #ffffff; --surface-2: #eef2f0; --surface-3: #dce3e1;
   --line: #dce4e2; --line-soft: #e8eeed; --line-strong: #c3cfcc;
   /* ink: --ink-3 is for non-essential labels only; --ink-4 never carries meaning. */
   --ink: #0f1f1e; --ink-2: #5a6b68; --ink-3: #7b8b87; --ink-4: #a9b6b2;

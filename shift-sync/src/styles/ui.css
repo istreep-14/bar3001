@@ -37,7 +37,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .error { color: var(--danger); font-size: var(--fs-meta); font-weight: var(--fw-med); }
 
 /* ── segmented control (radio group): view modes, scope unit, theme ── */
-.seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; background: transparent; border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line); }
+.seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; background: var(--surface-3); border-radius: var(--r-md); }
 .seg label { position: relative; }
 .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .seg span { display: flex; align-items: center; justify-content: center; gap: var(--s-2); min-height: calc(var(--ctl-h) - 6px); padding: 0 var(--s-3); border-radius: var(--r-sm); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); white-space: nowrap; transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
@@ -59,8 +59,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .badge[data-kind='Consideration'] { --c: var(--cat-consideration); }
 .badge[data-kind='Overtime'] { --c: var(--cat-overtime); }
 .badge[data-kind='party'] { --c: var(--party); --bg: var(--party-soft); }
-/* type and party are pills (as in Bar2.000); income sources stay a dot and a word */
-.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 1px var(--s-2); border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.04em; }
+/* type and party are pills, tinted with their own soft colour like any other status tag; income sources stay a dot and a word */
+.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 1px var(--s-2); border-radius: var(--r-pill); background: var(--bg); font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.04em; }
 .badge[data-kind='Tips'] { --c: var(--cat-tips); }
 .badge[data-kind='Wage'] { --c: var(--cat-wage); }
 
@@ -71,13 +71,19 @@ select.input { appearance: none; padding-right: var(--s-6);
 .rate[data-tone='bad'] { color: var(--rate-bad); }
 
 /* ── table: one component for every list of records. Columns size to their text and stay on one or two
-   lines; a long note ellipsizes instead of stretching the row. The sheet is the canvas, a selected row is white. ── */
-.tbl-wrap { overflow: auto; background: transparent; }
+   lines; a long note ellipsizes instead of stretching the row. The sheet is --surface, the lightest grey and
+   one step up from the panel around it, so the data itself is the most prominent thing on the page. ── */
+.tbl-wrap { overflow: auto; background: var(--surface); }
 .tbl-wrap.fill { flex: 1; min-height: 0; }
-.tbl { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); }
+/* Sized to its own content, not stretched to the panel's edge: a row of short figures stays a row of
+   short figures instead of the browser spreading the leftover width into gaps between them. */
+.tbl { width: max-content; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); }
 .tbl th, .tbl td { padding: 0.4rem 1rem; text-align: left; vertical-align: middle; }
+/* a tighter version for a table whose cells are two lines deep: less air, so a row of stacked figures
+   doesn't read taller than it needs to be. Opt in per page with a `.tbl-tight` ancestor. */
+.tbl-tight .tbl th, .tbl-tight .tbl td { padding: 0.3rem 0.65rem; }
 .tbl th {
-  position: sticky; top: 0; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--line);
   font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
 }
 .tbl td { border-bottom: 1px solid var(--line-soft); color: var(--ink); }
@@ -85,32 +91,36 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl :is(th, td).l { text-align: left; }
 .tbl :is(th, td).r { text-align: right; }
 .tbl :is(th, td).fit,
-.tbl :is(th, td).when,
 .tbl :is(th, td).earn { width: 1%; white-space: nowrap; }
+.tbl :is(th, td).when { width: 100%; }
 .tbl :is(th, td).act { width: 1%; white-space: nowrap; text-align: right; }
 .tbl :is(th, td).notes { color: var(--ink-2); }
+/* the weekday: a quiet label beside the date, not a fact of its own */
+.daylabel { color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-normal); letter-spacing: 0.04em; text-transform: uppercase; }
 .tbl td.notes { max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tbl td.mute { color: var(--ink-2); }
 .tbl td.strong { font-weight: var(--fw-semi); }
 .tbl tbody tr { transition: background var(--dur) var(--ease); }
 .tbl tbody tr[data-row] { cursor: pointer; }
-.tbl tbody tr[data-row]:hover { background: color-mix(in srgb, var(--surface) 72%, transparent); }
-.tbl tbody tr[aria-selected='true'] { background: var(--surface); }
+.tbl tbody tr[data-row]:hover { background: var(--surface-2); }
+.tbl tbody tr[aria-selected='true'] { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
 /* a cell: the fact, then one quieter line. nowrap so a time or a rate never breaks mid-token. */
-.stack { display: grid; gap: 1px; justify-items: start; min-width: 0; }
-.stack-title { font-weight: var(--fw-semi); color: var(--ink); line-height: 1.25; white-space: nowrap; }
-.stack-meta { color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-normal); line-height: 1.3; white-space: nowrap; }
+/* The title is the fact a row is about; the meta line is a quieter caption under it, not another line of
+   body text, so it drops a size and a shade and sits a hair lower — the title should read first and biggest. */
+.stack { display: grid; gap: 2px; justify-items: start; min-width: 0; }
+.stack-title { font-size: var(--fs-lead); font-weight: var(--fw-semi); color: var(--ink); line-height: 1.2; white-space: nowrap; }
+.stack-meta { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-normal); letter-spacing: 0.01em; line-height: 1.3; white-space: nowrap; margin-top: 1px; }
+.stack-meta .icon { width: 0.85em; height: 0.85em; margin-left: 0.35em; vertical-align: -0.05em; color: var(--party); }
 .stack-row { display: inline-flex; align-items: center; gap: 0.35rem 0.45rem; white-space: nowrap; }
-/* collapsible bands (year > month > week): a quiet row, the band's own summary under the columns */
-.tbl tr.band td { background: color-mix(in srgb, var(--ink) 4%, var(--bg)); border-bottom: 1px solid var(--line-soft); font-weight: var(--fw-med); }
-.tbl tr.band td:first-child { text-align: left; }
-.band-toggle { display: inline-flex; align-items: center; gap: var(--s-2); padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: var(--fw-semi); cursor: pointer; }
-.band-toggle .icon { width: 1em; height: 1em; stroke-width: 2.25; transition: transform var(--dur) var(--ease); }
-.band-toggle[aria-expanded='true'] .icon { transform: rotate(90deg); }
-.band-count { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
-.tbl tr.band[data-level='1'] .band-toggle { margin-left: var(--s-4); }
-.tbl tr.band[data-level='2'] .band-toggle { margin-left: var(--s-6); }
+/* a leading swatch (day/night icon) beside the fact it belongs to, sized once so nothing in the row stretches */
+.shiftcell { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.shiftcell .tbadge { flex: none; }
+/* ── avatars: a small overlapping stack of initials, the same shape wherever crew show up ── */
+.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 2px solid var(--surface); background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: 0.625rem; font-weight: var(--fw-semi); }
+.avatars { display: inline-flex; align-items: center; }
+.avatars .avatar + .avatar { margin-left: -0.5rem; }
+.avatar-more { background: var(--surface-3); color: var(--ink-2); }
 /* toggle chips (independent on/off, unlike .seg) */
 .tog { min-height: var(--ctl-h); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: transparent; color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-med); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
 .tog:hover { background: color-mix(in srgb, var(--surface) 65%, transparent); color: var(--ink); }

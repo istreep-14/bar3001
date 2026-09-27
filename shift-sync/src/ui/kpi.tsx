@@ -1,9 +1,11 @@
 import type { ComponentChildren } from 'preact';
+import { clock } from '../lib/format.ts';
 
 /* Small KPI parts, the vocabulary the Overview tiles, the Journal, the Calendar's month line and the Log's footer share:
  *   Spark      a few points of trend, no axes
  *   DeltaPill  the change against something, arrow + percent (never colour alone)
  *   Meter      one figure against its ceiling (rate vs your best, hours vs the 40-hour week)
+ *   TimeBar    where in the day a shift sat, a filled span over a 24-hour track
  *   MiniStat   label, value, and optionally a delta and a spark, on one line
  * Decorative graphics are aria-hidden; the number next to them says the same thing in words. */
 
@@ -36,6 +38,21 @@ export function Meter({ value, max, label }: { value: number | null; max: number
   if (value == null || !(max > 0)) return <span class="meter empty" aria-hidden="true" />;
   const pct = Math.max(2, Math.min(100, (value / max) * 100));
   return <span class="meter" role="img" aria-label={label} title={label}><i style={{ width: pct + '%' }} /></span>;
+}
+
+/** A shift's start-to-end span over a fixed 24-hour track, so its place in the day reads at a glance.
+ *  An overnight shift wraps: the span past midnight draws as a second, separate fill from the left edge. */
+export function TimeBar({ start, end }: { start: number | null; end: number | null }) {
+  if (start == null || end == null) return <span class="timebar empty" aria-hidden="true" />;
+  const day = 24 * 60;
+  const endAdj = end < start ? end + day : end;
+  const left = (start / day) * 100, width = Math.max(1.5, ((endAdj - start) / day) * 100);
+  return (
+    <span class="timebar" role="img" aria-label={`${clock(start)} to ${clock(end)}`} title={`${clock(start)} – ${clock(end)}`}>
+      <i style={{ left: `${left}%`, width: `${Math.min(100 - left, width)}%` }} />
+      {endAdj > day && <i style={{ left: '0%', width: `${((endAdj - day) / day) * 100}%` }} />}
+    </span>
+  );
 }
 
 /** A short vertical list of figures, for the card beside a table. */

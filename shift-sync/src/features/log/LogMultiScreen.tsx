@@ -1,12 +1,15 @@
 import { scopedViews } from '../../data/scope.ts';
-import { liveViews, ready } from '../../data/store.ts';
+import { liveViews, personById, ready } from '../../data/store.ts';
 import { sheetProblems, state, syncMessage } from '../../data/sync.ts';
 import { shortDate, money, moneyWhole, hours, clockShort, dollars, perHour, isPastYear, weekdayShort, DASH } from '../../lib/format.ts';
-import { groupByWeek, summarize, weekEnd } from '../../lib/stats.ts';
+import { groupByWeek, rateTone, summarize, weekEnd } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { openForm, openSheet, sheet } from '../../router.ts';
-import { StatList } from '../../ui/kpi.tsx';
+import { RatePill, TypeIcon } from '../../ui/Badges.tsx';
+import { Avatar } from '../../ui/Avatar.tsx';
+import { StatList, TimeBar } from '../../ui/kpi.tsx';
 import { DateCell } from '../../ui/DateCell.tsx';
+import { Stack } from '../../ui/Stack.tsx';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
@@ -17,7 +20,13 @@ import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftCard } from './ShiftCard.tsx';
 import styles from './LogScreen.module.css';
 
-export function LogScreen() {
+/* A cleanup pass on the multiline layout: the weekday sits above the date instead of beside it, Start/End
+   fold into Hours as its subtext instead of taking two columns of their own, and every money column's
+   rate is a plain toned line (RatePill's bare form) under the figure, not a pill — a pill's own padding
+   was throwing off the row's rhythm next to plain text. Not linked from a nav group; open it at #/log/multi. */
+const CREW_SHOWN = 3;
+
+export function LogMultiScreen() {
   const all = liveViews.value;
   const views = scopedViews(all);
   const s = summarize(views);
@@ -26,16 +35,40 @@ export function LogScreen() {
   const selected = sheet.value;
   const showTable = isDesktop.value;   // desktop is the table; a phone gets cards
 
-  /* Shift, Hours and Tips are the facts of the row and read a little bolder; Day, Start, End and Tips/hr
-     are the supporting detail and stay at normal weight. No pill or second line under any of them. */
+  /* Every earned figure — Tips, Wage, Other, Total — gets its own column: the amount on top, a plain
+     toned per-hour line under it (no pill), against this period's own average for that figure. */
+  const wageAvg = s.hours ? s.wage / s.hours : null;
+  const otherAvg = s.hours ? s.extra / s.hours : null;
+  const earnCol = (amount: number | null, v: ShiftView, avg: number | null) => {
+    if (amount == null || amount === 0) return <span class="muted">{DASH}</span>;
+    const perHr = v.hours ? amount / v.hours : null;
+    return <Stack title={dollars(amount)} lines={[<RatePill tph={perHr} tone={rateTone(perHr, avg)} />]} />;
+  };
   const columns: Column<ShiftView>[] = [
-    { key: 'date', head: 'Shift', className: 'fit strong', sort: v => v.shift.date, cell: v => <DateCell d={v.shift.date} /> },
-    { key: 'day', head: 'Day', className: 'fit', sort: v => v.shift.date, cell: v => <span class="daylabel">{weekdayShort(v.shift.date)}</span> },
-    { key: 'start', head: 'Start', className: 'fit', sort: v => v.shift.start, cell: v => v.shift.start != null ? clockShort(v.shift.start) : <span class="muted">{DASH}</span> },
-    { key: 'end', head: 'End', className: 'fit', sort: v => v.shift.end, cell: v => v.shift.end != null ? clockShort(v.shift.end) : <span class="muted">{DASH}</span> },
-    { key: 'hours', head: 'Hours', className: 'fit strong', sort: v => v.hours, cell: v => hours(v.hours) },
-    { key: 'tips', head: 'Tips', className: 'fit strong', sort: v => v.shift.tips, cell: v => dollars(v.shift.tips) },
-    { key: 'rate', head: 'Tips/hr', className: 'fit', sort: v => v.tph, cell: v => perHour(v.tph) }
+    { key: 'date', head: 'Shift', className: 'when', sort: v => v.shift.date, cell: v => {
+      const a = clockShort(v.shift.start), b = clockShort(v.shift.end);
+      const time = a && b ? `${a}–${b}` : (a || b || '');
+      const meta = (time || v.shift.party) ? <>{time}{v.shift.party && <Icon name="star" />}</> : null;
+      return (
+        <span class="shiftcell">
+          {v.shift.shift_type ? <TypeIcon type={v.shift.shift_type} /> : <span class="tbadge" aria-hidden="true" />}
+          <Stack title={<>{weekdayShort(v.shift.date)} <DateCell d={v.shift.date} /></>} lines={meta ? [meta] : []} />
+        </span>
+      );
+    } },
+    { key: 'hours', head: 'Hours', className: 'fit', sort: v => v.hours, cell: v => (
+      <Stack title={hours(v.hours)} lines={[<TimeBar start={v.shift.start} end={v.shift.end} />]} />
+    ) },
+    { key: 'tips', head: 'Tips', className: 'earn strong', sort: v => v.shift.tips, cell: v => earnCol(v.shift.tips, v, s.tph) },
+    { key: 'wage', head: 'Wage', className: 'earn', sort: v => v.wage, cell: v => earnCol(v.wage, v, wageAvg) },
+    { key: 'other', head: 'Other', className: 'earn', sort: v => v.extra, cell: v => earnCol(v.extra, v, otherAvg) },
+    { key: 'total', head: 'Total', className: 'earn strong', sort: v => v.total, cell: v => earnCol(v.total, v, s.perHour) },
+    { key: 'crew', head: 'Crew', className: 'fit', sort: v => v.crewCount || null, cell: v => v.crewCount ? (
+      <span class="avatars">
+        {v.crew.slice(0, CREW_SHOWN).map(c => <Avatar key={c.id} id={c.staff_id} name={personById(c.staff_id)?.name ?? c.name ?? '?'} />)}
+        {v.crewCount > CREW_SHOWN && <span class="avatar avatar-more">+{v.crewCount - CREW_SHOWN}</span>}
+      </span>
+    ) : <span class="muted">{DASH}</span> }
   ];
 
   const alerts = <>
@@ -56,11 +89,11 @@ export function LogScreen() {
       : null;
 
   return (
-    <section class={`panel ${showTable ? 'fill' : ''}`} aria-labelledby="log-title">
-      <PanelHead title="Shift log" id="log-title"><ScopeControl /></PanelHead>
+    <section class={`panel ${showTable ? 'fill' : ''}`} aria-labelledby="log-multi-title">
+      <PanelHead title="Shift log (multiline)" id="log-multi-title"><ScopeControl /></PanelHead>
       {showTable ? (
         <div class="split">
-          <div class={`panel-body flush ${styles.body}`}>
+          <div class={`panel-body flush tbl-tight ${styles.body}`}>
             {alerts}
             {empty ?? <Table fill paginate label="Shifts" rows={views} columns={columns} rowKey={v => v.shift.id} onRow={v => openSheet(v.shift.id)} selectedId={selected}
               defaultSort={{ key: 'date', dir: 'desc' }} />}

@@ -1,16 +1,14 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { PAGE_SIZES, buildEntries, paginateEntries, sortRows } from '../lib/table.ts';
-import type { Band, Dir, SortValue } from '../lib/table.ts';
+import { PAGE_SIZES, paginate, sortRows } from '../lib/table.ts';
+import type { Dir, SortValue } from '../lib/table.ts';
 import { Icon } from './Icon.tsx';
 
 export interface Column<T> {
   key: string;
   head: string;
   className?: string;
-  cell: (row: T, ctx: { banded: boolean }) => ComponentChildren;
-  /** What this column shows on a band header row, from every row in the band. */
-  summary?: (rows: T[]) => ComponentChildren;
+  cell: (row: T) => ComponentChildren;
   /** Makes the header a sort control. Blanks (null/'') always sort last. */
   sort?: (row: T) => SortValue;
   /** Starts a new column group: the prominent separator rule. */
@@ -32,11 +30,6 @@ interface Props<T> {
   label: string;
   /** Initial sort; without it rows keep the order they arrive in until a header is clicked. */
   defaultSort?: { key: string; dir: Dir };
-  /** Collapsible header rows (year > month > week), outermost first. Only shown while sorted by `bandKey`. */
-  bands?: Band<T>[];
-  bandKey?: string;
-  collapsed?: ReadonlySet<string>;
-  onToggleBand?: (path: string) => void;
   /** Rows-per-page and prev/next below the table. Hidden while everything fits on the smallest page. */
   paginate?: boolean;
   /** Fill the remaining height of the screen and scroll inside, with the head kept in view. */
@@ -49,8 +42,8 @@ const cls = (c: Column<any>) => [c.groupStart && 'gs', c.className].filter(Boole
 const SIZE_KEY = 'pagesize';
 const readSize = (): number => { try { const n = Number(localStorage.getItem(SIZE_KEY)); return (PAGE_SIZES as readonly number[]).includes(n) && localStorage.getItem(SIZE_KEY) !== null ? n : 50; } catch { return 50; } };
 
-/** The one grid component: sortable heads, group bands, week dividers, paging, arrow-key row navigation. */
-export function Table<T>({ rows, columns, rowKey, onRow, selectedId, bands, bandKey, collapsed, onToggleBand, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
+/** The one grid component: sortable heads, paging, arrow-key row navigation. Plain rows, no grouping. */
+export function Table<T>({ rows, columns, rowKey, onRow, selectedId, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
   const [sort, setSort] = useState(defaultSort ?? null);
   const [size, setSize] = useState(readSize);
   const [page, setPage] = useState(0);
@@ -58,10 +51,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, bands, band
 
   const col = sort ? columns.find(c => c.key === sort.key) : undefined;
   const sorted = sort && col?.sort ? sortRows(rows, col.sort, sort.dir) : rows;
-  const banded = bands && bands.length > 0 && (!bandKey || sort?.key === bandKey);
-  const entries = buildEntries(sorted, banded ? bands! : [], collapsed ?? new Set());
-  const pg = paginateEntries(entries, paged ? size : 0, page);
-  const shown = pg.entries;
+  const pg = paginate(sorted, paged ? size : 0, page);
 
   const toggle = (c: Column<T>) => {
     if (sort?.key === c.key) { setSort({ key: c.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' }); return; }
@@ -76,43 +66,6 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, bands, band
     const last = colBands[colBands.length - 1];
     if (last && last.label === c.group && c.group) last.span++; else colBands.push({ label: c.group, span: 1, first: c });
   }
-
-  const lead = columns.findIndex(c => c.summary);
-  const body: ComponentChildren[] = shown.map(e => {
-    if (e.kind === 'band') {
-      const open = !e.collapsed;
-      return (
-        <tr class="band" data-level={e.level} key={'b' + e.path}>
-          <td colSpan={lead > 0 ? lead : columns.length}>
-            <button type="button" class="band-toggle" aria-expanded={open} onClick={() => onToggleBand?.(e.path)}>
-              <Icon name="chevron" />
-              <span class="band-label">{e.label}</span>
-              <span class="band-count">{e.rows.length} {e.rows.length === 1 ? 'shift' : 'shifts'}</span>
-            </button>
-          </td>
-          {lead > 0 && columns.slice(lead).map(c => <td key={c.key} class={cls(c)}>{c.summary?.(e.rows)}</td>)}
-        </tr>
-      );
-    }
-    const r = e.row, id = rowKey(r);
-    return (
-      <tr key={id} data-row={onRow ? '' : undefined} tabIndex={onRow ? 0 : undefined} aria-selected={selectedId === id ? 'true' : undefined}
-        onClick={() => onRow?.(r)}
-        onKeyDown={ev => {
-          const el = ev.currentTarget as HTMLElement;
-          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); onRow?.(r); }
-          else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
-            ev.preventDefault();
-            const next = (n: Element | null) => (ev.key === 'ArrowDown' ? n?.nextElementSibling : n?.previousElementSibling) as HTMLElement | null;
-            let n = next(el);
-            while (n && !n.hasAttribute('data-row')) n = next(n);
-            n?.focus();
-          }
-        }}>
-        {columns.map(c => <td key={c.key} class={cls(c)}>{c.cell(r, { banded: !!banded })}</td>)}
-      </tr>
-    );
-  });
 
   return (
     <>
@@ -136,7 +89,28 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, bands, band
               })}
             </tr>
           </thead>
-          <tbody>{body}</tbody>
+          <tbody>
+            {pg.rows.map(r => {
+              const id = rowKey(r);
+              return (
+                <tr key={id} data-row={onRow ? '' : undefined} tabIndex={onRow ? 0 : undefined} aria-selected={selectedId === id ? 'true' : undefined}
+                  onClick={() => onRow?.(r)}
+                  onKeyDown={ev => {
+                    const el = ev.currentTarget as HTMLElement;
+                    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); onRow?.(r); }
+                    else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+                      ev.preventDefault();
+                      const next = (n: Element | null) => (ev.key === 'ArrowDown' ? n?.nextElementSibling : n?.previousElementSibling) as HTMLElement | null;
+                      let n = next(el);
+                      while (n && !n.hasAttribute('data-row')) n = next(n);
+                      n?.focus();
+                    }
+                  }}>
+                  {columns.map(c => <td key={c.key} class={cls(c)}>{c.cell(r)}</td>)}
+                </tr>
+              );
+            })}
+          </tbody>
         </table>
       </div>
       {((paged && rows.length > PAGE_SIZES[0]) || footer) && (

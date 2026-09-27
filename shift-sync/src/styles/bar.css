@@ -12,7 +12,7 @@
 
 /* ---- stat tiles ---------------------------------------------------------------------------------------------- */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: var(--s-2); margin: 0; }
-.tile { display: grid; align-content: start; gap: 2px; min-width: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: transparent; }
+.tile { display: grid; align-content: start; gap: 2px; min-width: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
 .tile dt { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
 .tile dd { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; color: var(--ink); overflow-wrap: anywhere; }
 .tile .sub { font-size: var(--fs-meta); line-height: 1.35; color: var(--ink-2); }
@@ -155,7 +155,7 @@
 /* browse: the cell IS the card. A day is a box holding one full-size button per shift (or one "log a shift" button),
    so the whole cell is the click target and carries the shift's figures. The shade is how much it earned; the type is one
    small sun or moon badge, not a fill colour. */
-.cal-browse .day { padding: 0; gap: 0; min-height: 7.75rem; overflow: hidden; background: transparent; }
+.cal-browse .day { padding: 0; gap: 0; min-height: 7.75rem; overflow: hidden; background: var(--surface-2); }
 .cal-browse .day.has { border-color: var(--line); background: var(--surface); }
 .cal-browse .sc, .cal-browse .dayhit { flex: 1; display: flex; flex-direction: column; gap: 1px; width: 100%; min-width: 0; padding: var(--s-2) var(--s-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .cal-browse .sc { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
@@ -191,13 +191,14 @@
 
 
 /* ---- panels -------------------------------------------------------------------
-   The page title sits on the grey canvas. The body is the same grey, edged with a hairline
-   so the line itself marks the rail. White is reserved for a selected control or an open row.
+   The page title sits on the grey canvas. The body steps up to --surface-2, one grey lighter
+   than the canvas, so the panel itself reads as a shape; a table or card inside it steps up
+   again to --surface (the lightest, most prominent grey) so content stands apart from its panel.
    A table page is .fill: the panel takes the rest of the screen and scrolls inside. */
 .panel { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 .panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); padding: var(--s-1) var(--s-1) 0; border: 0; background: transparent; }
 .panel-head h2 { font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-semi); letter-spacing: -0.02em; }
-.panel-body { display: grid; gap: var(--s-4); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); background: transparent; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: none; overflow: hidden; }
+.panel-body { display: grid; gap: var(--s-4); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
 .panel-body.open { padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 .chartgrid { display: grid; gap: var(--s-4); }
 .chartgrid.two { grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
@@ -286,6 +287,10 @@
 .meter { display: block; width: 100%; height: 5px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
 .meter i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
 .meter.empty { background: transparent; }
+/* a 24-hour track; the filled span is where in the day the shift sat, not how long it was */
+.timebar { position: relative; display: block; width: 100%; min-width: 3.5rem; height: 4px; margin-top: 3px; border-radius: 2px; background: var(--surface-3); }
+.timebar i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--night); }
+.timebar.empty { background: transparent; }
 .ministat { display: inline-flex; align-items: center; gap: var(--s-2); white-space: nowrap; font-size: var(--fs-meta); }
 .ministat .mk { color: var(--ink-2); }
 .ministat .mv { font-size: var(--fs-body); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
