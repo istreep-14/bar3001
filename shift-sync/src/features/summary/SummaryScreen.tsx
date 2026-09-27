@@ -68,7 +68,7 @@ export function SummaryScreen() {
 
   return (
     <section class="panel fill" aria-labelledby="sum-title">
-      <PanelHead title="Summary" id="sum-title">
+      <PanelHead title="Totals" id="sum-title">
         <div class="seg" role="radiogroup" aria-label="Group by">
           {BYS.map(x => <label key={x.id}><input type="radio" name="sum-by" checked={b === x.id} onChange={() => setBy(x.id)} /><span>{x.label}</span></label>)}
         </div>

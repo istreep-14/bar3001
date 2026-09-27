@@ -2,7 +2,6 @@ import { useEffect } from 'preact/hooks';
 import { flipTheme, mode } from './data/settings.ts';
 import { ready } from './data/store.ts';
 import { CalendarScreen } from './features/calendar/CalendarScreen.tsx';
-import { JournalScreen } from './features/journal/JournalScreen.tsx';
 import { HubCrew } from './features/hub/HubCrew.tsx';
 import { HubIncome } from './features/hub/HubIncome.tsx';
 import { HubWeek } from './features/hub/HubWeek.tsx';
@@ -26,24 +25,29 @@ import styles from './app.module.css';
 /* Shell = grey canvas, one rail of text links grouped by section, then main.
  * The rail does not paint a bar; the content panel's left edge is what marks it. The drawer floats over the page's right edge while a
  * shift or person is open (it never resizes the page); a click anywhere outside it closes it. On a phone the four sections are a bottom tab bar, and that section's pages are a strip. */
-interface Page { id: Screen; label: string; icon: IconName }
+interface Tab { id: Screen; label: string }
+/** A page in the rail. `tabs` = one page with two views, each its own route (so still a link), switched from a tab row;
+ *  `also` = other routes that belong to this page (the rail marks it current on them). */
+interface Page { id: Screen; label: string; icon: IconName; tabs?: Tab[]; also?: Screen[] }
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }
 const GROUPS: Group[] = [
-  { id: 'shift', label: 'Shift', icon: 'log', pages: [
-    { id: 'overview', label: 'Overview', icon: 'chart' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' }, { id: 'journal', label: 'Journal', icon: 'cards' },
-    { id: 'log', label: 'Log', icon: 'table' }, { id: 'summary', label: 'Summary', icon: 'trend' }] },
-  { id: 'hub', label: 'Hub', icon: 'table', pages: [
-    { id: 'hub/week', label: 'Crew week', icon: 'calendar' }, { id: 'hub/crew', label: 'Crew log', icon: 'users' }, { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
-  { id: 'people', label: 'People', icon: 'users', pages: [{ id: 'people', label: 'People', icon: 'users' }] },
+  { id: 'shift', label: 'Shifts', icon: 'log', pages: [
+    { id: 'overview', label: 'Overview', icon: 'chart', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
+    { id: 'log', label: 'Log', icon: 'table' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' },
+    { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
+  { id: 'crew', label: 'Crew', icon: 'users', pages: [
+    { id: 'hub/week', label: 'Crew', icon: 'calendar', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
+    { id: 'people', label: 'People', icon: 'users' }] },
   { id: 'settings', label: 'Settings', icon: 'settings', pages: [
-    { id: 'settings/look', label: 'Appearance', icon: 'sun' }, { id: 'settings/wages', label: 'Hourly wage', icon: 'dollar' },
-    { id: 'settings/sync', label: 'Google Sheet', icon: 'refresh' }, { id: 'settings/data', label: 'Your data', icon: 'download' }] }
+    { id: 'settings/wages', label: 'Settings', icon: 'settings', also: ['settings/look', 'settings/sync', 'settings/data'] }] }
 ];
+const owns = (p: Page, s: Screen) => p.id === s || !!p.tabs?.some(t => t.id === s) || !!p.also?.includes(s);
 
 export function App() {
   const current = screen.value, desktop = isDesktop.value;
   const open = ready.value ? sheet.value : null, who = ready.value ? person.value : null, editing = ready.value ? form.value : null;
-  const group = GROUPS.find(g => g.pages.some(p => p.id === current))!;
+  const group = GROUPS.find(g => g.pages.some(p => owns(p, current)))!;
+  const page = group.pages.find(p => owns(p, current))!;
   const solo = group.pages.length === 1;
   // On the Log and the Calendar (desktop) an open shift shows inside the page, so the floating drawer stays shut there.
   const inline = desktop && (current === 'log' || current === 'calendar') && !!open;
@@ -70,7 +74,7 @@ export function App() {
               <div class={styles.group} key={g.id}>
                 <h2 class={styles.gtitle}>{g.label}</h2>
                 {g.pages.map(p => (
-                  <a key={p.id} href={`#/${p.id}`} class={styles.pagelink} aria-current={current === p.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>
+                  <a key={p.id} href={`#/${p.id}`} class={styles.pagelink} aria-current={owns(p, current) ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>
                 ))}
               </div>
             ))}
@@ -101,13 +105,17 @@ export function App() {
         </header>
         {!solo && (
           <nav class={styles.strip} aria-label={group.label}>
-            {group.pages.map(p => <a key={p.id} href={`#/${p.id}`} class={styles.stripLink} aria-current={current === p.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>)}
+            {group.pages.map(p => <a key={p.id} href={`#/${p.id}`} class={styles.stripLink} aria-current={owns(p, current) ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>)}
           </nav>
         )}
         <main id="main" tabIndex={-1} class={styles.page}>
+          {page.tabs && (
+            <nav class={styles.tabs} aria-label={`${page.label} views`}>
+              {page.tabs.map(t => <a key={t.id} href={`#/${t.id}`} class={styles.tab} aria-current={current === t.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(t.id); }}>{t.label}</a>)}
+            </nav>
+          )}
           {current === 'overview' && <OverviewScreen />}
           {current === 'calendar' && <CalendarScreen />}
-          {current === 'journal' && <JournalScreen />}
           {current === 'log' && <LogScreen />}
           {current === 'summary' && <SummaryScreen />}
           {current === 'hub/week' && <HubWeek />}
