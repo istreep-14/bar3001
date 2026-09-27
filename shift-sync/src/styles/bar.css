@@ -12,11 +12,11 @@
 
 /* ---- stat tiles ---------------------------------------------------------------------------------------------- */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: var(--s-2); margin: 0; }
-.tile { display: grid; align-content: start; gap: 2px; min-width: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
+.tile { display: grid; align-content: start; gap: 2px; min-width: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: transparent; }
 .tile dt { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
-.tile dd { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.tile dd { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; color: var(--ink); overflow-wrap: anywhere; }
 .tile .sub { font-size: var(--fs-meta); line-height: 1.35; color: var(--ink-2); }
-.tile.lead { border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: var(--accent-soft); }
+.tile.lead { border-color: var(--line-strong); }
 .tile.lead dd { font-size: 30px; }
 .tiles .tile.lead { grid-column: span 2; }
 
@@ -155,7 +155,7 @@
 /* browse: the cell IS the card. A day is a box holding one full-size button per shift (or one "log a shift" button),
    so the whole cell is the click target and carries the shift's figures. The shade is how much it earned; the type is one
    small sun or moon badge, not a fill colour. */
-.cal-browse .day { padding: 0; gap: 0; min-height: 7.75rem; overflow: hidden; background: var(--surface-2); }
+.cal-browse .day { padding: 0; gap: 0; min-height: 7.75rem; overflow: hidden; background: transparent; }
 .cal-browse .day.has { border-color: var(--line); background: var(--surface); }
 .cal-browse .sc, .cal-browse .dayhit { flex: 1; display: flex; flex-direction: column; gap: 1px; width: 100%; min-width: 0; padding: var(--s-2) var(--s-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .cal-browse .sc { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
@@ -191,12 +191,13 @@
 
 
 /* ---- panels -------------------------------------------------------------------
-   The page title and its tools sit on the grey canvas. The body is the white card.
-   A table page is .fill: the card takes the rest of the screen and scrolls inside. */
+   The page title sits on the grey canvas. The body is the same grey, edged with a hairline
+   so the line itself marks the rail. White is reserved for a selected control or an open row.
+   A table page is .fill: the panel takes the rest of the screen and scrolls inside. */
 .panel { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 .panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); padding: var(--s-1) var(--s-1) 0; border: 0; background: transparent; }
 .panel-head h2 { font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-semi); letter-spacing: -0.02em; }
-.panel-body { display: grid; gap: var(--s-4); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
+.panel-body { display: grid; gap: var(--s-4); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); background: transparent; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: none; overflow: hidden; }
 .panel-body.open { padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 .chartgrid { display: grid; gap: var(--s-4); }
 .chartgrid.two { grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
@@ -228,7 +229,7 @@
 .stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); padding: 0.6rem 0; border-top: 1px solid var(--line-soft); }
 .stats > div:first-child { border-top: 0; padding-top: 0; }
 .stats dt { color: var(--ink-2); font-weight: var(--fw-normal); font-size: var(--fs-body); }
-.stats dd { margin: 0; font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; text-align: right; }
+.stats dd { margin: 0; font-weight: var(--fw-bold); color: var(--ink); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; text-align: right; }
 @media (min-width: 56rem) {
   .fill { flex: 1; min-height: 0; }
   .fill > .split { flex: 1; min-height: 0; align-items: stretch; grid-template-rows: auto minmax(0, 1fr); }

@@ -23,9 +23,9 @@ import { Toaster } from './ui/toast.tsx';
 import { isDesktop } from './ui/viewport.ts';
 import styles from './app.module.css';
 
-/* Shell = grey canvas, a two-tier rail that sits on it (groups, then the group's pages), then main.
- * The rail and the page title do not paint a full-bleed bar, so the canvas shows around them. The drawer floats over the page's right edge while a
- * shift or person is open (it never resizes the page); a click anywhere outside it closes it. A group with one page has no second tier. On a phone the six pages are a bottom tab bar. */
+/* Shell = grey canvas, one rail of text links grouped by section, then main.
+ * The rail does not paint a bar; the content panel's left edge is what marks it. The drawer floats over the page's right edge while a
+ * shift or person is open (it never resizes the page); a click anywhere outside it closes it. On a phone the four sections are a bottom tab bar, and that section's pages are a strip. */
 interface Page { id: Screen; label: string; icon: IconName }
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }
 const GROUPS: Group[] = [
@@ -58,42 +58,38 @@ export function App() {
     return () => document.removeEventListener('click', away);
   }, [floating]);
   return (
-    <div class={styles.shell} data-solo={solo ? '' : undefined}>
+    <div class={styles.shell}>
       <a class={styles.skip} href="#main" onClick={e => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a>
       <nav class={styles.rail} aria-label="Main">
-        <div class={styles.rail1}>
-          <span class={styles.brand} title="Shifts"><b aria-hidden="true">SH</b><span aria-hidden="true">Shifts</span><span class="sr-only">Shifts</span></span>
-          <div class={styles.gtiles}>
+        <div class={styles.side}>
+          <div class={styles.brand}>Shifts</div>
+          <div class={styles.groups}>
             {GROUPS.map(g => (
-              <a key={g.id} href={`#/${g.pages[0]!.id}`} class={styles.gtile} aria-current={g.id === group.id ? 'true' : undefined}
-                onClick={e => { e.preventDefault(); go(g.id === group.id ? current : g.pages[0]!.id); }}>
-                <Icon name={g.icon} />{g.label}
+              <div class={styles.group} key={g.id}>
+                <h2 class={styles.gtitle}>{g.label}</h2>
+                {g.pages.map(p => (
+                  <a key={p.id} href={`#/${p.id}`} class={styles.pagelink} aria-current={current === p.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div class={styles.foot}>
+            <button type="button" class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" /> New shift</button>
+            <SyncPill />
+            <button type="button" class={styles.themelink} onClick={flipTheme} aria-label={`Switch to ${mode() === 'dark' ? 'light' : 'dark'} theme`}>
+              <Icon name={mode() === 'dark' ? 'sun' : 'moon'} />{mode() === 'dark' ? 'Light' : 'Dark'}
+            </button>
+          </div>
+        </div>
+        <ul class={styles.links}>
+          {GROUPS.map(g => (
+            <li key={g.id}>
+              <a href={`#/${g.pages[0]!.id}`} class={styles.link} aria-current={g.id === group.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(g.id === group.id ? current : g.pages[0]!.id); }}>
+                <Icon name={g.icon} /><span>{g.label}</span>
               </a>
-            ))}
-          </div>
-          <button type="button" class={`${styles.gtile} ${styles.newtile}`} onClick={() => openForm('new')}><Icon name="plus" />New</button>
-          <div class={styles.syncslot}><SyncPill compact /></div>
-          <button type="button" class={`${styles.gtile} ${styles.themetile}`} onClick={flipTheme} aria-label={`Switch to ${mode() === 'dark' ? 'light' : 'dark'} theme`}>
-            <Icon name={mode() === 'dark' ? 'sun' : 'moon'} />{mode() === 'dark' ? 'Light' : 'Dark'}
-          </button>
-          <ul class={styles.links}>
-            {GROUPS.map(g => (
-              <li key={g.id}>
-                <a href={`#/${g.pages[0]!.id}`} class={styles.link} aria-current={g.id === group.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(g.id === group.id ? current : g.pages[0]!.id); }}>
-                  <Icon name={g.icon} /><span>{g.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div class={styles.rail2}>
-          <h2 class={`${styles.gtitle} label`}>{group.label}</h2>
-          <div class={styles.pages}>
-            {group.pages.map(p => (
-              <a key={p.id} href={`#/${p.id}`} class={styles.pagelink} aria-current={current === p.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>
-            ))}
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       </nav>
 
       <div class={styles.main}>

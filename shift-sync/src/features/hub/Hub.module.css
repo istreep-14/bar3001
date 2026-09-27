@@ -7,7 +7,7 @@
 .grid th:first-child { width: 11rem; text-align: left; padding-left: var(--s-5); }
 .grid th:last-child, .grid td:last-child { width: 5rem; padding-right: var(--s-5); }
 .grid td { height: 3.25rem; padding: 3px 4px; }
-.grid tfoot th, .grid tfoot td { position: static; height: var(--row-h); background: var(--surface-2); box-shadow: inset 0 1px var(--line-soft); }
+.grid tfoot th, .grid tfoot td { position: static; height: var(--row-h); background: color-mix(in srgb, var(--ink) 4%, var(--bg)); box-shadow: inset 0 1px var(--line-soft); }
 .dhead b { font-weight: var(--fw-semi); color: var(--ink); }
 .dshift { display: flex; justify-content: center; gap: 2px; min-height: 1.5rem; margin-top: 2px; }
 .today { color: var(--accent); }
@@ -16,7 +16,7 @@
 .cell { display: grid; gap: 3px; }
 .cell button, .off { display: flex; align-items: center; justify-content: center; gap: var(--s-2); width: 100%; min-height: 2.5rem; border-radius: var(--r-sm); font: inherit; font-size: var(--fs-meta); }
 .off { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--line-soft) 5px 6px); opacity: 0.6; }
-.on { border: 0; background: var(--accent-wash); color: var(--ink); cursor: pointer; flex-direction: column; gap: 0 !important; }
+.on { border: 0; background: var(--surface); color: var(--ink); cursor: pointer; flex-direction: column; gap: 0 !important; }
 .on b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
 .times { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .on:hover { background: var(--accent-soft); }
@@ -39,7 +39,7 @@
 /* the flat editable tables (crew log, other income) */
 .bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
 .bar .field { min-width: 0; }
-.cellin { width: 100%; max-width: 14rem; min-width: 6.5rem; min-height: 2rem; padding: 0 var(--s-2); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: inherit; font: inherit; text-align: left; }
+.cellin { width: 100%; max-width: 14rem; min-width: 6.5rem; min-height: 2rem; padding: 0 var(--s-2); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: inherit; font: inherit; text-align: left; }
 .cellin:hover { border-color: var(--line-strong); }
 .cellin:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 2px var(--accent-soft); }
 .cellin.left { text-align: left; }

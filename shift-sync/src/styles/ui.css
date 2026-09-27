@@ -23,7 +23,7 @@
 .field > .hint { font-size: var(--fs-meta); color: var(--ink-2); }
 .input {
   width: 100%; min-height: var(--ctl-h); padding: 0 var(--s-3);
-  background: var(--surface-2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
   font-size: var(--fs-lead);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
@@ -37,7 +37,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .error { color: var(--danger); font-size: var(--fs-meta); font-weight: var(--fw-med); }
 
 /* ── segmented control (radio group): view modes, scope unit, theme ── */
-.seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; background: var(--surface-3); border-radius: var(--r-md); }
+.seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; background: transparent; border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line); }
 .seg label { position: relative; }
 .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .seg span { display: flex; align-items: center; justify-content: center; gap: var(--s-2); min-height: calc(var(--ctl-h) - 6px); padding: 0 var(--s-3); border-radius: var(--r-sm); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); white-space: nowrap; transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
@@ -60,7 +60,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .badge[data-kind='Overtime'] { --c: var(--cat-overtime); }
 .badge[data-kind='party'] { --c: var(--party); --bg: var(--party-soft); }
 /* type and party are pills (as in Bar2.000); income sources stay a dot and a word */
-.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 2px var(--s-2); border-radius: var(--r-pill); background: var(--bg); font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.04em; }
+.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 1px var(--s-2); border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.04em; }
 .badge[data-kind='Tips'] { --c: var(--cat-tips); }
 .badge[data-kind='Wage'] { --c: var(--cat-wage); }
 
@@ -70,37 +70,40 @@ select.input { appearance: none; padding-right: var(--s-6);
 .rate[data-tone='good'] { color: var(--rate-good); }
 .rate[data-tone='bad'] { color: var(--rate-bad); }
 
-/* ── table: one component for every list of records. A few columns, each cell a short stack, rows as tall as
-   the text needs. Not a spreadsheet: nothing is shrunk to a single figure or centred into a grid. ── */
-.tbl-wrap { overflow: auto; background: var(--surface); }
+/* ── table: one component for every list of records. Columns size to their text and stay on one or two
+   lines; a long note ellipsizes instead of stretching the row. The sheet is the canvas, a selected row is white. ── */
+.tbl-wrap { overflow: auto; background: transparent; }
 .tbl-wrap.fill { flex: 1; min-height: 0; }
-.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); }
-.tbl th, .tbl td { padding: 0.85rem 1.15rem; text-align: left; vertical-align: middle; }
+.tbl { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); }
+.tbl th, .tbl td { padding: 0.4rem 1rem; text-align: left; vertical-align: middle; }
 .tbl th {
-  position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--line);
   font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
 }
 .tbl td { border-bottom: 1px solid var(--line-soft); color: var(--ink); }
 .tbl tbody tr:last-child td { border-bottom: 0; }
 .tbl :is(th, td).l { text-align: left; }
 .tbl :is(th, td).r { text-align: right; }
-.tbl :is(th, td).fit { width: 1%; white-space: nowrap; }
+.tbl :is(th, td).fit,
+.tbl :is(th, td).when,
+.tbl :is(th, td).earn { width: 1%; white-space: nowrap; }
 .tbl :is(th, td).act { width: 1%; white-space: nowrap; text-align: right; }
-.tbl :is(th, td).notes { width: 32%; min-width: 9rem; color: var(--ink-2); }
+.tbl :is(th, td).notes { color: var(--ink-2); }
+.tbl td.notes { max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tbl td.mute { color: var(--ink-2); }
 .tbl td.strong { font-weight: var(--fw-semi); }
 .tbl tbody tr { transition: background var(--dur) var(--ease); }
 .tbl tbody tr[data-row] { cursor: pointer; }
-.tbl tbody tr[data-row]:hover { background: var(--surface-2); }
-.tbl tbody tr[aria-selected='true'] { background: var(--accent-wash); }
-.tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
-/* a cell: the fact, then the quieter lines that belong with it */
-.stack { display: grid; gap: 2px; justify-items: start; min-width: 0; }
-.stack-title { font-weight: var(--fw-semi); color: var(--ink); line-height: 1.35; }
-.stack-meta { color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-normal); line-height: 1.45; }
-.stack-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+.tbl tbody tr[data-row]:hover { background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.tbl tbody tr[aria-selected='true'] { background: var(--surface); }
+.tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
+/* a cell: the fact, then one quieter line. nowrap so a time or a rate never breaks mid-token. */
+.stack { display: grid; gap: 1px; justify-items: start; min-width: 0; }
+.stack-title { font-weight: var(--fw-semi); color: var(--ink); line-height: 1.25; white-space: nowrap; }
+.stack-meta { color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-normal); line-height: 1.3; white-space: nowrap; }
+.stack-row { display: inline-flex; align-items: center; gap: 0.35rem 0.45rem; white-space: nowrap; }
 /* collapsible bands (year > month > week): a quiet row, the band's own summary under the columns */
-.tbl tr.band td { background: var(--surface-2); border-bottom: 1px solid var(--line-soft); font-weight: var(--fw-med); }
+.tbl tr.band td { background: color-mix(in srgb, var(--ink) 4%, var(--bg)); border-bottom: 1px solid var(--line-soft); font-weight: var(--fw-med); }
 .tbl tr.band td:first-child { text-align: left; }
 .band-toggle { display: inline-flex; align-items: center; gap: var(--s-2); padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: var(--fw-semi); cursor: pointer; }
 .band-toggle .icon { width: 1em; height: 1em; stroke-width: 2.25; transition: transform var(--dur) var(--ease); }
@@ -109,9 +112,9 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl tr.band[data-level='1'] .band-toggle { margin-left: var(--s-4); }
 .tbl tr.band[data-level='2'] .band-toggle { margin-left: var(--s-6); }
 /* toggle chips (independent on/off, unlike .seg) */
-.tog { min-height: var(--ctl-h); padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-med); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
-.tog:hover { background: var(--surface-3); }
-.tog[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.tog { min-height: var(--ctl-h); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: transparent; color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-med); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+.tog:hover { background: color-mix(in srgb, var(--surface) 65%, transparent); color: var(--ink); }
+.tog[aria-pressed='true'] { background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: var(--shadow-sm); font-weight: var(--fw-semi); }
 /* sortable heads: a real button, arrow reserved so centered labels don't jump */
 .th-sort { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
 .th-sort .icon { width: 0.8em; height: 0.8em; stroke-width: 2.5; opacity: 0; }
@@ -120,7 +123,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl th[aria-sort='ascending'] .icon, .tbl th[aria-sort='descending'] .icon { opacity: 1; color: var(--accent); }
 .tbl th[aria-sort='ascending'], .tbl th[aria-sort='descending'] { color: var(--ink); }
 /* pager */
-.flush .pager { padding: var(--s-3) 1.15rem; border-top: 1px solid var(--line-soft); }
+.flush .pager { padding: var(--s-2) 1rem; border-top: 1px solid var(--line-soft); }
 .pager { display: flex; align-items: center; justify-content: flex-end; gap: var(--s-3); padding: var(--s-2) 0; font-size: var(--fs-meta); color: var(--ink-2); }
 .pager-size { display: inline-flex; align-items: center; gap: var(--s-2); }
 .pager .input { width: auto; min-height: var(--ctl-h); }
@@ -128,7 +131,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 /* ── card + empty state ── */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); }
 .empty { display: grid; justify-items: start; gap: var(--s-3); padding: var(--s-5) 0; color: var(--ink-2); }
-.panel-body.flush > .empty { padding: var(--s-6) 1.15rem; }
+.panel-body.flush > .empty { padding: var(--s-6) 1rem; }
 .empty h2 { font-size: var(--fs-title); font-weight: var(--fw-semi); color: var(--ink); }
 
 /* a year that isn't this one: present but quiet */

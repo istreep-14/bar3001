@@ -61,26 +61,41 @@ export function LogScreen() {
   const showTable = isDesktop.value;   // desktop is the table; a phone gets cards
   const bands = bandDefs(bandsOn.value);
   const sum = (f: (t: ReturnType<typeof summarize>) => ComponentChildren) => (rs: ShiftView[]) => f(summarize(rs));
-  const span = (v: ShiftView) => {
+  /* One second line. A missing clock or tip is left out, so the row never fills with dashes. */
+  const shiftLine = (v: ShiftView) => {
     const a = clockShort(v.shift.start), b = clockShort(v.shift.end);
-    return a || b ? `${a || DASH}–${b || DASH}` : DASH;
+    const time = a && b ? `${a}–${b}` : (a || b || '');
+    const hrs = v.hours != null ? `${dec1(v.hours)} hr` : '';
+    return [weekdayShort(v.shift.date), time, hrs].filter(Boolean).join(' · ');
   };
-  const payLines = (v: ShiftView) => {
-    const more = [v.wage ? `Wage ${dollars(v.wage)}` : '', v.extra ? `Other ${dollars(v.extra)}` : ''].filter(Boolean).join(' · ');
-    return [`Tips ${dollars(v.shift.tips)} · ${perHour(v.tph)}`, more];
-  };
+  const earnedMeta = (v: ShiftView) => [
+    v.shift.tips != null ? `Tips ${dollars(v.shift.tips)}` : '',
+    v.tph != null ? perHour(v.tph) : '',
+    v.wage ? `Wage ${dollars(v.wage)}` : '',
+    v.extra ? `Other ${dollars(v.extra)}` : ''
+  ].filter(Boolean).join(' · ');
 
-  /* Four columns, each a short stack. The drawer still has every field; the row only has to be readable. */
+  /* Two lines at most. Shift, earned and crew stay as wide as their text; notes take the rest and ellipsize. */
   const columns: Column<ShiftView>[] = [
-    { key: 'date', head: 'Shift', sort: v => v.shift.date, cell: (v, { banded }) => (
-      <Stack title={<DateCell d={v.shift.date} banded={banded} />} lines={[`${weekdayShort(v.shift.date)} · ${span(v)} · ${dec1(v.hours)} hr`]}
-        extra={(v.shift.shift_type || v.shift.party) ? <span class="stack-row">{v.shift.shift_type ? <TypeBadge type={v.shift.shift_type} /> : null}{v.shift.party ? <PartyBadge /> : null}</span> : undefined} />
-    ) },
-    { key: 'total', head: 'Earned', sort: v => v.total, cell: v => <Stack title={dollars(v.total)} lines={payLines(v)} />, summary: sum(t => <Stack title={dollars(t.total)} lines={[`${dec1(t.hours)} hr · ${perHour(t.tph)}`]} />) },
+    { key: 'date', head: 'Shift', className: 'when', sort: v => v.shift.date, cell: (v, { banded }) => {
+      const line = shiftLine(v);
+      const second = (line || v.shift.shift_type || v.shift.party) ? (
+        <span class="stack-row">
+          {line}
+          {v.shift.shift_type ? <TypeBadge type={v.shift.shift_type} /> : null}
+          {v.shift.party ? <PartyBadge /> : null}
+        </span>
+      ) : null;
+      return <Stack title={<DateCell d={v.shift.date} banded={banded} />} lines={second ? [second] : []} />;
+    } },
+    { key: 'total', head: 'Earned', className: 'earn', sort: v => v.total, cell: v => {
+      const meta = earnedMeta(v);
+      return <Stack title={dollars(v.total)} lines={meta ? [meta] : []} />;
+    }, summary: sum(t => <Stack title={dollars(t.total)} lines={[`${dec1(t.hours)} hr${t.tph != null ? ` · ${perHour(t.tph)}` : ''}`]} />) },
     { key: 'crew', head: 'Crew', className: 'fit', sort: v => v.crewCount || null, cell: v => v.crewCount
-      ? <Stack title={`${v.crewCount} ${v.crewCount === 1 ? 'person' : 'people'}`} lines={[v.crewHours ? `${dec1(v.crewHours)} hr` : DASH]} />
+      ? `${v.crewCount} ${v.crewCount === 1 ? 'person' : 'people'}${v.crewHours ? ` · ${dec1(v.crewHours)} hr` : ''}`
       : <span class="muted">{DASH}</span>, summary: sum(t => t.crewHours ? `${dec1(t.crewHours)} hr` : DASH) },
-    { key: 'notes', head: 'Notes', className: 'notes', sort: v => v.shift.notes, cell: v => v.shift.notes || <span class="muted">{DASH}</span> }
+    { key: 'notes', head: 'Notes', className: 'notes', sort: v => v.shift.notes, cell: v => v.shift.notes || '' }
   ];
 
   const alerts = <>
