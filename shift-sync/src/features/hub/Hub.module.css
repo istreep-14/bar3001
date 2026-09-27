@@ -2,7 +2,8 @@
 .nav { display: flex; align-items: center; gap: var(--s-2); }
 .scroll { overflow-x: auto; }
 .grid { table-layout: fixed; min-width: 46rem; }
-.grid th, .grid td { width: auto; }
+.grid th, .grid td { width: auto; text-align: center; vertical-align: middle; }
+.grid th:first-child, .grid tbody th, .grid tfoot th { text-align: left; }
 .grid th:first-child { width: 11rem; text-align: left; padding-left: var(--s-5); }
 .grid th:last-child, .grid td:last-child { width: 5rem; padding-right: var(--s-5); }
 .grid td { height: 3.25rem; padding: 3px 4px; }
@@ -38,14 +39,9 @@
 /* the flat editable tables (crew log, other income) */
 .bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
 .bar .field { min-width: 0; }
-.cellin { width: 100%; min-width: 5.5rem; min-height: 1.75rem; padding: 0 var(--s-2); border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: inherit; font: inherit; text-align: center; }
+.cellin { width: 100%; max-width: 14rem; min-width: 6.5rem; min-height: 2rem; padding: 0 var(--s-2); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: inherit; font: inherit; text-align: left; }
 .cellin:hover { border-color: var(--line-strong); }
 .cellin:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 2px var(--accent-soft); }
 .cellin.left { text-align: left; }
 .body { min-height: 0; }
-.foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-4); margin-right: auto; }
-@media (min-width: 56rem) {
-  .fillscreen { display: flex; flex-direction: column; height: calc(100dvh - 2 * var(--s-4)); }
-  .fillscreen .body { flex: 1; display: flex; flex-direction: column; }
-}
 .filter { display: inline-flex; } .filter .input { width: auto; min-width: 9rem; }

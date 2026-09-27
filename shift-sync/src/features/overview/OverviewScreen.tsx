@@ -3,15 +3,15 @@ import { liveViews, ready } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
 import { byRecent } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
-import { dateCell, dec1, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { dateCell, dec1, dollars, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { groupBy, weekdayIndex } from '../../lib/periods.ts';
 import { summarize } from '../../lib/stats.ts';
 import { focusWindow, histogram, hoursPerWeek, inRange, pctChange, slotInsight, weeklySeries } from '../../lib/trends.ts';
 import type { Focus } from '../../lib/trends.ts';
 import { ComboChart, ColumnChart, HBars, Histogram, Tiles } from '../../ui/charts.tsx';
 import { DeltaPill } from '../../ui/kpi.tsx';
-import { Cur } from '../../ui/Cur.tsx';
 import { EmptyState } from '../../ui/EmptyState.tsx';
+import { Stack } from '../../ui/Stack.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { PartyBadge, TypeBadge } from '../../ui/Badges.tsx';
 import { Table } from '../../ui/Table.tsx';
@@ -85,12 +85,11 @@ function Body({ all }: { all: ShiftView[] }) {
   const recent = [...all].sort(byRecent).slice(0, 8);
 
   const columns: Column<ShiftView>[] = [
-    { key: 'date', head: 'Date', className: 'strong l', cell: v => <>{weekdayShort(v.shift.date)} {dateCell(v.shift.date)}</> },
-    { key: 'type', head: 'Type', className: 'hide-sm', cell: v => <>{v.shift.shift_type ? <TypeBadge type={v.shift.shift_type} bare /> : null}{v.shift.party ? <PartyBadge bare /> : null}</> },
-    { key: 'hours', head: 'HR', className: 'mute', cell: v => dec1(v.hours) },
-    { key: 'tips', head: 'Tips', className: 'strong', cell: v => <Cur n={v.shift.tips} /> },
-    { key: 'rate', head: 'RATE', className: 'mute', cell: v => dec1(v.tph) },
-    { key: 'total', head: 'Total', className: 'strong', cell: v => <Cur n={v.total} /> }
+    { key: 'date', head: 'Shift', cell: v => (
+      <Stack title={<>{weekdayShort(v.shift.date)} {dateCell(v.shift.date)}</>} lines={[`${dec1(v.hours)} hr`]}
+        extra={(v.shift.shift_type || v.shift.party) ? <span class="stack-row">{v.shift.shift_type ? <TypeBadge type={v.shift.shift_type} /> : null}{v.shift.party ? <PartyBadge /> : null}</span> : undefined} />
+    ) },
+    { key: 'total', head: 'Earned', className: 'fit', cell: v => <Stack title={dollars(v.total)} lines={[`Tips ${dollars(v.shift.tips)} · ${perHour(v.tph)}`]} /> }
   ];
 
   return (

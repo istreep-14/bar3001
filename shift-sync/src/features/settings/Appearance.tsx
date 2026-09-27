@@ -55,7 +55,7 @@ export function Appearance() {
             </label>
           ))}
         </div>
-        <p class={styles.p}>The page, the panels on it and the tints between are steps of one ramp, not white on black.</p>
+        <p class={styles.p}>The grey page shows around the navigation and the title. Cards sit on it, a step lighter, so the content is what stands out.</p>
       </section>
 
       <section class={styles.sec} aria-labelledby="ap-con">
@@ -71,10 +71,10 @@ export function Appearance() {
       <section class={styles.sec} aria-labelledby="ap-prev">
         <h2 id="ap-prev" class="label">Preview</h2>
         <div class={styles.preview}>
-          <div class={styles.pvHead}><b>Shift log</b><span>Muted label</span><span class={styles.pvFaint}>Faint label</span></div>
-          <div class={styles.pvRow}><b>Jul 30</b><span>6:00p – 2:10a</span><b>448</b><span>47.9</span></div>
-          <div class={`${styles.pvRow} ${styles.pvBand}`}><b>Week of Jul 26</b><span /><b>997</b><span>45.7</span></div>
-          <div class={styles.pvRow}><b>Jul 29</b><span>5:00p – 2:30a</span><b>428</b><span>45.0</span></div>
+          <div class={styles.pvHead}><b>Shift</b><span>Earned</span></div>
+          <div class={styles.pvRow}><span><b>Jul 30</b><span class={styles.pvFaint}>Wed · 6:00p–2:10a</span></span><span><b>$448</b><span>Tips $380</span></span></div>
+          <div class={`${styles.pvRow} ${styles.pvBand}`}><b>Week of Jul 26</b><b>$997</b></div>
+          <div class={styles.pvRow}><span><b>Jul 29</b><span class={styles.pvFaint}>Tue · 5:00p–2:30a</span></span><span><b>$428</b><span>Tips $360</span></span></div>
           <div class={styles.pvActions}><button type="button" class="btn btn-primary">Primary</button><button type="button" class="btn" onClick={flipTheme}>Flip light / dark</button></div>
         </div>
       </section>

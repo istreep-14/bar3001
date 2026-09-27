@@ -9,6 +9,10 @@ export const DASH = '\u2014';
 export const money = (n: number | null | undefined): string => (n == null ? DASH : money2.format(n));
 /** Whole dollars, only where two decimals cannot fit (axis and bar labels). */
 export const moneyWhole = (n: number): string => money0.format(n);
+/** Whole dollars in a sentence, or a dash when the figure is absent. */
+export const dollars = (n: number | null | undefined): string => (n == null ? DASH : moneyWhole(n));
+/** '$12.4/hr', or a dash when there is no rate. */
+export const perHour = (n: number | null | undefined): string => (n == null ? DASH : `$${n.toFixed(1)}/hr`);
 
 export const hours = (h: number | null | undefined): string => (h == null ? DASH : `${+h.toFixed(1)}h`);
 

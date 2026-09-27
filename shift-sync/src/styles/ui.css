@@ -70,51 +70,38 @@ select.input { appearance: none; padding-right: var(--s-6);
 .rate[data-tone='good'] { color: var(--rate-good); }
 .rate[data-tone='bad'] { color: var(--rate-bad); }
 
-/* ── table: one component for every grid, after Bar2.000's Log: a quiet header, plain uniform cells, one hairline
-   between rows, no fills or per-column styling. Everything is centered and sized to its content; only a free-text
-   column (.trunc) takes the leftover width. Status (Day/Night, Party) is a pill; everything else is plain text. ── */
+/* ── table: one component for every list of records. A few columns, each cell a short stack, rows as tall as
+   the text needs. Not a spreadsheet: nothing is shrunk to a single figure or centred into a grid. ── */
 .tbl-wrap { overflow: auto; background: var(--surface); }
 .tbl-wrap.fill { flex: 1; min-height: 0; }
-.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
-.tbl th, .tbl td { width: 1%; padding: 0 0.5rem; text-align: center; white-space: nowrap; }
+.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-body); }
+.tbl th, .tbl td { padding: 0.85rem 1.15rem; text-align: left; vertical-align: middle; }
 .tbl th {
-  position: sticky; top: 0; z-index: 1; height: var(--row-h-head); background: var(--surface); box-shadow: inset 0 -1px var(--line-soft);
-  font-size: var(--fs-meta); font-weight: var(--fw-normal); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-2);
+  position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--line);
+  font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
 }
-.flush .tbl :is(th, td):first-child { padding-left: var(--s-5); }
-.flush .tbl :is(th, td):last-child { padding-right: var(--s-5); }
-.tbl :is(th, td).pl { padding-right: 0.125rem; }      /* a pair (Day+Date, Tips+RATE, Total+RATE) reads as one figure: */
-.tbl :is(th, td).pr { padding-left: 0.125rem; }       /* the left half is tight on its right, the right half on its left */
-.tbl :is(th, td).pl0 { padding-right: 0; }
-.tbl :is(th, td).pr0 { padding-left: 0; }
-.tbl :is(th, td).pl2 { padding-right: 0.375rem; }   /* a figure and its rate: a little air, so they don't run together */
-.tbl :is(th, td).pr2 { padding-left: 0.375rem; }
+.tbl td { border-bottom: 1px solid var(--line-soft); color: var(--ink); }
+.tbl tbody tr:last-child td { border-bottom: 0; }
 .tbl :is(th, td).l { text-align: left; }
 .tbl :is(th, td).r { text-align: right; }
-.tbl .to { margin: 0 0.05em 0 0.15em; font-style: normal; color: var(--ink-3, var(--ink-2)); opacity: 0.6; }   /* the small dash between Start and End */
-.tbl :is(th, td).tight { padding-right: 0.25rem; }             /* a figure and its rate, centred in their cells with little padding */
-.tbl :is(th, td).tight:not(.gs) { padding-left: 0.25rem; }
-.tbl :is(th, td).narrow { width: 2.25rem; }             /* a column whose widest value is known (Wed, 12) is fixed, not stretched */
+.tbl :is(th, td).fit { width: 1%; white-space: nowrap; }
+.tbl :is(th, td).act { width: 1%; white-space: nowrap; text-align: right; }
+.tbl :is(th, td).notes { width: 32%; min-width: 9rem; color: var(--ink-2); }
 .tbl td.mute { color: var(--ink-2); }
 .tbl td.strong { font-weight: var(--fw-semi); }
-.tbl td { height: var(--row-h); box-shadow: inset 0 -1px var(--line-soft); }
-.tbl th.trunc, .tbl td.trunc { width: 100%; min-width: 5.5rem; max-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; padding-left: var(--s-3); color: var(--ink-2); }
+.tbl tbody tr { transition: background var(--dur) var(--ease); }
 .tbl tbody tr[data-row] { cursor: pointer; }
-.tbl tbody tr[data-row]:hover { background: var(--accent-wash); }
-.tbl tbody tr[aria-selected='true'] { background: var(--accent-soft); }
-.tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 2px 0 0 var(--accent), inset 0 -1px var(--line-soft); }
-/* Column groups: a label over its columns (Time, Income, Staff...), one tier above the heads. Repeated heads (HR in
-   Time, HR in Staff) mean what their group says. A group's first column gets a little extra room on its left. */
-.tbl thead tr.gh th { box-shadow: none; color: var(--ink-2); font-weight: var(--fw-med); letter-spacing: 0.08em; }
-.tbl thead[data-grouped] tr + tr th { top: var(--row-h-head); }
-.tbl .gs { padding-left: var(--s-4); border-left: 1px solid var(--line-soft); }   /* a faint hairline where each group starts */
-.tbl thead tr.gh th.gs { padding-left: 0; }
-.tbl :is(th, td).datecol { min-width: 6.5rem; }   /* Date is the row's title: it gets the room and the larger face */
-.tbl td.datecol { font-size: var(--fs-title); }
-.tbl th.gs.trunc, .tbl td.gs.trunc { padding-left: var(--s-3); }
-/* collapsible bands (year > month > week): a tinted row with the band's own summary under the columns */
-.tbl tr.band td { height: var(--row-h); background: var(--accent-wash); font-weight: var(--fw-med); box-shadow: none; }
-.tbl td.band-lead, .tbl tr.band td:first-child { text-align: left; }
+.tbl tbody tr[data-row]:hover { background: var(--surface-2); }
+.tbl tbody tr[aria-selected='true'] { background: var(--accent-wash); }
+.tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+/* a cell: the fact, then the quieter lines that belong with it */
+.stack { display: grid; gap: 2px; justify-items: start; min-width: 0; }
+.stack-title { font-weight: var(--fw-semi); color: var(--ink); line-height: 1.35; }
+.stack-meta { color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-normal); line-height: 1.45; }
+.stack-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+/* collapsible bands (year > month > week): a quiet row, the band's own summary under the columns */
+.tbl tr.band td { background: var(--surface-2); border-bottom: 1px solid var(--line-soft); font-weight: var(--fw-med); }
+.tbl tr.band td:first-child { text-align: left; }
 .band-toggle { display: inline-flex; align-items: center; gap: var(--s-2); padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: var(--fw-semi); cursor: pointer; }
 .band-toggle .icon { width: 1em; height: 1em; stroke-width: 2.25; transition: transform var(--dur) var(--ease); }
 .band-toggle[aria-expanded='true'] .icon { transform: rotate(90deg); }
@@ -133,7 +120,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl th[aria-sort='ascending'] .icon, .tbl th[aria-sort='descending'] .icon { opacity: 1; color: var(--accent); }
 .tbl th[aria-sort='ascending'], .tbl th[aria-sort='descending'] { color: var(--ink); }
 /* pager */
-.flush .pager { padding: var(--s-2) var(--s-5); border-top: 1px solid var(--line); }
+.flush .pager { padding: var(--s-3) 1.15rem; border-top: 1px solid var(--line-soft); }
 .pager { display: flex; align-items: center; justify-content: flex-end; gap: var(--s-3); padding: var(--s-2) 0; font-size: var(--fs-meta); color: var(--ink-2); }
 .pager-size { display: inline-flex; align-items: center; gap: var(--s-2); }
 .pager .input { width: auto; min-height: var(--ctl-h); }
@@ -141,6 +128,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 /* ── card + empty state ── */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); }
 .empty { display: grid; justify-items: start; gap: var(--s-3); padding: var(--s-5) 0; color: var(--ink-2); }
+.panel-body.flush > .empty { padding: var(--s-6) 1.15rem; }
 .empty h2 { font-size: var(--fs-title); font-weight: var(--fw-semi); color: var(--ink); }
 
 /* a year that isn't this one: present but quiet */

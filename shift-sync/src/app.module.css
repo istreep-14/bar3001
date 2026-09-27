@@ -1,9 +1,9 @@
-.shell { min-height: 100dvh; }
+.shell { min-height: 100dvh; background: var(--bg); }
 .skip { position: absolute; left: var(--s-3); top: -4rem; z-index: 100; padding: var(--s-2) var(--s-3); background: var(--accent); color: var(--on-accent); border-radius: var(--r-sm); font-weight: var(--fw-semi); }
 .skip:focus { top: var(--s-3); }
 
-/* ── phone: a top bar, the page, and a bottom tab bar of the five pages ── */
-.rail { position: fixed; inset: auto 0 0 0; z-index: var(--z-nav); background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+/* ── phone: tools on the grey, the page, and a tab bar that floats so the canvas shows around it ── */
+.rail { position: fixed; left: var(--shell-pad); right: var(--shell-pad); bottom: calc(var(--shell-pad) + env(safe-area-inset-bottom)); z-index: var(--z-nav); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); }
 .rail1 { display: block; }
 .rail2, .brand, .gtitle { display: none; }
 .links { display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -12,54 +12,54 @@
 .link[aria-current='page'] { color: var(--accent); }
 .link[aria-current="page"] :global(.icon) { stroke-width: 2.4; }
 .gtiles, .newtile, .syncslot, .themetile { display: none; }
-.strip { display: flex; gap: var(--s-2); overflow-x: auto; padding: var(--s-2) var(--s-4) 0; background: var(--bg); }
+.strip { display: flex; gap: var(--s-2); overflow-x: auto; padding: var(--s-2) var(--s-4) 0; background: transparent; }
 .stripLink { flex: none; padding: var(--s-2) var(--s-3); border-radius: var(--r-pill); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); text-decoration: none; white-space: nowrap; }
-.stripLink[aria-current='page'] { background: var(--accent-soft); color: var(--accent); font-weight: var(--fw-semi); }
+.stripLink[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--shadow-sm); }
 
 .main { min-width: 0; display: flex; flex-direction: column; }
-.topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: var(--topbar-h); padding: var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--line); padding-top: calc(var(--s-2) + env(safe-area-inset-top)); }
-.page { flex: 1; width: 100%; max-width: 87.5rem; margin: 0 auto; padding: var(--s-4) var(--s-4) calc(6rem + env(safe-area-inset-bottom)); min-width: 0; outline: none; }
+.topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: var(--topbar-h); padding: var(--s-3) var(--s-4); background: var(--bg); padding-top: calc(var(--s-3) + env(safe-area-inset-top)); }
+.page { flex: 1; width: 100%; margin: 0 auto; padding: 0 var(--s-4) calc(6.5rem + env(safe-area-inset-bottom)); min-width: 0; outline: none; display: flex; flex-direction: column; }
 .page > * { min-width: 0; }
 .long { display: none; }
 
-/* ── desktop: rail (two tiers) · main, plus the drawer column only while something is open ── */
+/* ── desktop: the canvas is the page. Rail tiles and the title sit on the grey; cards are what fill. ── */
 @media (min-width: 56rem) {
-  .shell { display: grid; grid-template-columns: var(--rail1) var(--rail2) minmax(0, 1fr); align-items: start; }
+  .shell { display: grid; grid-template-columns: var(--rail1) var(--rail2) minmax(0, 1fr); column-gap: var(--shell-gap); align-items: stretch; height: 100dvh; padding: var(--shell-pad); overflow: hidden; }
   .shell[data-solo] { grid-template-columns: var(--rail1) minmax(0, 1fr); }
   .long { display: inline; }
 
-  /* the rail is two sibling columns of one nav, so each can be sticky on its own */
   .rail { display: contents; }
-  .rail1 { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: var(--s-4) var(--s-2); background: var(--rail-bg); overflow-y: auto; }
-  .rail2 { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-4) var(--s-3); background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; }
+  .rail1 { position: relative; height: auto; display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: var(--s-1) 0; background: transparent; overflow-y: auto; }
+  .rail2 { position: relative; height: auto; display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-1) var(--s-2) var(--s-2) 0; background: transparent; overflow-y: auto; }
   .shell[data-solo] .rail2 { display: none; }
-  .brand { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-bottom: var(--s-3); line-height: 1; }
-  .brand b { font-size: 1.1875rem; font-weight: var(--fw-bold); letter-spacing: 0.02em; color: var(--rail-ink-hi); }
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-bottom: var(--s-2); line-height: 1; }
+  .brand b { font-size: 1.1875rem; font-weight: var(--fw-bold); letter-spacing: 0.02em; color: var(--ink); }
   .brand span { font-size: 0.5625rem; font-weight: var(--fw-semi); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); }
   .links { display: none; }
   .gtiles { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); }
-  .newtile { display: flex; margin-top: var(--s-3); border: 1.5px solid var(--accent); color: var(--accent); background: none; cursor: pointer; }
+  .newtile { display: flex; margin-top: var(--s-3); border: 1.5px solid var(--accent); color: var(--accent); background: transparent; cursor: pointer; }
   .newtile:hover { background: var(--accent); color: var(--on-accent); }
-  .themetile { display: flex; margin-top: auto; background: none; border: 0; cursor: pointer; }
-  .themetile:hover { background: rgb(255 255 255 / 0.08); color: var(--rail-ink-hi); }
+  .themetile { display: flex; margin-top: auto; background: transparent; border: 0; color: var(--ink-2); cursor: pointer; }
+  .themetile:hover { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
   .syncslot { display: block; }
   .strip { display: none; }
-  .gtile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; width: 4rem; aspect-ratio: 1; border-radius: var(--r-md); color: var(--rail-ink); font-size: 0.625rem; font-weight: var(--fw-med); letter-spacing: 0.02em; text-decoration: none; }
+  .gtile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; width: 4rem; aspect-ratio: 1; border-radius: var(--r-md); color: var(--ink-2); font-size: 0.625rem; font-weight: var(--fw-med); letter-spacing: 0.02em; text-decoration: none; }
   .gtile :global(.icon) { width: 1.375rem; height: 1.375rem; stroke-width: 1.7; }
-  .gtile:hover { background: rgb(255 255 255 / 0.08); color: var(--rail-ink-hi); }
-  .gtile[aria-current='true'] { background: var(--accent); color: var(--on-accent); font-weight: var(--fw-semi); box-shadow: 0 4px 12px rgb(0 0 0 / 0.35); }
-  .gtitle { display: block; padding: 0 var(--s-2); margin-bottom: var(--s-1); }
+  .gtile:hover { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .gtile[aria-current='true'] { background: var(--accent); color: var(--on-accent); font-weight: var(--fw-semi); box-shadow: var(--shadow-sm); }
+  .gtitle { display: block; padding: var(--s-2) var(--s-3) 0; margin-bottom: 0; }
   .pages { display: grid; gap: 2px; }
-  .pagelink { position: relative; display: block; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); font-size: 0.8125rem; font-weight: var(--fw-med); color: var(--ink-2); text-decoration: none; }
-  .pagelink:hover { background: var(--surface-3); color: var(--ink); }
-  .pagelink[aria-current='page'] { background: var(--accent-soft); color: var(--accent); font-weight: var(--fw-semi); }
-  .pagelink[aria-current='page']::before { content: ''; position: absolute; left: calc(-1 * var(--s-3) + 2px); top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+  .pagelink { position: relative; display: block; padding: var(--s-2) var(--s-3); border-radius: var(--r-md); font-size: 0.8125rem; font-weight: var(--fw-med); color: var(--ink-2); text-decoration: none; }
+  .pagelink:hover { background: var(--surface); color: var(--ink); }
+  .pagelink[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--shadow-sm); }
 
-  .topbar { display: none; }   /* the rail carries New and the sync state on desktop */
-  .page { padding: var(--s-4) var(--s-4) var(--s-5); }
-  /* The drawer is a floating card over the page's right edge: inset, outlined, shadowed, and never in the layout. */
-  .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-drawer); width: calc(var(--drawer-w) + var(--s-3) * 2); padding: var(--s-3); animation: slide var(--dur) var(--ease); }
+  .topbar { display: none; }
+  .main { min-height: 0; height: 100%; overflow: hidden; }
+  .page { padding: 0; max-width: none; min-height: 0; overflow: auto; }
+  .page:has(.fill) { overflow: hidden; }
+  /* The drawer floats over the right edge, inset like the rest of the chrome so the canvas shows around it. */
+  .drawer { position: fixed; top: var(--shell-pad); right: var(--shell-pad); bottom: var(--shell-pad); z-index: var(--z-drawer); width: var(--drawer-w); animation: slide var(--dur) var(--ease); }
   @keyframes slide { from { transform: translateX(1.5rem); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .drawer { animation: none; } }
-  .card { height: 100%; display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: var(--shadow); }
+  .card { height: 100%; display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
 }

@@ -23,7 +23,8 @@ import { Toaster } from './ui/toast.tsx';
 import { isDesktop } from './ui/viewport.ts';
 import styles from './app.module.css';
 
-/* Shell = a two-tier rail (groups, then the group's pages) · main. The drawer floats over the page's right edge while a
+/* Shell = grey canvas, a two-tier rail that sits on it (groups, then the group's pages), then main.
+ * The rail and the page title do not paint a full-bleed bar, so the canvas shows around them. The drawer floats over the page's right edge while a
  * shift or person is open (it never resizes the page); a click anywhere outside it closes it. A group with one page has no second tier. On a phone the six pages are a bottom tab bar. */
 interface Page { id: Screen; label: string; icon: IconName }
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }

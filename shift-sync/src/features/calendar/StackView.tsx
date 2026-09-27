@@ -1,7 +1,7 @@
 import { byDate, monthGrid, rateScale } from '../../lib/calendar.ts';
 import type { RateScale } from '../../lib/calendar.ts';
 import { addDays, today, ymd } from '../../lib/dates.ts';
-import { dec1, hours, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { dec1, dollars, hours, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { mondayOf } from '../../lib/periods.ts';
 import { summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
@@ -14,9 +14,9 @@ import { ComboChart } from '../../ui/charts.tsx';
 import { DeltaPill, MiniStat } from '../../ui/kpi.tsx';
 import { MONTH_NAMES, RateKey } from '../../ui/MonthCalendar.tsx';
 import type { Month } from '../../ui/MonthCalendar.tsx';
+import { Stack } from '../../ui/Stack.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
-import { Cur } from '../../ui/Cur.tsx';
 import styles from './StackView.module.css';
 
 /* Three months at a glance: the months stacked newest first on the left, each day shaded by its tips per hour, and beside them what
@@ -103,13 +103,10 @@ function MonthTable({ all, months }: { all: ShiftView[]; months: Month[] }) {
   const want = new Set(months.map(m => key(m.y, m.m)));
   const rows = summaryRows(wide, 'month').filter(r => want.has(r.key));
   const columns: Column<SumRow>[] = [
-    { key: 'm', head: 'Month', className: 'strong l', cell: r => `${MONTH_NAMES[+r.key.slice(5) - 1]} ${r.key.slice(2, 4) === String(new Date().getFullYear()).slice(2) ? '' : '’' + r.key.slice(2, 4)}`.trim() },
-    { key: 'n', head: 'CT', className: 'mute', cell: r => r.s.shifts },
-    { key: 'h', head: 'HR', className: 'strong', cell: r => dec1(r.s.hours) },
-    { key: 'tips', head: 'Tips', className: 'strong tight', cell: r => <Cur n={r.s.tips} /> },
-    { key: 'rate', head: 'RATE', className: 'mute tight', cell: r => dec1(r.s.tph) },
-    { key: 'total', head: 'Total', className: 'strong', cell: r => <Cur n={r.s.total} /> },
-    { key: 'd', head: 'Rate Δ', hint: 'Tips per hour against the month before', cell: r => <DeltaPill pct={pctChange(r.s.tph, r.prev?.tph)} /> }
+    { key: 'm', head: 'Month', cell: r => <Stack title={`${MONTH_NAMES[+r.key.slice(5) - 1]} ${r.key.slice(2, 4) === String(new Date().getFullYear()).slice(2) ? '' : '’' + r.key.slice(2, 4)}`.trim()} lines={[`${r.s.shifts} shift${r.s.shifts === 1 ? '' : 's'} · ${dec1(r.s.hours)} hr`]} /> },
+    { key: 'tips', head: 'Tips', cell: r => <Stack title={dollars(r.s.tips)} lines={[perHour(r.s.tph)]} /> },
+    { key: 'total', head: 'Earned', className: 'fit', cell: r => dollars(r.s.total) },
+    { key: 'd', head: 'Vs previous', className: 'fit', hint: 'Tips per hour against the month before', cell: r => <DeltaPill pct={pctChange(r.s.tph, r.prev?.tph)} /> }
   ];
   return (
     <figure class="viz">

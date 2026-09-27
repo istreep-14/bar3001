@@ -1,8 +1,8 @@
 .pill { display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--ctl-h); padding: 0 var(--s-2); border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-med); white-space: nowrap; }
 .pill:hover { background: var(--surface-3); }
 .pill svg { width: 1rem; height: 1rem; }
-.compact { display: grid; justify-items: center; gap: 4px; width: 4rem; padding: var(--s-2) 0; border: 0; border-radius: var(--r-md); background: transparent; color: var(--rail-ink); font-size: 0.625rem; font-weight: var(--fw-med); }
-.compact:hover { background: rgb(255 255 255 / 0.08); color: var(--rail-ink-hi); }
+.compact { display: grid; justify-items: center; gap: 4px; width: 4rem; padding: var(--s-2) 0; border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink-2); font-size: 0.625rem; font-weight: var(--fw-med); }
+.compact:hover { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
 .compact svg { width: 1.25rem; height: 1.25rem; }
 .warn { color: var(--danger); }
 .spin svg { animation: spin 1s linear infinite; }

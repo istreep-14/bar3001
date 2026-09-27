@@ -1,7 +1,7 @@
-/* The palette engine. The site's colours are not two extremes (paper white and near-black) but a ramp: page < panel < tint
- * < line, and ink in four steps, all derived from a few choices (mode, accent, background tint, contrast) and solved so
- * every text step keeps a WCAG contrast ratio against every surface it can sit on. Pure functions; settings.ts applies the
- * result to <html> as CSS custom properties, which win over the static defaults in tokens.css. */
+/* The palette engine. The site's colours are not two extremes (paper white and near-black) but a ramp: the page is a
+ * grey canvas, panels sit lighter on it, and ink is four steps, all derived from a few choices (mode, accent, background
+ * tint, contrast) and solved so every text step keeps a WCAG contrast ratio against every surface it can sit on.
+ * Pure functions; settings.ts applies the result to <html> as CSS custom properties, which win over tokens.css. */
 
 export type Mode = 'light' | 'dark';
 export type Contrast = 'soft' | 'standard' | 'high';
@@ -83,9 +83,10 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
   const t = TINTS.find(x => x.id === o.tint) ?? TINTS[0]!, dark = o.mode === 'dark';
   const { h, s } = t;
   const k = { soft: 0, standard: 1, high: 2 }[o.contrast];
-  // surfaces: the page is the mid step, the panel sits above it, tints between
-  const bg = hslToHex(h, s, dark ? 8.5 : 92.5), surface = hslToHex(h, s, dark ? 13 : 98.5), surface2 = hslToHex(h, s, dark ? 10.5 : 95.5);
-  const surface3 = hslToHex(h, s + 2, dark ? 18 : 90);
+  // The page is a grey canvas. Panels are the light step that sits on it, far enough apart that the canvas
+  // still reads in the gaps (around the rail, above a card). Not pure white: the ramp stays one family.
+  const bg = hslToHex(h, s, dark ? 6.5 : 89), surface = hslToHex(h, s, dark ? 13.5 : 99), surface2 = hslToHex(h, s, dark ? 10 : 95.5);
+  const surface3 = hslToHex(h, s + 2, dark ? 18 : 86);
   const lines = dark ? [21 + k * 2, 27 + k * 3, 38 + k * 5] : [89 - k * 2, 84 - k * 3, 74 - k * 5];
   const grounds = [bg, surface, surface2, surface3];
   const ink = solve(grounds, h, Math.min(s + 6, 24), dark ? 94 : 12, dark ? 1 : -1, [12, 14, 16][k]!);
@@ -104,6 +105,6 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
     '--accent': accent, '--accent-hover': hslToHex(a.h, a.s, clamp(a.l + (dark ? 8 : -7), 0, 100)),
     '--accent-soft': mix(surface, accent, dark ? 0.2 : 0.13), '--accent-wash': mix(surface, accent, dark ? 0.09 : 0.06),
     '--on-accent': onAccent,
-    '--rail-bg': hslToHex(h, Math.min(s + 10, 30), 8), '--rail-ink': hslToHex(h, 12, 70)
+    '--rail-bg': 'transparent', '--rail-ink': ink2, '--rail-ink-hi': ink
   };
 }

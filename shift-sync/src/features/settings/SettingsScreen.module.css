@@ -23,7 +23,8 @@
 .twin { border-radius: var(--r-sm) !important; }
 
 .preview { display: grid; gap: 0; max-width: 30rem; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--surface); font-size: var(--fs-body); }
-.pvHead, .pvRow { display: grid; grid-template-columns: 1.2fr 1.4fr 0.6fr 0.6fr; gap: var(--s-2); align-items: center; padding: var(--s-2) var(--s-3); }
+.pvHead, .pvRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-3); align-items: center; padding: var(--s-3); }
+.pvRow > span { display: grid; gap: 2px; }
 .pvHead { background: var(--bg); color: var(--ink-2); box-shadow: inset 0 -1px var(--line); }
 .pvHead b { color: var(--ink); }
 .pvFaint { color: var(--ink-3); }

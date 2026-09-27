@@ -46,7 +46,7 @@ export function JournalScreen() {
   return (
     <section class="panel" aria-labelledby="jr-title">
       <PanelHead title="Journal" id="jr-title"><ScopeControl /></PanelHead>
-      <div class={`panel-body ${styles.body}`}>
+      <div class={`panel-body open ${styles.body}`}>
         {state.value === 'failed' && <div class={styles.banner} role="alert"><Icon name="alert" /><span>{syncMessage.value || 'Sync failed.'} Your shifts are saved on this device.</span></div>}
         {sheetProblems.value.length > 0 && <div class={styles.banner} role="alert"><Icon name="alert" /><span>Fix these in the Sheet, then sync again: {sheetProblems.value.join(' ')}</span></div>}
         {ready.value && all.length === 0 ? (
