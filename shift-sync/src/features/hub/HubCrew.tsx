@@ -9,8 +9,9 @@ import type { ShiftView } from '../../lib/stats.ts';
 import { TypeBadge } from '../../ui/Badges.tsx';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
-import { MiniStat } from '../../ui/kpi.tsx';
+import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Stack } from '../../ui/Stack.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
@@ -35,18 +36,23 @@ export function HubCrew() {
       onChange={e => void run(() => saveCrewLine({ id: r.c.id, shift_id: r.c.shift_id, staff_id: r.c.staff_id, start: key === 'start' ? toMin(e.currentTarget.value) : r.c.start, end: key === 'end' ? toMin(e.currentTarget.value) : r.c.end }))} />
   );
   const columns: Column<Row>[] = [
-    { key: 'date', head: 'Date', className: 'strong l datecol', sort: r => r.v.shift.date, cell: r => <>{weekdayShort(r.v.shift.date)} {dateCell(r.v.shift.date)}</> },
-    { key: 'type', head: 'Shift', cell: r => (r.v.shift.shift_type ? <TypeBadge type={r.v.shift.shift_type} bare /> : '—') },
-    { key: 'name', head: 'Bartender', className: 'l', sort: r => r.name, cell: r => <>{r.name}{personById(r.c.staff_id)?.is_user && <span class="muted"> you</span>}</> },
-    { key: 'start', head: 'Start', cell: r => time(r, 'start') },
-    { key: 'end', head: 'End', cell: r => time(r, 'end') },
-    { key: 'hours', head: 'HR', className: 'strong', sort: r => hoursWorked(r.c.start, r.c.end), cell: r => dec1(hoursWorked(r.c.start, r.c.end)) },
-    { key: 'del', head: '', cell: r => (
+    { key: 'date', head: 'Shift', sort: r => r.v.shift.date, cell: r => (
+      <Stack title={<>{weekdayShort(r.v.shift.date)} {dateCell(r.v.shift.date)}</>} extra={r.v.shift.shift_type ? <span class="stack-row"><TypeBadge type={r.v.shift.shift_type} /></span> : undefined} />
+    ) },
+    { key: 'name', head: 'Bartender', sort: r => r.name, cell: r => <>{r.name}{personById(r.c.staff_id)?.is_user && <span class="stack-meta"> · you</span>}</> },
+    { key: 'start', head: 'Start', className: 'fit', cell: r => time(r, 'start') },
+    { key: 'end', head: 'End', className: 'fit', cell: r => time(r, 'end') },
+    { key: 'hours', head: 'Hours', className: 'fit', sort: r => hoursWorked(r.c.start, r.c.end), cell: r => dec1(hoursWorked(r.c.start, r.c.end)) },
+    { key: 'del', head: '', className: 'act', cell: r => (
       <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${r.name} from ${r.v.shift.date}`}
         onClick={() => void run(async () => { const gone = await removeCrewLine(r.c.id); if (gone) toast(`${r.name} removed`, { label: 'Undo', run: () => void saveCrewLine({ shift_id: gone.shift_id, staff_id: gone.staff_id, start: gone.start, end: gone.end }) }); })}><Icon name="trash" /></button>) }
   ];
+  const table = ready.value && all.length === 0 ? <EmptyState title="No shifts yet">Log a shift first, then set who worked it.</EmptyState>
+    : rows.length === 0 ? <EmptyState title="No crew hours in this period">Widen the period, or add a line above.</EmptyState>
+    : <Table fill paginate label="Crew hours" rows={rows} columns={columns} rowKey={r => r.c.id} defaultSort={{ key: 'date', dir: 'desc' }} />;
+
   return (
-    <section class={`panel ${styles.fillscreen}`} aria-labelledby="hc-title">
+    <section class="panel fill" aria-labelledby="hc-title">
       <PanelHead title="Crew log" id="hc-title">
         <label class={styles.filter}><span class="sr-only">Bartender</span>
           <select class="input" value={who.value} onChange={e => { who.value = e.currentTarget.value; }} aria-label="Show one bartender">
@@ -56,12 +62,17 @@ export function HubCrew() {
         </label>
         <ScopeControl />
       </PanelHead>
-      <div class={`panel-body flush ${styles.body}`}>
-        <AddCrew views={views} />
-        {ready.value && all.length === 0 ? <EmptyState title="No shifts yet">Log a shift first, then set who worked it.</EmptyState>
-          : rows.length === 0 ? <EmptyState title="No crew hours in this period">Widen the period, or add a line above.</EmptyState>
-          : <Table fill paginate label="Crew hours" rows={rows} columns={columns} rowKey={r => r.c.id} defaultSort={{ key: 'date', dir: 'desc' }}
-              footer={<span class={styles.foot}><MiniStat label="Lines" value={rows.length} /><MiniStat label="Hours" value={dec1(hoursSum)} /></span>} />}
+      <div class="split">
+        <div class={`panel-body flush ${styles.body}`}>
+          <AddCrew views={views} />
+          {table}
+        </div>
+        <aside class="panel-body side" aria-label="This period">
+          <div class="side-block">
+            <h3 class="label">This period</h3>
+            <StatList items={[{ label: 'Lines', value: rows.length }, { label: 'Hours', value: dec1(hoursSum), hint: 'Each bartender’s hours, added up' }]} />
+          </div>
+        </aside>
       </div>
     </section>
   );

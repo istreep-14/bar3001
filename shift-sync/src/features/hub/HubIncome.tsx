@@ -4,13 +4,14 @@ import { CATEGORIES } from '../../core/core.generated.js';
 import type { Category, Income } from '../../core/core.generated.js';
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready, removeIncomeLine, saveIncomeLine } from '../../data/store.ts';
-import { dateCell, moneyWhole, weekdayShort } from '../../lib/format.ts';
+import { dateCell, dollars, moneyWhole, weekdayShort } from '../../lib/format.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { TypeBadge } from '../../ui/Badges.tsx';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
-import { MiniStat } from '../../ui/kpi.tsx';
+import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Stack } from '../../ui/Stack.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
@@ -35,26 +36,31 @@ export function HubIncome() {
     void run(() => saveIncomeLine({ id: r.line!.id, shift_id: r.line!.shift_id, category: patch.category ?? r.line!.category, amount: patch.amount ?? r.line!.amount, note: 'note' in patch ? patch.note ?? null : r.line!.note }));
 
   const columns: Column<Row>[] = [
-    { key: 'date', head: 'Date', className: 'strong l datecol', sort: r => r.v.shift.date, cell: r => <>{weekdayShort(r.v.shift.date)} {dateCell(r.v.shift.date)}</> },
-    { key: 'type', head: 'Shift', cell: r => (r.v.shift.shift_type ? <TypeBadge type={r.v.shift.shift_type} bare /> : '—') },
+    { key: 'date', head: 'Shift', sort: r => r.v.shift.date, cell: r => (
+      <Stack title={<>{weekdayShort(r.v.shift.date)} {dateCell(r.v.shift.date)}</>} extra={r.v.shift.shift_type ? <span class="stack-row"><TypeBadge type={r.v.shift.shift_type} /></span> : undefined} />
+    ) },
     { key: 'cat', head: 'Source', sort: r => r.line?.category ?? 'zz', cell: r => r.line
       ? <select class={styles.cellin} value={r.line.category} aria-label="Source" onChange={e => save(r, { category: e.currentTarget.value as Category })}>{CATEGORIES.map((c: string) => <option key={c} value={c}>{c}</option>)}</select>
       : <span class="muted">Other (earlier entry)</span> },
-    { key: 'amount', head: 'Amt', className: 'strong', sort: r => r.line?.amount ?? r.legacy ?? 0, cell: r => r.line
+    { key: 'amount', head: 'Amount', className: 'fit', sort: r => r.line?.amount ?? r.legacy ?? 0, cell: r => r.line
       ? <input class={styles.cellin} type="number" step="0.01" defaultValue={r.line.amount} key={r.line.id + r.line.amount} aria-label="Amount"
           onChange={e => { const n = e.currentTarget.valueAsNumber; if (Number.isFinite(n)) save(r, { amount: n }); }} />
-      : moneyWhole(r.legacy ?? 0) },
-    { key: 'note', head: 'Note', className: 'l', cell: r => r.line
+      : dollars(r.legacy ?? 0) },
+    { key: 'note', head: 'Note', className: 'notes', cell: r => r.line
       ? <input class={`${styles.cellin} ${styles.left}`} type="text" defaultValue={r.line.note ?? ''} key={r.line.id + (r.line.note ?? '')} placeholder="Add a note" aria-label="Note"
           onChange={e => save(r, { note: e.currentTarget.value.trim() || null })} />
       : '' },
-    { key: 'del', head: '', cell: r => r.line ? (
+    { key: 'del', head: '', className: 'act', cell: r => r.line ? (
       <button type="button" class="btn btn-quiet btn-icon" aria-label="Remove this income line"
         onClick={() => void run(async () => { const gone = await removeIncomeLine(r.line!.id); if (gone) toast('Income removed', { label: 'Undo', run: () => void saveIncomeLine({ shift_id: gone.shift_id, category: gone.category, amount: gone.amount, note: gone.note }) }); })}><Icon name="trash" /></button>) : null }
   ];
 
+  const table = ready.value && all.length === 0 ? <EmptyState title="No shifts yet">Log a shift first, then add its extra income.</EmptyState>
+    : rows.length === 0 ? <EmptyState title="No other income in this period">Widen the period, or add a line above.</EmptyState>
+    : <Table fill paginate label="Other income" rows={rows} columns={columns} rowKey={r => r.line?.id ?? r.v.shift.id + ':other'} defaultSort={{ key: 'date', dir: 'desc' }} />;
+
   return (
-    <section class={`panel ${styles.fillscreen}`} aria-labelledby="hi-title">
+    <section class="panel fill" aria-labelledby="hi-title">
       <PanelHead title="Other income" id="hi-title">
         <label class={styles.filter}><span class="sr-only">Source</span>
           <select class="input" value={cat.value} onChange={e => { cat.value = e.currentTarget.value as '' | Category; }} aria-label="Show one source">
@@ -64,12 +70,17 @@ export function HubIncome() {
         </label>
         <ScopeControl />
       </PanelHead>
-      <div class={`panel-body flush ${styles.body}`}>
-        <AddIncome views={views} />
-        {ready.value && all.length === 0 ? <EmptyState title="No shifts yet">Log a shift first, then add its extra income.</EmptyState>
-          : rows.length === 0 ? <EmptyState title="No other income in this period">Widen the period, or add a line above.</EmptyState>
-          : <Table fill paginate label="Other income" rows={rows} columns={columns} rowKey={r => r.line?.id ?? r.v.shift.id + ':other'} defaultSort={{ key: 'date', dir: 'desc' }}
-              footer={<span class={styles.foot}><MiniStat label="Lines" value={rows.length} /><MiniStat label="Total" value={moneyWhole(sum)} /></span>} />}
+      <div class="split">
+        <div class={`panel-body flush ${styles.body}`}>
+          <AddIncome views={views} />
+          {table}
+        </div>
+        <aside class="panel-body side" aria-label="This period">
+          <div class="side-block">
+            <h3 class="label">This period</h3>
+            <StatList items={[{ label: 'Lines', value: rows.length }, { label: 'Total', value: moneyWhole(sum) }]} />
+          </div>
+        </aside>
       </div>
     </section>
   );

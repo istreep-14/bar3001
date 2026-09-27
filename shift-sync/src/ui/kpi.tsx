@@ -38,6 +38,17 @@ export function Meter({ value, max, label }: { value: number | null; max: number
   return <span class="meter" role="img" aria-label={label} title={label}><i style={{ width: pct + '%' }} /></span>;
 }
 
+/** A short vertical list of figures, for the card beside a table. */
+export function StatList({ items }: { items: { label: string; value: ComponentChildren; hint?: string }[] }) {
+  return (
+    <dl class="stats">
+      {items.map(it => (
+        <div key={it.label}><dt title={it.hint}>{it.label}</dt><dd>{it.value}</dd></div>
+      ))}
+    </dl>
+  );
+}
+
 /** label · value · delta · spark, on one line. */
 export function MiniStat({ label, value, pct, neutral, spark, hint }: { label: string; value: ComponentChildren; pct?: number | null; neutral?: boolean; spark?: (number | null)[]; hint?: string }) {
   return (

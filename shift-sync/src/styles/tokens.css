@@ -2,7 +2,7 @@
    The single place a raw color, size or radius is allowed. Components use only these names.
    The palette, type ladder, spacing and radii come from Bar2.000's dashboard (its styles.css header).
 
-   Levels (depth):   page (--bg)  <  panel (--surface, 1px line, soft shadow)  <  raised (dialog, drawer, tooltip)
+   Levels (depth):   canvas (--bg, the grey that shows around unfilled chrome)  <  card (--surface)  <  raised (dialog, drawer)
    Levels (type):    title 16  >  heading 14 semi  >  eyebrow 11 caps  >  body 14 / small 12
    Spacing scale:    --s-1 4 · 2 8 · 3 12 · 4 16 · 5 24 · 6 32 · 7 48
    Two densities share one set of names: comfortable on touch, dense with a mouse (tables mostly).
@@ -26,12 +26,13 @@
 
   /* geometry */
   --ctl-h: 2.75rem; --row-h: 3.5rem; --row-h-head: 2rem;
-  --rail1: 5rem; --rail2: 13.25rem; --topbar-h: 3.75rem; --drawer-w: 21rem;
+  --rail-w: 13.25rem; --topbar-h: 3.75rem; --drawer-w: 21rem;
+  --shell-pad: 0.875rem; --shell-gap: 0.75rem;
   --dur: 150ms; --ease: cubic-bezier(0.2, 0, 0, 1);
   --z-nav: 20; --z-drawer: 30; --z-toast: 60;
 
   /* surfaces + lines: page < panel (surface) ; field = an input's or tile's own fill ; hover = a hovered row */
-  --bg: #eef2f1; --surface: #ffffff; --surface-2: #f5f8f7; --surface-3: #eaf3f1;
+  --bg: #e3e8e6; --surface: #fbfcfb; --surface-2: #f3f6f5; --surface-3: #dce3e1;
   --line: #dce4e2; --line-soft: #e8eeed; --line-strong: #c3cfcc;
   /* ink: --ink-3 is for non-essential labels only; --ink-4 never carries meaning. */
   --ink: #0f1f1e; --ink-2: #5a6b68; --ink-3: #7b8b87; --ink-4: #a9b6b2;
@@ -56,11 +57,11 @@
   /* rate: a diverging pair */
   --rate-good: var(--good); --rate-bad: var(--bad);
 
-  /* the two-tier rail: dark chrome that stays constant across the light/dark page */
-  --rail-bg: #0a1817; --rail-ink: #93aaa5; --rail-ink-hi: #ffffff;
+  /* The rail sits on the canvas. These match the page ink so a tile is readable before the theme script runs. */
+  --rail-bg: transparent; --rail-ink: var(--ink-2); --rail-ink-hi: var(--ink);
 
   --overlay: rgb(10 25 24 / 0.58);
-  --shadow-panel: 0 1px 2px rgb(15 31 30 / 0.05), 0 4px 16px rgb(15 31 30 / 0.04);
+  --shadow-panel: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 28px rgb(15 23 42 / 0.06);
   --shadow: 0 24px 60px rgb(10 25 24 / 0.28), 0 4px 12px rgb(10 25 24 / 0.12);
   --shadow-sm: 0 1px 2px rgb(15 31 30 / 0.06);
   color-scheme: light;
@@ -78,7 +79,7 @@
 /* Dark: written twice (OS preference, manual override). Keep the two blocks identical. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0b1110; --surface: #131b1a; --surface-2: #0e1514; --surface-3: #18242a;
+    --bg: #0c1211; --surface: #18211f; --surface-2: #121a18; --surface-3: #24302d;
     --line: #243230; --line-soft: #1c2826; --line-strong: #34463f;
     --ink: #e8f0ee; --ink-2: #93a6a2; --ink-3: #6f827e; --ink-4: #4a5a56;
     --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
@@ -97,7 +98,7 @@
   }
 }
 :root[data-theme='dark'] {
-  --bg: #0b1110; --surface: #131b1a; --surface-2: #0e1514; --surface-3: #18242a;
+  --bg: #0c1211; --surface: #18211f; --surface-2: #121a18; --surface-3: #24302d;
   --line: #243230; --line-soft: #1c2826; --line-strong: #34463f;
   --ink: #e8f0ee; --ink-2: #93a6a2; --ink-3: #6f827e; --ink-4: #4a5a56;
   --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
