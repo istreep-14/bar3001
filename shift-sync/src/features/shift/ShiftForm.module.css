@@ -33,7 +33,7 @@
 .pane { display: grid; gap: var(--s-4); align-content: start; max-width: 47.5rem; padding: var(--s-5) var(--s-6) var(--s-5); }
 .pane > h3 { color: var(--ink-2); }
 .hint { font-size: var(--fs-meta); color: var(--ink-2); }
-.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: var(--s-3); }
 .dateline { display: grid; grid-template-columns: minmax(9.5rem, 14rem) minmax(0, 1fr); align-items: end; gap: var(--s-3); }
 .datenote { margin: 0; padding-bottom: 10px; font-size: var(--fs-meta); color: var(--ink-2); }
 .datenote.warn { color: var(--warn); font-weight: var(--fw-med); }
@@ -56,8 +56,9 @@
 .rows { display: grid; gap: var(--s-2); }
 .mrow { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: end; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
 .mrow .note { grid-column: 1 / -1; }
-.person { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
+.person { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; align-items: end; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
 .pname { display: flex; align-items: baseline; gap: var(--s-2); min-height: var(--ctl-h); align-self: center; font-weight: var(--fw-semi); }
+.person .pname { grid-column: 1 / -1; }
 .pname small { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
 .pills { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .pill { min-height: 2rem; padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-body); transition: background-color var(--dur), border-color var(--dur); }

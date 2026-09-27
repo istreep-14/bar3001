@@ -18,6 +18,7 @@ export const ACCENTS: Accent[] = [
   { id: 'slate', label: 'Slate', light: '#475569', dark: '#a9b8cc' }
 ];
 export const TINTS: Tint[] = [
+  { id: 'grey', label: 'Soft grey', h: 220, s: 5 },
   { id: 'teal', label: 'Mint', h: 172, s: 14 },
   { id: 'slate', label: 'Slate', h: 215, s: 14 },
   { id: 'warm', label: 'Stone', h: 38, s: 13 },
@@ -66,7 +67,7 @@ function solve(against: string[], h: number, s: number, from: number, dir: 1 | -
 }
 
 export interface ThemeOpts { mode: Mode; accent: string; tint: string; contrast: Contrast }
-export const DEFAULT_LOOK = { accent: 'teal', tint: 'teal', contrast: 'standard' as Contrast };
+export const DEFAULT_LOOK = { accent: 'teal', tint: 'grey', contrast: 'standard' as Contrast };
 
 /** `accent` is a preset id or a #hex; a custom colour is used as-is in light and lightened for dark. */
 export function resolveAccent(id: string, mode: Mode): string {
@@ -83,9 +84,9 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
   const t = TINTS.find(x => x.id === o.tint) ?? TINTS[0]!, dark = o.mode === 'dark';
   const { h, s } = t;
   const k = { soft: 0, standard: 1, high: 2 }[o.contrast];
-  // The page is a grey canvas. Panels are the light step that sits on it, far enough apart that the canvas
-  // still reads in the gaps (around the rail, above a card). Not pure white: the ramp stays one family.
-  const bg = hslToHex(h, s, dark ? 6.5 : 89), surface = hslToHex(h, s, dark ? 13.5 : 99), surface2 = hslToHex(h, s, dark ? 10 : 95.5);
+  // The page is a light grey canvas. Panels sit a step or two above it, close enough that the grey still reads
+  // as one field; only content you act on (the table, a field, an opened row) reaches the near-white top step.
+  const bg = hslToHex(h, s, dark ? 6.5 : 91), surface = hslToHex(h, s, dark ? 13.5 : 99.5), surface2 = hslToHex(h, s, dark ? 10 : 96);
   const surface3 = hslToHex(h, s + 2, dark ? 18 : 86);
   const lines = dark ? [21 + k * 2, 27 + k * 3, 38 + k * 5] : [89 - k * 2, 84 - k * 3, 74 - k * 5];
   const grounds = [bg, surface, surface2, surface3];

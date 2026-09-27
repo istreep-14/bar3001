@@ -9,6 +9,7 @@ import type { ShiftView } from '../../lib/stats.ts';
 import { TypeBadge } from '../../ui/Badges.tsx';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { TimeField } from '../../ui/TimeField.tsx';
 import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { Stack } from '../../ui/Stack.tsx';
@@ -101,8 +102,8 @@ function AddCrew({ views }: { views: ShiftView[] }) {
           {liveStaff.value.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </label>
-      <label class="field"><span class="label-text">Start</span><input class="input" type="time" value={s} onInput={ev => setStart(ev.currentTarget.value)} /></label>
-      <label class="field"><span class="label-text">End</span><input class="input" type="time" value={e} onInput={ev => setEnd(ev.currentTarget.value)} /></label>
+      <TimeField label="Start" value={s} onChange={setStart} />
+      <TimeField label="End" value={e} pm={false} onChange={setEnd} />
       <button class="btn btn-primary" type="submit" disabled={!ok}><Icon name="plus" /> Add</button>
     </form>
   );

@@ -10,6 +10,7 @@ import { mondayOf } from '../../lib/periods.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { TypeIcon } from '../../ui/Badges.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { TimeField } from '../../ui/TimeField.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { toast } from '../../ui/toast.tsx';
 import styles from './Hub.module.css';
@@ -132,8 +133,8 @@ function HoursDialog() {
       <form onSubmit={save} class={styles.dform}>
         <header><h2 id="hd-title">{e.name}</h2><p>{weekdayShort(sh.date)}, {shortDate(sh.date)} · shift {clockShort(sh.start)}–{clockShort(sh.end)}</p></header>
         <div class={styles.two}>
-          <label class="field"><span class="label-text">Start</span><input class="input" type="time" value={start} onInput={ev => setStart(ev.currentTarget.value)} /></label>
-          <label class="field"><span class="label-text">End</span><input class="input" type="time" value={end} onInput={ev => setEnd(ev.currentTarget.value)} /></label>
+          <TimeField label="Start" value={start} onChange={setStart} />
+          <TimeField label="End" value={end} pm={false} onChange={setEnd} />
         </div>
         <p class={styles.calc} aria-live="polite">{bad ? bad : h == null ? 'Enter both times to see the hours.' : `${dec1(h)} hours`}</p>
         <footer>

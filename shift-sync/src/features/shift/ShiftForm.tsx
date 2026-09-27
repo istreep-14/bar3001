@@ -11,6 +11,7 @@ import { Facts, Ribbon } from '../../ui/charts.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { MixBar, MixKey } from '../../ui/MixBar.tsx';
 import { MonthCalendar } from '../../ui/MonthCalendar.tsx';
+import { TimeField } from '../../ui/TimeField.tsx';
 import { toast } from '../../ui/toast.tsx';
 import styles from './ShiftForm.module.css';
 
@@ -189,15 +190,15 @@ export function ShiftForm({ id }: { id: string }) {
   const err = (k: string) => errors[k] && <span class="error">{errors[k]}</span>;
   const timeFields = (
     <div class={styles.two}>
-      <label class="field"><span class="label-text">Start</span>
-        <input class="input" type="time" value={form.start} aria-invalid={!!errors.start}
-          onInput={e => { const v = e.currentTarget.value; set({ start: v, ...(typeTouched.current ? {} : { type: defaultShiftType(minutes(v)) ?? '' }) }); }} />
+      <div class="field">
+        <TimeField label="Start" value={form.start} invalid={!!errors.start}
+          onChange={v => set({ start: v, ...(typeTouched.current ? {} : { type: defaultShiftType(minutes(v)) ?? '' }) })} />
         {err('start')}
-      </label>
-      <label class="field"><span class="label-text">End</span>
-        <input class="input" type="time" value={form.end} aria-invalid={!!errors.end} onInput={e => set({ end: e.currentTarget.value })} />
+      </div>
+      <div class="field">
+        <TimeField label="End" value={form.end} invalid={!!errors.end} pm={false} onChange={v => set({ end: v })} />
         {err('end')}
-      </label>
+      </div>
     </div>
   );
   const tipsField = (
@@ -381,12 +382,8 @@ export function ShiftForm({ id }: { id: string }) {
                     {form.crew.map(m => (
                       <div class={styles.person} key={m.key} role="group" aria-label={m.name}>
                         <div class={styles.pname}><span>{m.name}</span>{personById(m.staff_id)?.is_user && <small>you</small>}{memberHours(m) != null && <small class="num">{dec1(memberHours(m))}h</small>}</div>
-                        <label class="field"><span class="label-text">Start</span>
-                          <input class="input" type="time" value={m.start} aria-invalid={!!errors['crew' + m.key]} onInput={e => setMember(m.key, { start: e.currentTarget.value, follow: false })} />
-                        </label>
-                        <label class="field"><span class="label-text">End</span>
-                          <input class="input" type="time" value={m.end} aria-invalid={!!errors['crew' + m.key]} onInput={e => setMember(m.key, { end: e.currentTarget.value, follow: false })} />
-                        </label>
+                        <TimeField label="Start" value={m.start} invalid={!!errors['crew' + m.key]} onChange={v => setMember(m.key, { start: v, follow: false })} />
+                        <TimeField label="End" value={m.end} invalid={!!errors['crew' + m.key]} pm={false} onChange={v => setMember(m.key, { end: v, follow: false })} />
                         <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${m.name}`} onClick={() => setForm(f => f && { ...f, crew: f.crew.filter(x => x.key !== m.key) })}><Icon name="trash" /></button>
                         {errors['crew' + m.key] && <span class="error">{errors['crew' + m.key]}</span>}
                       </div>
