@@ -46,10 +46,12 @@ One page of areas (Hourly wage, Google Sheet, Appearance, Your data), each a gre
 their area. Hourly wage shows what the wage comes to this month as a share of the total, with the mix bar.
 
 ## Rail, groups and pages
-Rail one is four groups: **Shift** (Overview, Calendar, Journal, Log, Summary), **Hub** (Crew week, Crew log, Other income), **People**, **Settings**
-(Appearance, Hourly wage, Google Sheet, Your data). Rail two lists the group's pages, so a settings area or a hub table is a page you navigate to, never
-a toggle inside another page. Below the groups: New shift, the sync state, and a one-tap light/dark switch. On a phone the groups are the bottom bar and the
-group's pages a pill strip under the top bar. Routes: `#/hub/week`, `#/settings/look`, and so on; old `#/settings` lands on Google Sheet.
+Rail one is three groups: **Shifts** (Overview, Log, Calendar, Other income), **Crew** (Crew, People) and **Settings** (one page). A page
+with two views has a tab row on the canvas above its panel, each view its own route: Overview is *Trends* (`#/overview`) and *Totals*
+(`#/summary`); Crew is *Week* (`#/hub/week`) and *Every shift* (`#/hub/crew`). Settings is one page whose areas are still linked
+(`#/settings/wages` and so on). Retired pages land somewhere sensible: `#/journal` and `#/log/multi` open the Log. Below the groups:
+New shift, the sync state, and a one-tap light/dark switch. On a phone the groups are the bottom bar and the group's pages a pill strip
+under the top bar.
 
 ## Colour (`lib/theme.ts`, applied by `data/settings.ts`)
 No white-on-black extremes. The page, the panel, the tints and the lines are steps of one ramp built from the background tint (Soft grey, the
@@ -71,12 +73,9 @@ grouped rows, hovers and filled cells. tokens.css holds only the static defaults
 ## KPI parts (`ui/kpi.tsx`)
 One small vocabulary, used wherever a number needs context instead of a bigger box: `Spark` (a few points, no axes), `DeltaPill` (▲/▼ + %,
 never colour alone; hours are neutral), `Meter` (a figure against its ceiling: rate vs your best, hours vs 40), `MiniStat` (label, value,
-delta, spark on one line). Used by the Overview tiles, the Journal's rows and week heads, the Calendar's month line and the Log's footer.
+delta, spark on one line). Used by the Overview tiles, the Calendar's month line and the side columns.
 Add a KPI by composing these, not by adding a card.
 
-## Journal
-The relaxed twin of the Log: same shifts, same period control, same drawer, one roomy multi-line row each (date; when, who was on, note;
-total with its rate and a delta against your average), grouped by Mon–Sun week with the week's own KPIs. The Log stays the dense grid.
 
 ## Overview
 Recent first, and trends over noise. Its own two controls (not the Log's period): the span (this week, 2 weeks, this month) and the trend

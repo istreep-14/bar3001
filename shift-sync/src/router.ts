@@ -1,16 +1,16 @@
 import { computed, signal } from '@preact/signals';
 
 /* Hash routing, so every state is a link and Back closes whatever opened, with no server rewrite rules.
- *   #/overview  #/calendar  #/journal  #/log  #/summary  #/hub/{week,crew,income}  #/people  #/settings/{look,wages,sync,data}   the screens
+ *   #/overview  #/calendar  #/log  #/summary  #/hub/{week,crew,income}  #/people  #/settings/{look,wages,sync,data}   the screens
  *   ?shift=<id>                          the shift drawer (a read-only look), over ANY screen
  *   ?form=<id|new>[&date=YYYY-MM-DD]     the shift form dialog (add or edit); `date` pre-fills a new shift
  *   ?person=<id|new>                     the person drawer (one drawer at a time) */
-export type Screen = 'overview' | 'calendar' | 'journal' | 'log' | 'summary' | 'hub/week' | 'hub/crew' | 'hub/income' | 'people'
+export type Screen = 'overview' | 'calendar' | 'log' | 'summary' | 'hub/week' | 'hub/crew' | 'hub/income' | 'people'
   | 'settings/look' | 'settings/wages' | 'settings/sync' | 'settings/data';
-export const SCREENS: Screen[] = ['overview', 'calendar', 'journal', 'log', 'summary', 'hub/week', 'hub/crew', 'hub/income', 'people',
+export const SCREENS: Screen[] = ['overview', 'calendar', 'log', 'summary', 'hub/week', 'hub/crew', 'hub/income', 'people',
   'settings/look', 'settings/wages', 'settings/sync', 'settings/data'];
 /** Links from before a page moved still land somewhere sensible. */
-const LEGACY: Record<string, Screen> = { earnings: 'overview', rate: 'overview', settings: 'settings/sync', hub: 'hub/week', 'log/multi': 'log' };
+const LEGACY: Record<string, Screen> = { earnings: 'overview', rate: 'overview', settings: 'settings/sync', hub: 'hub/week', 'log/multi': 'log', journal: 'log' };
 
 const read = () => location.hash.replace(/^#\/?/, '');
 const raw = signal(read());
