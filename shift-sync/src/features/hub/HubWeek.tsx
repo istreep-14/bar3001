@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { hoursWorked, toHHMM, toMin } from '../../core/core.generated.js';
-import { liveStaff, liveViews, removeCrewLine, saveCrewLine } from '../../data/store.ts';
+import { liveStaff, liveViews, personById, removeCrewLine, saveCrewLine } from '../../data/store.ts';
 import { addDays, today, weekStart } from '../../lib/dates.ts';
 import { clockPlain, clockShort, dec1, shortDate, weekdayShort } from '../../lib/format.ts';
 import { crewWeek } from '../../lib/hub.ts';
@@ -72,7 +72,7 @@ export function HubWeek() {
             <tbody>
               {g.rows.map(r => (
                 <tr key={r.staff_id}>
-                  <th class="l strong" scope="row">{r.name}{liveStaff.value.find(p => p.id === r.staff_id)?.is_user && <span class={styles.you}>you</span>}</th>
+                  <th class="l strong" scope="row">{r.name}{personById(r.staff_id)?.is_user && <span class={styles.you}>you</span>}</th>
                   {r.cells.map(c => <td key={c.date}><CellButtons cell={c} staff_id={r.staff_id} name={r.name} /></td>)}
                   <td class="strong">{r.hours ? dec1(r.hours) : '—'}</td>
                 </tr>

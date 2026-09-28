@@ -1,8 +1,8 @@
 import { pendingCount } from '../data/store.ts';
 import { lastSynced, state, sync, syncMessage } from '../data/sync.ts';
 import { go } from '../router.ts';
-import { Icon } from './Icon.tsx';
-import type { IconName } from './Icon.tsx';
+import { Icon } from '../ui/Icon.tsx';
+import type { IconName } from '../ui/Icon.tsx';
 import styles from './SyncPill.module.css';
 
 const ago = (t: number): string => {

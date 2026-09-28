@@ -8,7 +8,7 @@ import { Icon } from '../../ui/Icon.tsx';
 import { StatList } from '../../ui/kpi.tsx';
 import { periodItems } from '../../ui/SideStats.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
-import { ShiftDetails } from '../shift/ShiftDetails.tsx';
+import { ShiftDetails } from '../../parts/ShiftDetails.tsx';
 import { MONTH_NAMES, MonthCalendar, MonthNav } from '../../ui/MonthCalendar.tsx';
 import type { Month } from '../../ui/MonthCalendar.tsx';
 import { StackView } from './StackView.tsx';

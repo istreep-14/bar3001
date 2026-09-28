@@ -1,13 +1,13 @@
-import { personById, removeShift, undoRemove } from '../../data/store.ts';
-import { DASH, clockPlain, dollars, hours, money } from '../../lib/format.ts';
-import { groupShifts, isPending, rowDay } from '../../lib/groups.ts';
-import type { GroupBy } from '../../lib/groups.ts';
-import type { ShiftView } from '../../lib/stats.ts';
-import { closeSheet, openForm, openSheet } from '../../router.ts';
-import { Avatar } from '../../ui/Avatar.tsx';
-import { Icon } from '../../ui/Icon.tsx';
-import { toast } from '../../ui/toast.tsx';
-import { ShiftDetails } from '../shift/ShiftDetails.tsx';
+import { personById, removeShift, undoRemove } from '../data/store.ts';
+import { DASH, clockPlain, dollars, hours, money } from '../lib/format.ts';
+import { groupShifts, isPending, rowDay } from '../lib/groups.ts';
+import type { GroupBy } from '../lib/groups.ts';
+import type { ShiftView } from '../lib/stats.ts';
+import { closeSheet, openForm, openSheet } from '../router.ts';
+import { Avatar } from '../ui/Avatar.tsx';
+import { Icon } from '../ui/Icon.tsx';
+import { toast } from '../ui/toast.tsx';
+import { ShiftDetails } from './ShiftDetails.tsx';
 import styles from './ShiftLog.module.css';
 
 /* The desktop Log. Rows are grouped by month or week: a band names the group once (with a count and the group's

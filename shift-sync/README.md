@@ -15,13 +15,17 @@ core/                 core.js + core.d.ts: the sync rules. Plain ES5 so Apps Scr
 scripts/sync-core.mjs derives apps-script/core.gs and src/core/core.generated.* from core/ (runs before dev/build/test)
 apps-script/          Code.gs + core.gs (generated): the Sheet side
 src/
-  data/               db.ts (IndexedDB), store.ts (signals + actions), sync.ts, settings.ts
-  lib/                pure helpers: dates, format, stats (unit-tested)
-  features/           overview/, calendar/, log/, people/, settings/, shift/ (the form dialog + the read-only drawer): one folder per screen
-  ui/                 shared pieces: charts, MonthCalendar, Table, PanelHead, DrawerFrame, ScopeControl, Badges, Icon, toast, SyncPill
-  styles/             tokens.css (all colors/type/spacing, light + dark, Poppins), base.css, ui.css (buttons, fields, table), bar.css (charts, tiles, calendar, panels)
-  router.ts           hash routes: #/overview #/calendar #/log #/people #/settings, plus ?shift=<id>, ?form=<id|new> and ?person=<id|new>
-tests/                node:test: core rules, Code.gs against a fake Sheet, stats
+  data/               db.ts (IndexedDB), store.ts (signals, id lookups, actions), sync.ts, settings.ts, scope.ts, persisted.ts
+  lib/                pure helpers: dates (WEEK_START), format, stats, groups, dashboard, trends, ruler, time12 (unit-tested)
+  features/           one folder per page: dashboard/, overview/ (Insights), log/, calendar/, summary/ (Totals), hub/ (Crew, Other income),
+                      people/, settings/, shift/ (the form dialog: model.ts + pages.tsx, and the read-only drawer)
+  parts/              domain parts more than one page uses and that may read the store: ShiftDetails, ShiftLog, SyncPill
+  ui/                 generic parts driven by props: charts, MonthCalendar, Table, TimeField, MixBar, SideStats, EmptyState, Icon, toast...
+  styles/             tokens.css (all colors/type/spacing, light + dark), base.css, ui.css (buttons, fields, table, chips),
+                      layout.css (panels, split + side column), charts.css (charts, tiles, calendars, KPI parts)
+  router.ts           hash routes: #/dashboard #/overview #/summary #/log #/calendar #/hub/* #/people #/settings/*, plus ?shift=, ?form=, ?person=
+tests/                node:test: core rules, Code.gs against a fake Sheet, every lib/ helper, the form model, and rules that
+                      keep the code honest (one week everywhere, layer boundaries, identical dark palettes)
 ```
 
 ## Develop

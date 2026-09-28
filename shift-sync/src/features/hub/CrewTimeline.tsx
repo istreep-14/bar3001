@@ -1,4 +1,4 @@
-import { liveStaff } from '../../data/store.ts';
+import { personById } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
 import { clockPlain, dec1, weekdayShort } from '../../lib/format.ts';
 import { place, rulerFor, tickLabel } from '../../lib/ruler.ts';
@@ -38,7 +38,7 @@ export function CrewTimeline({ days, shiftsPerDay, dayHours, onEdit }: {
                   return p && <span key={v.shift.id} class={styles.lane}><span class={`${styles.bar} ${styles.nobody}`} style={{ left: `${p.left}%`, width: `${p.width}%` }}>Nobody logged</span></span>;
                 }
                 return crew.map(c => {
-                  const person = liveStaff.value.find(x => x.id === c.staff_id), name = person?.name ?? c.name ?? '?';
+                  const person = personById(c.staff_id), name = person?.name ?? c.name ?? '?';
                   const p = place(c.start, c.end, r);
                   const label = `${name}${person?.is_user ? ' (you)' : ''}`;
                   return (

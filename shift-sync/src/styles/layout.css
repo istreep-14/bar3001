@@ -1,0 +1,44 @@
+/* ═══ Layout: the page's panel, its head and body, the table-page split with its side column, and the Calendar's
+   day card. Everything a page is laid out with; what goes inside (charts, tiles, calendars) is in charts.css. ═══ */
+/* ---- panels -------------------------------------------------------------------
+   The page title sits on the grey canvas. The body steps up to --surface-2, one grey lighter
+   than the canvas, so the panel itself reads as a shape; a table or card inside it steps up
+   again to --surface (the lightest, most prominent grey) so content stands apart from its panel.
+   A table page is .fill: the panel takes the rest of the screen and scrolls inside. */
+.panel { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); padding: var(--s-1) var(--s-1) 0; border: 0; background: transparent; }
+.panel-head h2 { font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-semi); letter-spacing: -0.02em; }
+.panel-body { display: grid; gap: var(--s-4); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
+.panel-body.open { padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
+@media (max-width: 720px) {
+  .panel-head, .panel-body { padding-inline: var(--s-3); }
+}
+.panel-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-2) var(--s-4); min-width: 0; }
+/* a card whose body is one table: the rows run to the rounded edge */
+.panel-body.flush { padding: 0; gap: 0; }
+
+/* table pages: the list is the wide card, a short summary sits beside it. Below the breakpoint the summary stacks on top. */
+.split { display: grid; gap: var(--shell-gap); align-items: start; min-width: 0; min-height: 0; }
+.split > .side { order: -1; }
+@media (min-width: 64rem) {
+  .split { grid-template-columns: minmax(0, 1fr) 18rem; }
+  .split > .side { order: 0; }
+}
+.side { align-content: start; gap: var(--s-5); }
+.side-block { display: grid; gap: var(--s-2); justify-items: start; }
+.side-togs { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.side-note { margin: 0; font-size: var(--fs-meta); line-height: 1.45; }
+/* the Calendar's open shift: a white card in the side column (what you act on sits on the top surface) */
+.day-card { justify-items: stretch; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }
+.day-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2); }
+.day-card-head .h-title { margin: 0; }
+.day-card-actions { display: flex; gap: var(--s-2); }
+@media (min-width: 56rem) {
+  .fill { flex: 1; min-height: 0; }
+  .fill > .split { flex: 1; min-height: 0; align-items: stretch; grid-template-rows: auto minmax(0, 1fr); }
+  .fill .body { min-height: 0; display: flex; flex-direction: column; }
+}
+@media (min-width: 64rem) {
+  .fill > .split { grid-template-rows: minmax(0, 1fr); }
+  .fill .side { align-self: start; max-height: 100%; overflow: auto; }
+}
