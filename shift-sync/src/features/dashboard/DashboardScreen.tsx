@@ -56,10 +56,11 @@ export function DashboardScreen() {
   const bestDay = w.days.filter(d => d.hours).sort((a, b) => b.tips / b.hours - a.tips / a.hours)[0];
 
   // Who was on this week's shifts: hours only, never money per person.
-  const crew = new Map<string, { name: string; you: boolean; shifts: number; hours: number }>();
-  for (const d of w.days) for (const v of d.views) for (const c of v.crew) {
+  // Scheduled shifts (no money in yet) don't count, the same as the figures across the top.
+  const crew = new Map<string, { id: string; name: string; you: boolean; shifts: number; hours: number }>();
+  for (const d of w.days) for (const v of d.views) if (!isPending(v)) for (const c of v.crew) {
     const p = liveStaff.value.find(x => x.id === c.staff_id);
-    const row = crew.get(c.staff_id) ?? { name: p?.name ?? c.name ?? '?', you: !!p?.is_user, shifts: 0, hours: 0 };
+    const row = crew.get(c.staff_id) ?? { id: c.staff_id, name: p?.name ?? c.name ?? '?', you: !!p?.is_user, shifts: 0, hours: 0 };
     row.shifts++; row.hours += hoursWorked(c.start, c.end) ?? 0;
     crew.set(c.staff_id, row);
   }
@@ -93,9 +94,9 @@ export function DashboardScreen() {
 
         <aside class={styles.side} aria-label="This week">
           <Card title={offset === 0 ? 'This week, day by day' : 'Last week, day by day'} to="calendar" link="Open the calendar">
-            <div class={styles.days} role="group" aria-label="Hours each day this week">
+            <div class={styles.days} role="group" aria-label={offset === 0 ? 'Hours each day this week' : 'Hours each day last week'}>
               {w.days.map(d => {
-                const first = d.views[0], sel = !!first && d.views.some(v => v.shift.id === open);
+                const first = d.views.find(v => !isPending(v)) ?? d.views[0], sel = !!first && d.views.some(v => v.shift.id === open);
                 const status = !first ? 'no shift' : d.views.every(isPending) ? 'scheduled, no tips yet' : `${hours(d.hours)}, ${dollars(d.tips)}`;
                 const label = `${weekdayShort(d.date)} ${shortDate(d.date)}: ${status}`;
                 return (
@@ -144,7 +145,7 @@ export function DashboardScreen() {
           <Card title={offset === 0 ? 'Crew this week' : 'Crew last week'} to="hub/week" link="Open crew week">
             {crewRows.length === 0 ? <p class="muted side-note">No one logged on that week's shifts.</p> : (
               <dl class={styles.list}>
-                {crewRows.map(r => <div key={r.name}><dt>{r.name}{r.you && <span class="muted"> you</span>}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
+                {crewRows.map(r => <div key={r.id}><dt>{r.name}{r.you && <span class="muted"> you</span>}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
               </dl>
             )}
           </Card>
