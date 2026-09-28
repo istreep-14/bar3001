@@ -1,7 +1,7 @@
 import type { MutableRef } from 'preact/hooks';
 import { CATEGORIES, defaultShiftType, wageRateFor } from '../../../core/core.generated.js';
 import type { Category, ShiftType, Local, Staff } from '../../../core/core.generated.js';
-import { liveStaff, liveViews, liveWages, personById } from '../../../data/store.ts';
+import { liveViews, liveWages, me, personById } from '../../../data/store.ts';
 import { dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../../lib/format.ts';
 import type { IncomePart } from '../../../lib/groups.ts';
 import type { ShiftView, Summary } from '../../../lib/stats.ts';
@@ -41,7 +41,7 @@ export interface Ctx {
 }
 
 /** You, if the roster marks someone as you: added to a new shift's crew, and offered first on the Crew page. */
-export const meOnRoster = () => liveStaff.value.find(p => p.is_user);
+export const meOnRoster = () => me.value;
 
 /** Start and end, on Overview and on the Time page. Picking a start fills in Day or Night until you choose one. */
 function TimeFields({ c }: { c: Ctx }) {

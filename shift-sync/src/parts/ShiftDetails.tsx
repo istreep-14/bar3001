@@ -1,9 +1,9 @@
-import { hoursWorked } from '../../core/core.generated.js';
-import { personById } from '../../data/store.ts';
-import { DASH, clockPlain, dec1, hours, money } from '../../lib/format.ts';
-import { incomeParts } from '../../lib/groups.ts';
-import type { ShiftView } from '../../lib/stats.ts';
-import { MixBar, MixKey } from '../../ui/MixBar.tsx';
+import { hoursWorked } from '../core/core.generated.js';
+import { personById } from '../data/store.ts';
+import { DASH, clockPlain, dec1, hours, money } from '../lib/format.ts';
+import { incomeParts } from '../lib/groups.ts';
+import type { ShiftView } from '../lib/stats.ts';
+import { MixBar, MixKey } from '../ui/MixBar.tsx';
 import styles from './ShiftDetails.module.css';
 
 /* One shift, read-only, as stacked lists: Time, Crew, Money (label left, detail in the middle, amount right, a bold

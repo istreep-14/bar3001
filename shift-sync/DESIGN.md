@@ -22,7 +22,7 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
 
 ## Tokens (`tokens.css`)
 - **Surfaces:** page `--bg` < panel `--surface` (1px `--line`, soft shadow) < raised (dialog, drawer, tooltip: `--shadow`).
-  `--surface-2` is an input's or tile's fill, `--surface-3` a hover. Dark mode is written twice; keep the two blocks identical.
+  `--surface-2` is an input's or tile's fill, `--surface-3` a hover. Dark mode is written twice (a test keeps the two blocks identical).
 - **Type:** Poppins, self-hosted. Title 16, body 14, small 12, labels 12 semibold (sentence case), tiles 22/30. A mouse gets a denser scale.
 - **Times:** always 12-hour. Reading form `6:00 PM` (`clockPlain`) in rows, cards, lists and labels; the compact `6:00p` (`clockShort`)
   only inside dense cells (calendar days, the crew grid); every editable time is a `TimeField`.
@@ -131,4 +131,10 @@ are free text. It syncs to the Staff tab.
 - No raw colour or size in a component: tokens only.
 - One of each: table, calendar, drawer, form, empty state, toast.
 - A new page is a folder in `features/`, an entry in `router.ts` and in `app.tsx`'s groups, and a panel.
+- **Where a part lives says what it may touch** (`tests/layers.test.ts` checks it): `ui/` is generic and driven by props (it may
+  navigate, never read or write data); `parts/` holds domain parts more than one page uses (a shift's card, the grouped list, the
+  sync pill) and may read the store; `features/<page>/` is one page and what only it uses. `parts/` never imports a page.
+- **Styles:** `tokens.css` values, `base.css` type roles, `ui.css` controls (buttons, fields, table, chips, time field), `layout.css`
+  how a page is laid out (panel, split, side column), `charts.css` what goes in it (charts, tiles, calendars, KPI parts), and a
+  `.module.css` beside any component with styles of its own. The two dark blocks in `tokens.css` are checked identical by a test.
 - Nothing decorative that encodes nothing: no icons where a word will do, no colour without a label.

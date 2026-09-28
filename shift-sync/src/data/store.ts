@@ -46,12 +46,17 @@ export const liveViews = computed<ShiftView[]>(() => {
 /** The roster, by name. */
 export const liveStaff = computed<Local<Staff>[]>(() =>
   Object.values(staffRows.value).filter(p => !p.deleted).sort((a, b) => a.name.localeCompare(b.name)));
-export const personById = (id: string): Local<Staff> | undefined => liveStaff.value.find(p => p.id === id);
+/* Lookups by id are kept as maps next to the lists, so a row or a card can ask for its person or shift without scanning. */
+const staffIndex = computed(() => new Map(liveStaff.value.map(p => [p.id, p])));
+export const personById = (id: string): Local<Staff> | undefined => staffIndex.value.get(id);
+/** The roster's "this is me", if someone is marked. */
+export const me = computed<Local<Staff> | undefined>(() => liveStaff.value.find(p => p.is_user));
 
 export const pendingCount = computed(() =>
   [shifts.value, incomeRows.value, staffRows.value, crewRows.value, wageRows.value].reduce((n, m) => n + Object.values(m).filter(r => r._dirty).length, 0));
 
-export const viewById = (id: string): ShiftView | undefined => liveViews.value.find(v => v.shift.id === id);
+const viewIndex = computed(() => new Map(liveViews.value.map(v => [v.shift.id, v])));
+export const viewById = (id: string): ShiftView | undefined => viewIndex.value.get(id);
 
 export async function boot() {
   const [s, i, p, c, w] = await Promise.all([loadAll('rows'), loadAll('income'), loadAll('staff'), loadAll('crew'), loadAll('wages')]);

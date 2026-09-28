@@ -18,7 +18,7 @@ import { drawerAsk, form, go, justNavigated, openForm, person, screen, sheet } f
 import type { Screen } from './router.ts';
 import { Icon } from './ui/Icon.tsx';
 import type { IconName } from './ui/Icon.tsx';
-import { SyncPill } from './ui/SyncPill.tsx';
+import { SyncPill } from './parts/SyncPill.tsx';
 import { Toaster } from './ui/toast.tsx';
 import { isDesktop } from './ui/viewport.ts';
 

@@ -1,6 +1,6 @@
 import { hoursWorked } from '../../core/core.generated.js';
 import { signal } from '@preact/signals';
-import { liveStaff, liveViews, ready } from '../../data/store.ts';
+import { liveViews, personById, ready } from '../../data/store.ts';
 import { addDays, today } from '../../lib/dates.ts';
 import { bestShifts, waiting, weekCompare } from '../../lib/dashboard.ts';
 import { isPending } from '../../lib/groups.ts';
@@ -9,7 +9,7 @@ import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
 import { DeltaPill } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
-import { ShiftLog } from '../log/ShiftLog.tsx';
+import { ShiftLog } from '../../parts/ShiftLog.tsx';
 import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
 import styles from './DashboardScreen.module.css';
 
@@ -58,7 +58,7 @@ export function DashboardScreen() {
   // Scheduled shifts (no money in yet) don't count, the same as the figures across the top.
   const crew = new Map<string, { id: string; name: string; you: boolean; shifts: number; hours: number }>();
   for (const d of w.days) for (const v of d.views) if (!isPending(v)) for (const c of v.crew) {
-    const p = liveStaff.value.find(x => x.id === c.staff_id);
+    const p = personById(c.staff_id);
     const row = crew.get(c.staff_id) ?? { id: c.staff_id, name: p?.name ?? c.name ?? '?', you: !!p?.is_user, shifts: 0, hours: 0 };
     row.shifts++; row.hours += hoursWorked(c.start, c.end) ?? 0;
     crew.set(c.staff_id, row);

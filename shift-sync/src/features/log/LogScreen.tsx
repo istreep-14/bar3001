@@ -12,7 +12,7 @@ import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftCard } from './ShiftCard.tsx';
-import { ShiftLog } from './ShiftLog.tsx';
+import { ShiftLog } from '../../parts/ShiftLog.tsx';
 import { EmptyPeriod, FirstShiftEmpty } from '../../ui/EmptyState.tsx';
 import { SideStats, periodItems } from '../../ui/SideStats.tsx';
 import styles from './LogScreen.module.css';
