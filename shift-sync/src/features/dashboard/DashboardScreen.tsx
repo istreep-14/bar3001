@@ -7,11 +7,10 @@ import { isPending } from '../../lib/groups.ts';
 import { dec1, dollars, hours, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
 import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
-import { EmptyState } from '../../ui/EmptyState.tsx';
-import { Icon } from '../../ui/Icon.tsx';
 import { DeltaPill } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ShiftLog } from '../log/ShiftLog.tsx';
+import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
 import styles from './DashboardScreen.module.css';
 
 /* Dashboard: this week at a glance, and a door to every other page. The numbers across the top are this week against
@@ -36,9 +35,9 @@ export function DashboardScreen() {
       <section class="panel" aria-labelledby="dash-title">
         <PanelHead title="Dashboard" id="dash-title" />
         <div class="panel-body">
-          <EmptyState title="Log your first shift" action={<button class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" /> New shift</button>}>
+          <FirstShiftEmpty>
             This week, your best nights and the crew fill in as you log shifts.
-          </EmptyState>
+          </FirstShiftEmpty>
         </div>
       </section>
     );

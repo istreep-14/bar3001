@@ -7,15 +7,15 @@ import { liveViews, ready, removeIncomeLine, saveIncomeLine } from '../../data/s
 import { dateCell, dollars, moneyWhole, weekdayShort } from '../../lib/format.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { TypeBadge } from '../../ui/Badges.tsx';
-import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
-import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { Stack } from '../../ui/Stack.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
 import { toast } from '../../ui/toast.tsx';
+import { EmptyState } from '../../ui/EmptyState.tsx';
+import { SideStats } from '../../ui/SideStats.tsx';
 import styles from './Hub.module.css';
 
 /* Other income: every income line besides tips and wage (chump, cash, Venmo, consideration, overtime), one row each, editable in place.
@@ -75,12 +75,7 @@ export function HubIncome() {
           <AddIncome views={views} />
           {table}
         </div>
-        <aside class="panel-body side" aria-label="This period">
-          <div class="side-block">
-            <h3 class="label">This period</h3>
-            <StatList items={[{ label: 'Lines', value: rows.length }, { label: 'Total', value: moneyWhole(sum) }]} />
-          </div>
-        </aside>
+        <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Total', value: moneyWhole(sum) }]} />
       </div>
     </section>
   );

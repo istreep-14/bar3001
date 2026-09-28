@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { PAGE_SIZES, paginate, sortRows } from '../lib/table.ts';
 import type { Dir, SortValue } from '../lib/table.ts';
 import { Icon } from './Icon.tsx';
+import { oneOf, persisted } from '../data/persisted.ts';
 
 export interface Column<T> {
   key: string;
@@ -39,13 +40,13 @@ interface Props<T> {
 }
 
 const cls = (c: Column<any>) => [c.groupStart && 'gs', c.className].filter(Boolean).join(' ') || undefined;
-const SIZE_KEY = 'pagesize';
-const readSize = (): number => { try { const n = Number(localStorage.getItem(SIZE_KEY)); return (PAGE_SIZES as readonly number[]).includes(n) && localStorage.getItem(SIZE_KEY) !== null ? n : 50; } catch { return 50; } };
+/** Rows per page, remembered once for every table. */
+const [pageSize, setPageSize] = persisted<number>('pagesize', oneOf(PAGE_SIZES), 50);
 
 /** The one grid component: sortable heads, paging, arrow-key row navigation. Plain rows, no grouping. */
 export function Table<T>({ rows, columns, rowKey, onRow, selectedId, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
   const [sort, setSort] = useState(defaultSort ?? null);
-  const [size, setSize] = useState(readSize);
+  const size = pageSize.value;
   const [page, setPage] = useState(0);
   useEffect(() => setPage(0), [rows.length, sort?.key, sort?.dir, size]);
 
@@ -118,7 +119,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, label, defa
           {footer}
           {paged && rows.length > PAGE_SIZES[0] && <><label class="pager-size">Rows
             <select class="input" value={size} aria-label="Rows per page"
-              onChange={e => { const n = Number(e.currentTarget.value); setSize(n); try { localStorage.setItem(SIZE_KEY, String(n)); } catch { /* private mode */ } }}>
+              onChange={e => setPageSize(Number(e.currentTarget.value))}>
               {PAGE_SIZES.map(n => <option key={n} value={n}>{n === 0 ? 'All' : n}</option>)}
             </select>
           </label>

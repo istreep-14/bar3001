@@ -7,16 +7,16 @@ import { liveStaff, liveViews, personById, ready, removeCrewLine, saveCrewLine }
 import { dateCell, dec1, weekdayShort } from '../../lib/format.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { TypeBadge } from '../../ui/Badges.tsx';
-import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { TimeField } from '../../ui/TimeField.tsx';
-import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { Stack } from '../../ui/Stack.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
 import { toast } from '../../ui/toast.tsx';
+import { EmptyState } from '../../ui/EmptyState.tsx';
+import { SideStats } from '../../ui/SideStats.tsx';
 import styles from './Hub.module.css';
 
 /* Crew log: every bartender's hours on every shift in the period, one row each. Times edit in place (a change saves when you leave the
@@ -68,12 +68,7 @@ export function HubCrew() {
           <AddCrew views={views} />
           {table}
         </div>
-        <aside class="panel-body side" aria-label="This period">
-          <div class="side-block">
-            <h3 class="label">This period</h3>
-            <StatList items={[{ label: 'Lines', value: rows.length }, { label: 'Hours', value: dec1(hoursSum), hint: 'Each bartender’s hours, added up' }]} />
-          </div>
-        </aside>
+        <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Hours', value: dec1(hoursSum), hint: 'Each bartender’s hours, added up' }]} />
       </div>
     </section>
   );

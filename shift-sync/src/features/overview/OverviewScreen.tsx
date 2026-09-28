@@ -1,4 +1,3 @@
-import { signal } from '@preact/signals';
 import { liveViews, ready } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
 import { byRecent } from '../../lib/stats.ts';
@@ -10,14 +9,15 @@ import { focusWindow, histogram, hoursPerWeek, inRange, pctChange, slotInsight, 
 import type { Focus } from '../../lib/trends.ts';
 import { ComboChart, ColumnChart, HBars, Histogram, Tiles } from '../../ui/charts.tsx';
 import { DeltaPill } from '../../ui/kpi.tsx';
-import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Stack } from '../../ui/Stack.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { PartyBadge, TypeBadge } from '../../ui/Badges.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
-import { openForm, openSheet } from '../../router.ts';
+import { openSheet } from '../../router.ts';
 import { MiniCalendar } from './MiniCalendar.tsx';
+import { oneOf, persisted } from '../../data/persisted.ts';
+import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
 
 /* Overview: what recent work is doing to your rate. Recent first: this week (or two weeks, or this month) against the
  * span just before it, the newest shift against your last few of the same weekday and type, then trends by week, where
@@ -28,10 +28,8 @@ const WEEKDAY_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 const FOCUS: { id: Focus; label: string }[] = [{ id: 'week', label: 'This week' }, { id: 'fortnight', label: '2 weeks' }, { id: 'month', label: 'This month' }];
 const TREND: { n: number; label: string }[] = [{ n: 12, label: '12 wk' }, { n: 26, label: '26 wk' }, { n: 52, label: '52 wk' }, { n: 0, label: 'All' }];
 
-const load = <T,>(key: string, ok: (v: unknown) => v is T, fallback: T): T => { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); if (ok(v)) return v; } catch { /* default */ } return fallback; };
-const save = (key: string, v: unknown) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* private mode */ } };
-const focus = signal<Focus>(load('ov:focus', (v): v is Focus => FOCUS.some(f => f.id === v), 'week'));
-const trend = signal<number>(load('ov:trend', (v): v is number => TREND.some(t => t.n === v), 12));
+const [focus, setFocus] = persisted<Focus>('ov:focus', oneOf(FOCUS.map(f => f.id)), 'week');
+const [trend, setTrend] = persisted<number>('ov:trend', oneOf(TREND.map(t => t.n)), 12);
 
 const hrs = (v: number) => `${+v.toFixed(1)}h`;
 const rate = (v: number | null) => (v == null ? '—' : `$${v.toFixed(1)}`);
@@ -44,18 +42,18 @@ export function OverviewScreen() {
         <h2 id="ov-title">Insights</h2>
         <div class="panel-tools">
           <div class="seg" role="radiogroup" aria-label="Recent span">
-            {FOCUS.map(f => <label key={f.id}><input type="radio" name="ov-focus" checked={focus.value === f.id} onChange={() => { focus.value = f.id; save('ov:focus', f.id); }} /><span>{f.label}</span></label>)}
+            {FOCUS.map(f => <label key={f.id}><input type="radio" name="ov-focus" checked={focus.value === f.id} onChange={() => setFocus(f.id)} /><span>{f.label}</span></label>)}
           </div>
           <div class="seg" role="radiogroup" aria-label="Trend length">
-            {TREND.map(t => <label key={t.n}><input type="radio" name="ov-trend" checked={trend.value === t.n} onChange={() => { trend.value = t.n; save('ov:trend', t.n); }} /><span>{t.label}</span></label>)}
+            {TREND.map(t => <label key={t.n}><input type="radio" name="ov-trend" checked={trend.value === t.n} onChange={() => setTrend(t.n)} /><span>{t.label}</span></label>)}
           </div>
         </div>
       </header>
       <div class="panel-body">
         {ready.value && all.length === 0 ? (
-          <EmptyState title="Log your first shift" action={<button class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" /> New shift</button>}>
+          <FirstShiftEmpty>
             Charts fill in as you log shifts. Everything saves on this device first, so it works with no signal.
-          </EmptyState>
+          </FirstShiftEmpty>
         ) : <Body all={all} />}
       </div>
     </section>

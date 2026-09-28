@@ -1,29 +1,28 @@
-import { signal } from '@preact/signals';
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
 import { addDays } from '../../lib/dates.ts';
-import { dec1, dollars, hours, moneyWhole, perHour, shortDate } from '../../lib/format.ts';
+import { dec1, dollars, perHour, shortDate } from '../../lib/format.ts';
 import { BYS, isTime, summaryRows } from '../../lib/summary.ts';
 import type { By, SumRow } from '../../lib/summary.ts';
 import { summarize } from '../../lib/stats.ts';
 import { pctChange } from '../../lib/trends.ts';
-import { openForm } from '../../router.ts';
-import { EmptyState } from '../../ui/EmptyState.tsx';
-import { Icon } from '../../ui/Icon.tsx';
-import { DeltaPill, StatList } from '../../ui/kpi.tsx';
+
+import { DeltaPill } from '../../ui/kpi.tsx';
 import { Stack } from '../../ui/Stack.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
+import { oneOf, persisted } from '../../data/persisted.ts';
+import { EmptyPeriod, FirstShiftEmpty } from '../../ui/EmptyState.tsx';
+import { SideStats, periodItems } from '../../ui/SideStats.tsx';
 import styles from './SummaryScreen.module.css';
 
 /* Summary: the Log's grouped-row totals as a table of their own. Fold the shifts in the period into weeks, months, years, weekdays,
  * types or party / no party, and see every column summed for each; time groups also show the change against the one before. */
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const by = signal<By>((() => { try { const v = localStorage.getItem('sum:by'); return BYS.some(b => b.id === v) ? (v as By) : 'week'; } catch { return 'week'; } })());
-const setBy = (b: By) => { by.value = b; try { localStorage.setItem('sum:by', b); } catch { /* private mode */ } };
+const [by, setBy] = persisted<By>('sum:by', oneOf(BYS.map(b => b.id)), 'week');
 
 const label = (b: By, key: string): string => {
   if (b === 'week') return `${shortDate(key)} – ${shortDate(addDays(key, 6))}`;
@@ -61,9 +60,9 @@ export function SummaryScreen() {
   ];
 
   const table = ready.value && all.length === 0
-    ? <EmptyState title="Log your first shift" action={<button class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" /> Add shift</button>}>Totals appear here as you log shifts.</EmptyState>
+    ? <FirstShiftEmpty>Totals appear here as you log shifts.</FirstShiftEmpty>
     : ready.value && views.length === 0
-      ? <EmptyState title="No shifts in this period">Widen the period above, or choose All, to see the rest.</EmptyState>
+      ? <EmptyPeriod />
       : <Table fill label="Summary" rows={rows} columns={columns} rowKey={r => r.key} defaultSort={time ? { key: 'label', dir: 'desc' } : undefined} key={b} />;
 
   return (
@@ -76,19 +75,7 @@ export function SummaryScreen() {
       </PanelHead>
       <div class="split">
         <div class={`panel-body flush ${styles.body}`}>{table}</div>
-        <aside class="panel-body side" aria-label="This period">
-          <div class="side-block">
-            <h3 class="label">This period</h3>
-            <StatList items={[
-              { label: 'Shifts', value: s.shifts },
-              { label: 'Hours', value: hours(s.hours) },
-              { label: 'Tips', value: moneyWhole(s.tips) },
-              { label: 'Rate', value: perHour(s.tph), hint: 'Tips over hours worked' },
-              { label: 'Total', value: moneyWhole(s.total), hint: 'Tips, estimated wage and other income' }
-            ]} />
-            <p class="muted side-note">Each row folds the shifts in that group. Rate is tips over hours.</p>
-          </div>
-        </aside>
+        <SideStats items={periodItems(s)} note="Each row folds the shifts in that group. Rate is tips over hours." />
       </div>
     </section>
   );

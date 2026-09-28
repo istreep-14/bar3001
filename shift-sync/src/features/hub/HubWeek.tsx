@@ -14,6 +14,7 @@ import { Icon } from '../../ui/Icon.tsx';
 import { TimeField } from '../../ui/TimeField.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { toast } from '../../ui/toast.tsx';
+import { oneOf, persisted } from '../../data/persisted.ts';
 import styles from './Hub.module.css';
 
 /* Crew week: every bartender as a row, Monday to Sunday across, each cell that person's hours on that day's shift.
@@ -24,8 +25,7 @@ const extra = signal<string[]>([]);
 const editing = signal<{ view: ShiftView; staff_id: string; name: string } | null>(null);
 /* Two views of the same week: Timeline (days down, a bar per bartender on one time ruler) and Grid (bartenders down, days across). */
 type View = 'timeline' | 'grid';
-const view = signal<View>((() => { try { return localStorage.getItem('crew:view') === 'grid' ? 'grid' : 'timeline'; } catch { return 'timeline'; } })());
-const setView = (v: View) => { view.value = v; try { localStorage.setItem('crew:view', v); } catch { /* private mode */ } };
+const [view, setView] = persisted<View>('crew:view', oneOf(['timeline', 'grid'] as const), 'timeline');
 
 export function HubWeek() {
   const people = liveStaff.value.map(p => ({ id: p.id, name: p.name, is_user: p.is_user }));

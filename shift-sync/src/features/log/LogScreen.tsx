@@ -1,31 +1,25 @@
-import { signal } from '@preact/signals';
+import { oneOf, persisted } from '../../data/persisted.ts';
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
 import { sheetProblems, state, syncMessage } from '../../data/sync.ts';
-import { DASH, dollars, hours, moneyWhole, perHour } from '../../lib/format.ts';
+import { DASH, dollars } from '../../lib/format.ts';
 import { GROUP_BYS, groupShifts } from '../../lib/groups.ts';
 import type { GroupBy } from '../../lib/groups.ts';
 import { summarize } from '../../lib/stats.ts';
-import { openForm, sheet } from '../../router.ts';
-import { EmptyState } from '../../ui/EmptyState.tsx';
+import { sheet } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
-import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftCard } from './ShiftCard.tsx';
 import { ShiftLog } from './ShiftLog.tsx';
+import { EmptyPeriod, FirstShiftEmpty } from '../../ui/EmptyState.tsx';
+import { SideStats, periodItems } from '../../ui/SideStats.tsx';
 import styles from './LogScreen.module.css';
 
 /* The Log: every shift in the period, grouped by month or week (or flat). Desktop is the grouped list with rows that
  * open in place; a phone gets the same groups as cards. Grouping is remembered per device. */
-const KEY = 'log-group';
-const readBy = (): GroupBy => {
-  try { const v = localStorage.getItem(KEY); if (GROUP_BYS.some(g => g.id === v)) return v as GroupBy; } catch { /* private mode */ }
-  return 'month';
-};
-const groupBy = signal<GroupBy>(readBy());
-const setGroupBy = (by: GroupBy) => { groupBy.value = by; try { localStorage.setItem(KEY, by); } catch { /* private mode */ } };
+const [groupBy, setGroupBy] = persisted<GroupBy>('log-group', oneOf(GROUP_BYS.map(g => g.id)), 'month');
 
 export function LogScreen() {
   const all = liveViews.value;
@@ -48,9 +42,9 @@ export function LogScreen() {
     )}
   </>;
   const empty = ready.value && all.length === 0
-    ? <EmptyState title="Log your first shift" action={<button class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" /> Add shift</button>}>Add the date, hours and tips. Everything saves on this device first, so it works with no signal.</EmptyState>
+    ? <FirstShiftEmpty>Add the date, hours and tips. Everything saves on this device first, so it works with no signal.</FirstShiftEmpty>
     : ready.value && views.length === 0
-      ? <EmptyState title="No shifts in this period">Widen the period above, or choose All, to see the rest.</EmptyState>
+      ? <EmptyPeriod />
       : null;
 
   const groupControl = (
@@ -70,19 +64,7 @@ export function LogScreen() {
             {alerts}
             {empty ?? <ShiftLog views={views} by={by} openId={selected} />}
           </div>
-          <aside class="panel-body side" aria-label="This period">
-            <div class="side-block">
-              <h3 class="label">This period</h3>
-              <StatList items={[
-                { label: 'Shifts', value: s.shifts },
-                { label: 'Hours', value: hours(s.hours) },
-                { label: 'Tips', value: moneyWhole(s.tips) },
-                { label: 'Rate', value: perHour(s.tph), hint: 'Tips over hours worked' },
-                { label: 'Total', value: moneyWhole(s.total), hint: 'Tips, estimated wage and other income' }
-              ]} />
-              <p class="muted side-note">Rate is tips over hours. Total also includes wage and other income.</p>
-            </div>
-          </aside>
+          <SideStats items={periodItems(s)} note="Rate is tips over hours. Total also includes wage and other income." />
         </div>
       ) : (
         <div class={`panel-body ${styles.body}`}>

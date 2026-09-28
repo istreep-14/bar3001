@@ -7,8 +7,8 @@ import type { FrameApi } from '../../ui/DrawerFrame.tsx';
 import { PartyBadge, TypeBadge } from '../../ui/Badges.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { toast } from '../../ui/toast.tsx';
-import styles from '../../ui/drawer.module.css';
 import { ShiftDetails } from './ShiftDetails.tsx';
+import styles from '../../ui/drawer.module.css';
 
 /* The shift drawer: a quick read-only look at one shift. Editing (and adding) is the shift form, a dialog:
  * the pencil hands off to it. Same content in both hosts (panel = desktop card, dialog = phone sheet). */
