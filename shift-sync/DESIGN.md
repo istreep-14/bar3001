@@ -26,7 +26,7 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
 - **Marks:** day amber, night indigo, party rose, income sources one token each. A mark is never colour alone (letter, word or label).
 
 ## Components
-- `ui/charts.tsx`: `Tiles`, `Facts`, `ColumnChart`, `DotLine`, `HBars`, `Ribbon`, `TableView`. Charts are HTML in percentages (no
+- `ui/charts.tsx`: `Tiles`, `Facts`, `ColumnChart`, `ComboChart`, `Histogram`, `HBars`, `Ribbon`, `TableView`. Charts are HTML in percentages (no
   library). Every chart has a legend where colour carries identity, a tooltip on hover and focus, and *View as table*.
 - `ui/MonthCalendar.tsx`: one calendar, two sizes (`browse` on the Calendar page, `pick` on the form's Date page). Weeks run Mon–Sun.
   In `browse` the day cell *is* the card: one full-cell button per shift (total large; rate and hours; start–end; a single sun/moon icon
@@ -72,7 +72,7 @@ grouped rows, hovers and filled cells. tokens.css holds only the static defaults
 
 ## KPI parts (`ui/kpi.tsx`)
 One small vocabulary, used wherever a number needs context instead of a bigger box: `Spark` (a few points, no axes), `DeltaPill` (▲/▼ + %,
-never colour alone; hours are neutral), `Meter` (a figure against its ceiling: rate vs your best, hours vs 40), `MiniStat` (label, value,
+never colour alone; hours are neutral), `MiniStat` (label, value,
 delta, spark on one line). Used by the Overview tiles, the Calendar's month line and the side columns.
 Add a KPI by composing these, not by adding a card.
 
@@ -105,6 +105,7 @@ in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of 
   "Fill in tips" button, not a row of dashes. It counts in the band's chip, not its total.
 - The mix bar lives only where a shift is opened (card, drawer, form Overview), never in a row or band.
 - Chips (`.chip`) are words in small solid blocks, sentence case: count, Party, Waiting on tips. No mono caps.
+- No small caps anywhere: labels, table heads, weekday headers and pills are sentence case in semibold, never spaced uppercase.
 
 ## People
 An identity-only roster (no shift counts, so it can't read as a leaderboard). A person's card lists the shifts they were on

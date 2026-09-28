@@ -11,5 +11,5 @@
 .item[aria-current='true'] { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
 .main { display: grid; gap: 2px; min-width: 0; }
 .name { font-size: var(--fs-lead); font-weight: var(--fw-semi); display: inline-flex; align-items: center; gap: var(--s-2); }
-.mgr { font-size: var(--fs-micro); font-weight: var(--fw-med); color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.mgr { font-size: var(--fs-micro); font-weight: var(--fw-med); color: var(--accent); }
 .sub { font-size: var(--fs-meta); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -4,15 +4,17 @@ import { Icon } from './Icon.tsx';
 
 /** A time as hour · minute · AM/PM, never a 24-hour clock. Reads and writes the form's 'HH:MM' string ('' = not set).
  *  `pm` is the half an empty field starts in when an hour is first picked (shifts mostly start in the evening). */
-export function TimeField({ label, value, onChange, invalid, pm: startPm = true }: {
+export function TimeField({ label, value, onChange, invalid, pm: startPm = true, compact }: {
   label: string; value: string; onChange: (hhmm: string) => void; invalid?: boolean; pm?: boolean;
+  /** A table cell: the label is for screen readers only and there is no clear button. */
+  compact?: boolean;
 }) {
   const t = to12(value), id = useId();
   const set = (patch: Partial<{ h: number; m: number; pm: boolean }>) =>
     onChange(from12({ h: t?.h ?? 12, m: t?.m ?? 0, pm: t?.pm ?? startPm, ...patch }));
   return (
-    <fieldset class="timefield" aria-invalid={invalid || undefined}>
-      <legend class="label-text">{label}</legend>
+    <fieldset class={compact ? 'timefield compact' : 'timefield'} aria-invalid={invalid || undefined}>
+      <legend class={compact ? 'sr-only' : 'label-text'}>{label}</legend>
       <div class="timefield-row">
         <select class="input" aria-label={`${label} hour`} value={t ? String(t.h) : ''} onChange={e => set({ h: +e.currentTarget.value })}>
           {!t && <option value="">–</option>}
@@ -31,7 +33,7 @@ export function TimeField({ label, value, onChange, invalid, pm: startPm = true 
             </label>
           ))}
         </div>
-        {t && <button type="button" class="btn btn-quiet btn-icon" aria-label={`Clear ${label.toLowerCase()}`} onClick={() => onChange('')}><Icon name="x" /></button>}
+        {t && !compact && <button type="button" class="btn btn-quiet btn-icon" aria-label={`Clear ${label.toLowerCase()}`} onClick={() => onChange('')}><Icon name="x" /></button>}
       </div>
     </fieldset>
   );

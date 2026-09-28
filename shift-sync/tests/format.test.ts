@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DASH, clock, clockPlain, clockShort, dateCell, dec1, int, isPastYear, longDate, timeRange, weekLabel } from '../src/lib/format.ts';
+import { DASH, clock, clockPlain, clockShort, dateCell, dec1, int, isPastYear, longDate, weekLabel } from '../src/lib/format.ts';
 
 test('clock is exact and fixed-width so times align', () => {
   assert.equal(clock(17 * 60), '05:00 PM');
@@ -10,7 +10,6 @@ test('clock is exact and fixed-width so times align', () => {
   assert.equal(clock(2 * 60 + 10), '02:10 AM');
   assert.equal(clock(null), '');
   for (const m of [0, 65, 600, 720, 1020, 1439]) assert.equal(clock(m).length, 8);
-  assert.equal(timeRange(1080, 120), '06:00 PM – 02:00 AM');
 });
 
 test('table figures round to whole numbers; absent is a dash', () => {

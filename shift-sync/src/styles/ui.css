@@ -60,7 +60,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .badge[data-kind='Overtime'] { --c: var(--cat-overtime); }
 .badge[data-kind='party'] { --c: var(--party); --bg: var(--party-soft); }
 /* type and party are pills, tinted with their own soft colour like any other status tag; income sources stay a dot and a word */
-.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 1px var(--s-2); border-radius: var(--r-pill); background: var(--bg); font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.04em; }
+.badge[data-kind='day'], .badge[data-kind='night'], .badge[data-kind='party'] { padding: 1px var(--s-2); border-radius: var(--r-pill); background: var(--bg); font-size: var(--fs-meta); }
 .badge[data-kind='Tips'] { --c: var(--cat-tips); }
 .badge[data-kind='Wage'] { --c: var(--cat-wage); }
 
@@ -84,7 +84,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-tight .tbl th, .tbl-tight .tbl td { padding: 0.3rem 0.65rem; }
 .tbl th {
   position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--line);
-  font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
+  font-size: var(--fs-meta); font-weight: var(--fw-med); color: var(--ink-3); white-space: nowrap;
 }
 .tbl td { border-bottom: 1px solid var(--line-soft); color: var(--ink); }
 .tbl tbody tr:last-child td { border-bottom: 0; }
@@ -96,7 +96,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl :is(th, td).act { width: 1%; white-space: nowrap; text-align: right; }
 .tbl :is(th, td).notes { color: var(--ink-2); }
 /* the weekday: a quiet label beside the date, not a fact of its own */
-.daylabel { color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-normal); letter-spacing: 0.04em; text-transform: uppercase; }
+.daylabel { color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-normal); }
 .tbl td.notes { max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tbl td.mute { color: var(--ink-2); }
 .tbl td.strong { font-weight: var(--fw-semi); }
@@ -166,3 +166,5 @@ select.input { appearance: none; padding-right: var(--s-6);
 .timefield-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
 .timefield-row > select.input { width: auto; min-width: 4.25rem; font-variant-numeric: tabular-nums; }
 .timefield[aria-invalid='true'] select.input { border-color: var(--danger); }
+.timefield.compact .timefield-row { flex-wrap: nowrap; gap: var(--s-1); }
+.timefield.compact select.input { min-width: 3.25rem; min-height: var(--ctl-h); padding-right: var(--s-5); }

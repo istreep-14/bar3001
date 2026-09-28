@@ -13,7 +13,7 @@
 /* ---- stat tiles ---------------------------------------------------------------------------------------------- */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: var(--s-2); margin: 0; }
 .tile { display: grid; align-content: start; gap: 2px; min-width: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
-.tile dt { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.tile dt { font-size: var(--fs-micro); font-weight: 600; color: var(--ink-2); }
 .tile dd { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; color: var(--ink); overflow-wrap: anywhere; }
 .tile .sub { font-size: var(--fs-meta); line-height: 1.35; color: var(--ink-2); }
 .tile.lead { border-color: var(--line-strong); }
@@ -121,7 +121,7 @@
 .ltrack > i { position: absolute; top: 0; bottom: 0; border-radius: 6px; }
 .ltrack .seg-work { background: var(--accent); }
 .ltrack .seg-break { top: -3px; bottom: -3px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--line-strong) 0 2px, var(--surface) 2px 4px); box-shadow: 0 0 0 2px var(--surface); }
-.ltrack .seg-party { display: flex; align-items: center; overflow: hidden; padding: 0 var(--s-2); background: var(--party); color: #fff; font-size: 11px; font-style: normal; font-weight: 600; white-space: nowrap; }
+.ltrack .seg-party { display: flex; align-items: center; overflow: hidden; padding: 0 var(--s-2); background: var(--party); color: var(--surface); font-size: 11px; font-style: normal; font-weight: 600; white-space: nowrap; }
 .ltrack .seg-crew { top: 5px; bottom: 5px; background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
 .ltrack .seg-past { top: 5px; bottom: 5px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line-strong); }
 
@@ -136,7 +136,7 @@
 .calnav { display: flex; align-items: center; gap: var(--s-2); }
 .calnav .icon-btn { border-color: var(--line-strong); background: var(--surface); }
 .calgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
-.dow { padding: 0 0 2px; font-size: var(--fs-micro); font-weight: 600; letter-spacing: .08em; text-align: center; text-transform: uppercase; color: var(--ink-2); }
+.dow { padding: 0 0 2px; font-size: var(--fs-micro); font-weight: 600; letter-spacing: .08em; text-align: center; color: var(--ink-2); }
 .cal .day { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; min-height: 60px; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink); text-align: left; transition: background-color .12s, border-color .12s; }
 .cal .day.out { opacity: .5; }
 .cal .day .dn { font-size: 13px; font-weight: 500; line-height: 1.2; }
@@ -281,7 +281,7 @@
 .mini .md.today { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); }
 .viz-cap:has(.minink) { align-items: center; }
 
-/* ---- KPI parts: spark, delta pill, meter, ministat ------------------------------------------------------------- */
+/* ---- KPI parts: spark, delta pill, ministat ------------------------------------------------------------- */
 .spark { flex: none; overflow: visible; }
 .spark-line { fill: none; stroke: var(--accent); stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; }
 .spark-area { fill: color-mix(in srgb, var(--accent) 14%, transparent); stroke: none; }
@@ -290,9 +290,6 @@
 .dpill.up { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .dpill.down { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
 .dpill.flat { background: var(--surface-3); color: var(--ink-2); }
-.meter { display: block; width: 100%; height: 5px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
-.meter i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
-.meter.empty { background: transparent; }
 /* a 24-hour track; the filled span is where in the day the shift sat, not how long it was */
 .ministat { display: inline-flex; align-items: center; gap: var(--s-2); white-space: nowrap; font-size: var(--fs-meta); }
 .ministat .mk { color: var(--ink-2); }

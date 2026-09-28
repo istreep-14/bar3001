@@ -35,7 +35,7 @@
   .brand { flex: none; padding: 0 var(--s-3); font-size: var(--fs-hero); font-weight: var(--fw-bold); letter-spacing: -0.03em; color: var(--ink); line-height: 1.2; }
   .groups { flex: 1; min-height: 0; overflow: auto; display: grid; align-content: start; gap: var(--s-4); }
   .group { display: grid; gap: 2px; }
-  .gtitle { margin: 0; padding: var(--s-1) var(--s-3) 0; font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+  .gtitle { margin: 0; padding: var(--s-1) var(--s-3) 0; font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--ink-3); }
   .pagelink { display: block; padding: 0.35rem var(--s-3); border-radius: var(--r-md); font-size: 0.8125rem; font-weight: var(--fw-med); color: var(--ink-2); text-decoration: none; }
   .pagelink:hover { color: var(--ink); }
   .pagelink[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--shadow-sm); }
