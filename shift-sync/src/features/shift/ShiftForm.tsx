@@ -1,48 +1,28 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CATEGORIES, defaultShiftType, hoursWorked, tipsPerHour, toHHMM, toMin, wageFor, wageRateFor } from '../../core/core.generated.js';
-import type { Category, ShiftType } from '../../core/core.generated.js';
+import { defaultShiftType, hoursWorked, tipsPerHour, toHHMM, wageFor } from '../../core/core.generated.js';
+import type { ShiftType } from '../../core/core.generated.js';
 import { liveStaff, liveViews, liveWages, personById, ready, removeShift, saveShift, undoRemove, viewById } from '../../data/store.ts';
 import { today, weekday } from '../../lib/dates.ts';
-import { clockPlain, dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { clockPlain, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
 import { partsOf } from '../../lib/groups.ts';
 import { summarize } from '../../lib/stats.ts';
-import { closeDrawer, go, guard, sheetDate } from '../../router.ts';
-import { Facts, Ribbon } from '../../ui/charts.tsx';
+import { closeDrawer, guard, sheetDate } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
-import { MixBar, MixKey } from '../../ui/MixBar.tsx';
-import { MonthCalendar } from '../../ui/MonthCalendar.tsx';
-import { TimeField } from '../../ui/TimeField.tsx';
 import { toast } from '../../ui/toast.tsx';
+import { GROUPS, LABEL, ORDER, check, flaggedPages, minutes, newLine, newMember, num, pageOfError } from './form/model.ts';
+import type { Form, Line, Member, PageId } from './form/model.ts';
+import { PAGES, meOnRoster } from './form/pages.tsx';
+import type { Ctx } from './form/pages.tsx';
 import styles from './ShiftForm.module.css';
 
 /* The shift form: add or edit one shift in a dialog over the page. It opens on Overview, which holds the three things
  * every shift needs (date on a calendar that already shows your shifts, start and end, tips) and what the shift adds up
  * to. The pages after it (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew, Party, Notes) each give one
  * part a full panel, with a live one-line summary and a dot when a field on it needs fixing. Every page's input lives in
- * one form object, so nothing typed is lost by moving between pages. */
-type PageId = 'home' | 'date' | 'time' | 'type' | 'tips' | 'wage' | 'misc' | 'crew' | 'party' | 'notes';
-const GROUPS: { name: string; pages: { id: PageId; label: string }[] }[] = [
-  { name: 'Shift', pages: [{ id: 'home', label: 'Overview' }] },
-  { name: 'Info', pages: [{ id: 'date', label: 'Date' }, { id: 'time', label: 'Time' }, { id: 'type', label: 'Type' }] },
-  { name: 'Income', pages: [{ id: 'tips', label: 'Tips' }, { id: 'wage', label: 'Wage' }, { id: 'misc', label: 'Other' }] },
-  { name: 'Details', pages: [{ id: 'crew', label: 'Crew' }, { id: 'party', label: 'Party' }, { id: 'notes', label: 'Notes' }] }
-];
-const ORDER = GROUPS.flatMap(g => g.pages.map(p => p.id));
-const LABEL = Object.fromEntries(GROUPS.flatMap(g => g.pages.map(p => [p.id, p.label]))) as Record<PageId, string>;
-
-interface Line { key: string; id?: string; category: Category; amount: string; note: string }
-/** One bartender on the shift. `follow` = their times track the shift's own until they're edited by hand. */
-interface Member { key: string; id?: string; staff_id: string; name: string; start: string; end: string; follow: boolean }
-interface Form { date: string; start: string; end: string; type: ShiftType | ''; party: boolean; tips: string; notes: string; lines: Line[]; crew: Member[] }
-
-let lineKey = 0, memberKey = 0;
-const newLine = (over: Partial<Line> = {}): Line => ({ key: 'l' + ++lineKey, category: CATEGORIES[0]!, amount: '', note: '', ...over });
-const newMember = (over: Pick<Member, 'staff_id' | 'name'> & Partial<Member>): Member => ({ key: 'm' + ++memberKey, start: '', end: '', follow: true, ...over });
-const meOnRoster = () => liveStaff.value.find(p => p.is_user);
-const weekdayLong = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long' });
-const num = (s: string) => (s.trim() === '' ? null : Number(s));
-const minutes = (s: string): number | null => { try { return toMin(s); } catch { return null; } };
-
+ * one form object, so nothing typed is lost by moving between pages.
+ *   form/model.ts   the pages, the form object, and check() (validation), pure and tested
+ *   form/pages.tsx  one component per page, drawn from one context
+ *   this file       state, the figures the pages show, save and delete, and the dialog around them */
 function initial(id: string): Form | null {
   if (id === 'new') {
     const me = meOnRoster();   // you worked it, so you start on the crew
@@ -135,31 +115,11 @@ export function ShiftForm({ id }: { id: string }) {
     party: form.party ? 'Party' : 'No party',
     notes: form.notes.trim() ? form.notes.trim().slice(0, 18) : 'None'
   };
-  const flagged = new Set<PageId>();
-  if (errors.date) flagged.add('date');
-  if (errors.start || errors.end) flagged.add('time');
-  if (errors.tips) flagged.add('tips');
-  if (Object.keys(errors).some(k => k.startsWith('line'))) flagged.add('misc');
-  if (Object.keys(errors).some(k => k.startsWith('crew'))) flagged.add('crew');
-  const pageOfError = (errs: Record<string, string>): PageId | null =>
-    errs.date ? 'date' : errs.start || errs.end ? 'time' : errs.tips ? 'tips' : Object.keys(errs).some(k => k.startsWith('line')) ? 'misc' : Object.keys(errs).some(k => k.startsWith('crew')) ? 'crew' : null;
+  const flagged = flaggedPages(errors);
 
   async function submit(e: Event) {
     e.preventDefault();
-    const f = form!, errs: Record<string, string> = {};
-    if (!f.date) errs.date = 'Pick a date.';
-    let s: number | null = null, en: number | null = null;
-    try { s = toMin(f.start); } catch { errs.start = 'Use a time like 6:00 PM.'; }
-    try { en = toMin(f.end); } catch { errs.end = 'Use a time like 2:00 AM.'; }
-    const t = num(f.tips);
-    if (t != null && (isNaN(t) || t < 0)) errs.tips = 'Enter tips as a positive number.';
-    f.lines.forEach(l => { if (l.amount.trim() === '' || isNaN(Number(l.amount))) errs['line' + l.key] = 'Enter an amount.'; });
-    const crew = f.crew.map(m => {
-      let ms: number | null = null, me: number | null = null;
-      try { ms = toMin(m.start); } catch { errs['crew' + m.key] = `Use times like 6:00 PM for ${m.name}.`; }
-      try { me = toMin(m.end); } catch { errs['crew' + m.key] = `Use times like 2:00 AM for ${m.name}.`; }
-      return { id: m.id, staff_id: m.staff_id, name: personById(m.staff_id)?.name ?? m.name, start: ms, end: me };
-    });
+    const f = form!, { errors: errs, start: s, end: en, tips: t, crew } = check(f, sid => personById(sid)?.name);
     setErrors(errs);
     const first = pageOfError(errs);
     if (first) { show(first); return; }
@@ -188,25 +148,11 @@ export function ShiftForm({ id }: { id: string }) {
   const typeLabel = form.type ? (form.type === 'day' ? 'Day' : 'Night') : null;
   const meta = [form.date ? `${weekdayShort(form.date)}, ${shortDate(form.date)}` : null, typeLabel, `${money(total)} total`].filter(Boolean).join(' · ');
   const err = (k: string) => errors[k] && <span class="error">{errors[k]}</span>;
-  const timeFields = (
-    <div class={styles.two}>
-      <div class="field">
-        <TimeField label="Start" value={form.start} invalid={!!errors.start}
-          onChange={v => set({ start: v, ...(typeTouched.current ? {} : { type: defaultShiftType(minutes(v)) ?? '' }) })} />
-        {err('start')}
-      </div>
-      <div class="field">
-        <TimeField label="End" value={form.end} invalid={!!errors.end} pm={false} onChange={v => set({ end: v })} />
-        {err('end')}
-      </div>
-    </div>
-  );
-  const tipsField = (hideLabel = false) => (
-    <label class="field"><span class={hideLabel ? 'sr-only' : 'label-text'}>Tips</span>
-      <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={form.tips} placeholder="0.00" aria-invalid={!!errors.tips} onInput={e => set({ tips: e.currentTarget.value })} />
-      {err('tips')}
-    </label>
-  );
+  const ctx: Ctx = {
+    form, set, setForm, setLine, setMember, addMember, errors, err, show, isNew, id, typeTouched,
+    start, end, h, tipsNum, tph, avg, total, lineSum, legacy, wageEst, parts, sameDay, pastSame, typeAvg, memberHours, inCrew, roster
+  };
+  const Page = PAGES[page];
 
   return (
     <dialog ref={dlg} class={styles.modal} aria-labelledby="form-title" onCancel={e => { e.preventDefault(); requestClose(); }}>
@@ -237,180 +183,7 @@ export function ShiftForm({ id }: { id: string }) {
           </nav>
 
           <div class={styles.panes} ref={panes}>
-            {page === 'home' && (
-              <div class={`${styles.pane} ${styles.home}`} role="tabpanel">
-                <div class={styles.homeCal}>
-                  <h3 class={styles.subhead}>Date{form.date && <span class={styles.homeSub}> · {longDate(form.date)}</span>}</h3>
-                  <MonthCalendar mode="pick" views={liveViews.value} selected={form.date} exclude={isNew ? null : id} onPick={d => set({ date: d })} />
-                  {sameDay.length > 0 && <p class={`${styles.datenote} ${styles.warn}`}>This day already has a shift. A second one is fine.</p>}
-                  {err('date')}
-                </div>
-                <div class={styles.homeSide}>
-                  <div class={styles.homeBlock}>
-                    <h3 class={styles.subhead}>Time{h != null && <span class={styles.homeSub}> · {hours(h)}</span>}</h3>
-                    {timeFields}
-                    <button type="button" class="linkbtn" onClick={() => show('time')}>{form.date ? `Compare with your past ${weekdayLong(form.date)} shifts` : 'Compare with your past shifts'}</button>
-                  </div>
-                  <div class={styles.homeBlock}>
-                    <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {money(tph)}/hr</span>}</h3>
-                    {tipsField(true)}
-                    <button type="button" class="linkbtn" onClick={() => show('misc')}>Add other income</button>
-                  </div>
-                  <div class={styles.summary} aria-live="polite">
-                    <span class="label">This shift adds up to</span>
-                    <MixBar parts={parts} labels={false} />
-                    <dl class={styles.sumList}>
-                      {parts.map(p => <div key={p.key}><dt><MixKey token={p.token} />{p.label}{p.estimated && <small>estimated</small>}</dt><dd class="num">{money(p.amount)}</dd></div>)}
-                      <div class={styles.sumTotal}><dt>Total</dt><dd class="num">{money(total)}</dd></div>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {page === 'date' && (
-              <div class={styles.pane} role="tabpanel">
-                <div class={styles.dateline}>
-                  <label class="field"><span class="label-text">Date</span>
-                    <input class="input" type="date" value={form.date} aria-invalid={!!errors.date} required onInput={e => set({ date: e.currentTarget.value })} />
-                  </label>
-                  <p class={styles.datenote + (sameDay.length ? ' ' + styles.warn : '')}>
-                    {form.date ? (sameDay.length ? `This day already holds ${sameDay.map(v => (v.shift.shift_type ? (v.shift.shift_type === 'day' ? 'a day' : 'a night') : 'a')).join(' and ')} shift. A second one is fine.` : longDate(form.date)) : 'Pick a day, or leave it blank for now.'}
-                  </p>
-                </div>
-                {err('date')}
-                <MonthCalendar mode="pick" views={liveViews.value} selected={form.date} exclude={isNew ? null : id} onPick={d => set({ date: d })} />
-              </div>
-            )}
-
-            {page === 'time' && (
-              <div class={styles.pane} role="tabpanel">
-                {timeFields}
-                <Facts items={[h != null && { label: 'Worked', value: hours(h) }, h != null && end != null && start != null && end <= start && { label: 'Ends', value: 'the next day' }]} />
-                <Ribbon lanes={[{ name: 'This shift', start, end, cls: 'seg-work' }, ...pastSame.map(v => ({ name: `${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}`, start: v.shift.start, end: v.shift.end, cls: 'seg-past' as const }))]} />
-                <p class={styles.hint}>{pastSame.length ? `Under it: your last ${pastSame.length === 1 ? '' : pastSame.length + ' '}${form.date ? weekdayLong(form.date) : ''} shift${pastSame.length === 1 ? '' : 's'}. ` : ''}An end at or before the start means the shift ends the next day.</p>
-              </div>
-            )}
-
-            {page === 'type' && (
-              <div class={styles.pane} role="tabpanel">
-                <div class={styles.cards} role="radiogroup" aria-label="Shift type">
-                  {(['day', 'night'] as const).map(t => {
-                    const a = typeAvg(t);
-                    return (
-                      <label key={t} class={`${styles.card} k-${t}`}>
-                        <input type="radio" name="type" value={t} checked={form.type === t}
-                          onClick={() => { typeTouched.current = true; set({ type: form.type === t ? '' : t }); }} onChange={() => {}} />
-                        <b>{t === 'day' ? 'Day' : 'Night'}</b>
-                        <span class={styles.typehist}>{a.tph != null ? `${moneyWhole(a.tph)}/hr in tips over ${a.shifts} shift${a.shifts === 1 ? '' : 's'}` : 'No shifts of this type yet'}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <p class={styles.hint}>Starting at 3 PM or later fills in Night until you pick one yourself. Tap the chosen one again to clear it.</p>
-              </div>
-            )}
-
-            {page === 'tips' && (
-              <div class={styles.pane} role="tabpanel">
-                {tipsField()}
-                <Facts items={[
-                  tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${moneyWhole(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${moneyWhole(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
-                  { label: 'Total income', value: money(total) }
-                ]} />
-              </div>
-            )}
-
-            {page === 'wage' && (
-              <div class={styles.pane} role="tabpanel">
-                <div class={styles.result} aria-live="polite">
-                  {wageEst != null ? (
-                    <>
-                      <span class="label">Estimated wage</span>
-                      <span class={styles.amt}>{money(wageEst)}</span>
-                      <span class={styles.why}>{dec1(h)}h × ${wageRateFor(liveWages.value, form.date)}/hr, the hourly wage in effect on {form.date ? longDate(form.date) : 'that day'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span class="label">Estimated wage</span>
-                      <span class={styles.why}>{h == null ? 'Enter the start and end times to estimate the wage.' : 'No hourly wage applies to this date.'}</span>
-                    </>
-                  )}
-                </div>
-                <p class={styles.hint}>Not typed: worked out from your hours and your hourly wage. <button type="button" class="linkbtn" onClick={() => go('settings/wages')}>Set your hourly wage</button></p>
-                <Facts items={[{ label: 'Total income', value: money(total) }]} />
-              </div>
-            )}
-
-            {page === 'misc' && (
-              <div class={styles.pane} role="tabpanel">
-                <div class={styles.rows}>
-                  {form.lines.map((l, i) => (
-                    <div class={styles.mrow} key={l.key} role="group" aria-label={`Other income ${i + 1}`}>
-                      <label class="field"><span class="label-text">Source</span>
-                        <select class="input" value={l.category} onChange={e => setLine(l.key, { category: e.currentTarget.value as Category })}>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select>
-                      </label>
-                      <label class="field"><span class="label-text">Amount</span>
-                        <input class="input num" type="number" inputMode="decimal" step="0.01" value={l.amount} placeholder="0.00" aria-invalid={!!errors['line' + l.key]} onInput={e => setLine(l.key, { amount: e.currentTarget.value })} />
-                      </label>
-                      <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove other income ${i + 1}`} onClick={() => setForm(f => f && { ...f, lines: f.lines.filter(x => x.key !== l.key) })}><Icon name="trash" /></button>
-                      <label class={`field ${styles.note}`}><span class="label-text">Note</span>
-                        <input class="input" type="text" value={l.note} onInput={e => setLine(l.key, { note: e.currentTarget.value })} />
-                      </label>
-                      {errors['line' + l.key] && <span class={`error ${styles.note}`}>{errors['line' + l.key]}</span>}
-                    </div>
-                  ))}
-                </div>
-                {legacy ? <p class={styles.hint}>Earlier entry: {money(legacy)} other income. It still counts toward the total.</p> : null}
-                <div><button type="button" class="btn" onClick={() => setForm(f => f && { ...f, lines: [...f.lines, newLine()] })}><Icon name="plus" /> Add other income</button></div>
-                <Facts items={[{ label: 'Other income', value: money(lineSum + legacy) }, { label: 'Total income', value: money(total) }]} />
-              </div>
-            )}
-
-            {page === 'crew' && (
-              <div class={styles.pane} role="tabpanel">
-                <h3 class="label">Who worked</h3>
-                {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people">People</a> page.</p> : (
-                  <div class={styles.pills}>
-                    {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user ? ' (you)' : ''}</button>)}
-                  </div>
-                )}
-                {roster.length > 0 && !meOnRoster() && <p class={styles.hint}>Mark one person as "This is me" on the People page to add yourself in one tap.</p>}
-                <h3 class="label">Their shift</h3>
-                {form.crew.length === 0 ? <p class={styles.hint}>No one else is on this shift. Tap a name above to add them.</p> : (
-                  <div class={styles.rows}>
-                    {form.crew.map(m => (
-                      <div class={styles.person} key={m.key} role="group" aria-label={m.name}>
-                        <div class={styles.pname}><span>{m.name}</span>{personById(m.staff_id)?.is_user && <small>you</small>}{memberHours(m) != null && <small class="num">{dec1(memberHours(m))}h</small>}</div>
-                        <TimeField label="Start" value={m.start} invalid={!!errors['crew' + m.key]} onChange={v => setMember(m.key, { start: v, follow: false })} />
-                        <TimeField label="End" value={m.end} invalid={!!errors['crew' + m.key]} pm={false} onChange={v => setMember(m.key, { end: v, follow: false })} />
-                        <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${m.name}`} onClick={() => setForm(f => f && { ...f, crew: f.crew.filter(x => x.key !== m.key) })}><Icon name="trash" /></button>
-                        {errors['crew' + m.key] && <span class="error">{errors['crew' + m.key]}</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <Ribbon lanes={[{ name: 'Shift', start, end, cls: 'seg-work' }, ...form.crew.map(m => ({ name: m.name, start: minutes(m.start), end: minutes(m.end), cls: 'seg-crew' as const }))]} />
-                <Facts items={form.crew.length ? [{ label: 'On the shift', value: `${form.crew.length}` }, { label: 'Hours, all', value: hours(form.crew.reduce((t, m) => t + (memberHours(m) ?? 0), 0)) }] : []} />
-              </div>
-            )}
-
-            {page === 'party' && (
-              <div class={styles.pane} role="tabpanel">
-                <label class={styles.check}>
-                  <input type="checkbox" checked={form.party} onChange={e => set({ party: e.currentTarget.checked })} />
-                  <span><b>A party happened during this shift</b><span class={styles.hint}>The yes or no is what you compare shifts by. Put who and how many in the notes.</span></span>
-                </label>
-              </div>
-            )}
-
-            {page === 'notes' && (
-              <div class={styles.pane} role="tabpanel">
-                <label class="field"><span class="label-text">Notes</span>
-                  <textarea class="input" rows={6} value={form.notes} onInput={e => set({ notes: e.currentTarget.value })} />
-                </label>
-              </div>
-            )}
+            <Page c={ctx} />
           </div>
         </div>
 

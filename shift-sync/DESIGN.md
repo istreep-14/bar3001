@@ -39,7 +39,8 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
 - `ui/Table.tsx`: the one grid (sort, bands, paging, group headers). `ui/PanelHead.tsx`, `ui/DrawerFrame.tsx`, `ui/toast.tsx`.
 - `features/shift/ShiftForm.tsx`: opens on **Overview** (the calendar that already shows your shifts, start and end, tips, and what the
   shift adds up to with the mix bar), then pages in three groups (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew,
-  Party, Notes), each with a live summary and a problem dot. No time presets: the Time page draws your last few same-weekday shifts
+  Party, Notes), each with a live summary and a problem dot. The pages are components in `form/pages.tsx`; the page list, the form
+  object and validation (`check`) are in `form/model.ts`, pure and tested. No time presets: the Time page draws your last few same-weekday shifts
   under this one. Close confirms in place ("Discard changes?"); Delete acts at once with Undo.
 - `ui/TimeField.tsx`: every editable time is hour · minute · AM/PM (`lib/time12.ts` converts), so no device shows a 24-hour clock.
 - `features/shift/ShiftDetails.tsx`: the one read-only shift block (mix bar + Time / Crew / Money stacked lists), used by the drawer and
