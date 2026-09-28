@@ -1,0 +1,25 @@
+name: CI
+
+# Every push to main and every pull request: typecheck (with unused-code checks on), the test suite, and a production build.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  shift-sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: shift-sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'   # package.json asks for >=22.18: the tests run .ts files with Node's own type stripping
+          cache: npm
+          cache-dependency-path: shift-sync/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

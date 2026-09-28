@@ -84,7 +84,7 @@ Add a KPI by composing these, not by adding a card.
 ## Dashboard
 The landing page (`#/dashboard`, and anything unknown): one week at a glance and a door to every other page. The week is this week once it
 has a shift with money in, else last week, and a switch picks either. Across the top, six figures (tips, tips/hr, hours, shifts, other,
-total) against the week before; a running week is compared with the same days of last week (`lib/dashboard.ts`, tested). Under them, that
+total) against the week before (weeks run Monday to Sunday everywhere, `WEEK_START` in `lib/dates.ts`); a running week is compared with the same days of last week (`lib/dashboard.ts`, tested). Under them, that
 week and the one before as the Log's own grouped list (rows open the drawer here). Beside them: day capsules (height = hours, outlined = no
 shift, accent outline = waiting on tips), best nights by tips/hr over 12 weeks, shifts waiting on tips with Fill in tips, and the crew with
 hours only. Each card is the part its full page uses and ends in a link to that page.

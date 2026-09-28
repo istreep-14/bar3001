@@ -13,8 +13,9 @@ test('date math is timezone-safe across month and year ends', () => {
   assert.equal(addDays('2026-12-31', 1), '2027-01-01');
   assert.equal(addDays('2026-03-01', -1), '2026-02-28');
   assert.equal(daysBetween('2026-09-18', '2026-09-25'), 7);
-  assert.equal(weekStart('2026-09-25'), '2026-09-20'); // Friday -> previous Sunday
-  assert.equal(weekStart('2026-09-20'), '2026-09-20');
+  assert.equal(weekStart('2026-09-25'), '2026-09-21'); // Friday -> that week's Monday
+  assert.equal(weekStart('2026-09-21'), '2026-09-21');
+  assert.equal(weekStart('2026-09-27'), '2026-09-21'); // Sunday closes the week, it doesn't start one
 });
 
 test('view derives hours, tips/hr and total incl. income lines and legacy other', () => {
@@ -85,7 +86,7 @@ test('labels, equality, and input clamping', () => {
 test('weeks group newest-first views and total each week', () => {
   const vs = [toView(shift({ id: 'a', date: '2026-09-25' }), []), toView(shift({ id: 'b', date: '2026-09-21', tips: 60 }), []), toView(shift({ id: 'c', date: '2026-09-13', tips: 10 }), [])];
   const w = groupByWeek(vs);
-  assert.deepEqual(w.map(x => [x.start, x.views.length, x.summary.total]), [['2026-09-20', 2, 300], ['2026-09-13', 1, 10]]);
+  assert.deepEqual(w.map(x => [x.start, x.views.length, x.summary.total]), [['2026-09-21', 2, 300], ['2026-09-07', 1, 10]]);
 });
 
 test('a shift view counts its bartenders and adds up their hours, blanks excluded from hours', () => {
@@ -129,13 +130,13 @@ test('total per hour: everything earned over hours; tips per hour is untouched b
 });
 
 /* ── Overview and calendar helpers ── */
-import { groupBy, mondayOf, niceScale, periods, scopeBounds, weekdayIndex } from '../src/lib/periods.ts';
+import { groupBy, niceScale, periods, scopeBounds, weekdayIndex } from '../src/lib/periods.ts';
 import { heat, monthGrid } from '../src/lib/calendar.ts';
 
 test('weeks run Monday to Sunday', () => {
-  assert.equal(mondayOf('2026-09-25'), '2026-09-21');   // Fri
-  assert.equal(mondayOf('2026-09-27'), '2026-09-21');   // Sun belongs to the week that began Monday
-  assert.equal(mondayOf('2026-09-28'), '2026-09-28');
+  assert.equal(weekStart('2026-09-25'), '2026-09-21');   // Fri
+  assert.equal(weekStart('2026-09-27'), '2026-09-21');   // Sun belongs to the week that began Monday
+  assert.equal(weekStart('2026-09-28'), '2026-09-28');
   assert.deepEqual(['2026-09-21', '2026-09-27'].map(weekdayIndex), [0, 6]);
 });
 

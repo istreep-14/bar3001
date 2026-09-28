@@ -1,5 +1,5 @@
-import { addDays } from './dates.ts';
-import { mondayOf, weekdayIndex } from './periods.ts';
+import { addDays, weekStart } from './dates.ts';
+import { weekdayIndex } from './periods.ts';
 import { summarize } from './stats.ts';
 import type { ShiftView, Summary } from './stats.ts';
 
@@ -13,7 +13,7 @@ export const BYS: { id: By; label: string }[] = [
 export interface SumRow { key: string; views: ShiftView[]; s: Summary; /** The group just before this one in time (time groups only). */ prev: Summary | null }
 
 const KEY: Record<By, (v: ShiftView) => string> = {
-  week: v => mondayOf(v.shift.date),
+  week: v => weekStart(v.shift.date),
   month: v => v.shift.date.slice(0, 7),
   year: v => v.shift.date.slice(0, 4),
   weekday: v => String(weekdayIndex(v.shift.date)),

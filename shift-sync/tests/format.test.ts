@@ -23,7 +23,7 @@ test('table figures round to whole numbers; absent is a dash', () => {
 test('date cells are fixed width', () => {
   assert.equal(dateCell('2026-09-05'), 'Sep 5');
   assert.equal(dateCell('2026-09-25'), 'Sep 25');
-  assert.equal(weekLabel('2026-09-25'), 'Sep 20 – 26, 2026');
+  assert.equal(weekLabel('2026-09-25'), 'Sep 21 – 27, 2026');
 });
 
 test('hours show one decimal so 8.0 and 9.5 line up', () => {
