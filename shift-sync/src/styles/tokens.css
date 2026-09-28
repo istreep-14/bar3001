@@ -33,10 +33,10 @@
 
   /* surfaces + lines: canvas (--bg) < panel (--surface-2) < table/content, the prominent surface (--surface) ;
      each step must read as a distinct grey, not just a hover tint. --surface-3 is the pressed/inset shade. */
-  --bg: #e3e8e6; --surface: #ffffff; --surface-2: #eef2f0; --surface-3: #dce3e1;
-  --line: #dce4e2; --line-soft: #e8eeed; --line-strong: #c3cfcc;
+  --bg: #e7e8e9; --surface: #fefefe; --surface-2: #f4f5f5; --surface-3: #d9dade;
+  --line: #ccced1; --line-soft: #dcdde0; --line-strong: #acafb4;
   /* ink: --ink-3 is for non-essential labels only; --ink-4 never carries meaning. */
-  --ink: #0f1f1e; --ink-2: #5a6b68; --ink-3: #7b8b87; --ink-4: #a9b6b2;
+  --ink: #0b0c0e; --ink-2: #44464b; --ink-3: #52555b; --ink-4: #878a92;
 
   --accent: #0d7a70; --accent-hover: #0a625a; --accent-soft: #dff1ee; --accent-wash: #edf6f4; --on-accent: #ffffff;
   --good: #15803d; --warn: #b45309; --bad: #b91c1c;
@@ -80,9 +80,9 @@
 /* Dark: written twice (OS preference, manual override). Keep the two blocks identical. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0c1211; --surface: #18211f; --surface-2: #121a18; --surface-3: #24302d;
-    --line: #243230; --line-soft: #1c2826; --line-strong: #34463f;
-    --ink: #e8f0ee; --ink-2: #93a6a2; --ink-3: #6f827e; --ink-4: #4a5a56;
+    --bg: #101011; --surface: #212224; --surface-2: #18191b; --surface-3: #2b2d31;
+    --line: #494b50; --line-soft: #383a3e; --line-strong: #686c73;
+    --ink: #ffffff; --ink-2: #c4c6ca; --ink-3: #a4a7ad; --ink-4: #747881;
     --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
     --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
     --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
@@ -99,9 +99,9 @@
   }
 }
 :root[data-theme='dark'] {
-  --bg: #0c1211; --surface: #18211f; --surface-2: #121a18; --surface-3: #24302d;
-  --line: #243230; --line-soft: #1c2826; --line-strong: #34463f;
-  --ink: #e8f0ee; --ink-2: #93a6a2; --ink-3: #6f827e; --ink-4: #4a5a56;
+  --bg: #101011; --surface: #212224; --surface-2: #18191b; --surface-3: #2b2d31;
+  --line: #494b50; --line-soft: #383a3e; --line-strong: #686c73;
+  --ink: #ffffff; --ink-2: #c4c6ca; --ink-3: #a4a7ad; --ink-4: #747881;
   --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
   --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
   --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;

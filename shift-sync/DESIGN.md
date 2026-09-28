@@ -37,6 +37,7 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   shift adds up to with the mix bar), then pages in three groups (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew,
   Party, Notes), each with a live summary and a problem dot. No time presets: the Time page draws your last few same-weekday shifts
   under this one. Close confirms in place ("Discard changes?"); Delete acts at once with Undo.
+- `ui/TimeField.tsx`: every editable time is hour · minute · AM/PM (`lib/time12.ts` converts), so no device shows a 24-hour clock.
 - `features/shift/ShiftDetails.tsx`: the one read-only shift block (mix bar + Time / Crew / Money stacked lists), used by the drawer and
   the Log's opened row. `ui/MixBar.tsx`: the income stacked bar, coloured from the `--cat-*` tokens, always named in the list beside it.
 
@@ -47,7 +48,9 @@ a toggle inside another page. Below the groups: New shift, the sync state, and a
 group's pages a pill strip under the top bar. Routes: `#/hub/week`, `#/settings/look`, and so on; old `#/settings` lands on Google Sheet.
 
 ## Colour (`lib/theme.ts`, applied by `data/settings.ts`)
-No white-on-black extremes. The page, the panel, the tints and the lines are steps of one ramp built from the background tint (Mint, Slate, Stone, Neutral);
+No white-on-black extremes. The page, the panel, the tints and the lines are steps of one ramp built from the background tint (Soft grey, the
+default, then Mint, Slate, Stone, Neutral). The canvas is a light grey, panels sit a step or two above it, and only what you act on (the table,
+a field, an opened row) reaches the near-white top step;
 text is four steps (ink, ink-2, ink-3, ink-4) *solved* to keep 5.3:1 / 4.5:1 or better on every surface at every contrast setting (tests enforce it).
 The primary colour (presets or any custom colour) is deepened or lightened until it reads as text. `--accent-wash` is the faint primary tint used for
 grouped rows, hovers and filled cells. tokens.css holds only the static defaults and the status colours; never hard-code a neutral.
