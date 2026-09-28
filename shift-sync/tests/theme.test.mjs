@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ACCENTS, TINTS, buildTheme, contrast, hexToHsl, hslToHex, resolveAccent } from '../src/lib/theme.ts';
+import { ACCENTS, TINTS, buildTheme, contrast, hexToHsl, hslToHex, mix, resolveAccent } from '../src/lib/theme.ts';
 
 test('hsl round trip', () => {
   for (const hex of ['#0d7a70', '#4fd6c4', '#be1e5a', '#475569']) {
@@ -40,4 +40,15 @@ test('custom accents: as-is in light, lightened in dark, always readable', () =>
   const t = buildTheme({ mode: 'light', accent: '#f5e000', tint: 'neutral', contrast: 'standard' });   // a yellow that fails as text
   assert.ok(contrast(t['--accent'], t['--surface']) >= 4.5);
   assert.equal(resolveAccent('nonsense', 'light'), ACCENTS[0].light);
+});
+
+test('table headers read as a band and their text stays readable on it', () => {
+  for (const mode of ['light', 'dark'])
+    for (const tint of TINTS) for (const c of ['soft', 'standard', 'high']) {
+      const t = buildTheme({ mode, accent: 'teal', tint: tint.id, contrast: c });
+      const th = mix(t['--surface'], t['--surface-3'], 0.7);   // tokens.css --th-bg
+      const label = `${mode}/${tint.id}/${c}`;
+      assert.ok(contrast(t['--ink-2'], th) >= 5.3, `header text ${label}`);
+      assert.ok(contrast(th, t['--surface']) > 1.08, `header band stands off the table ${label}`);
+    }
 });

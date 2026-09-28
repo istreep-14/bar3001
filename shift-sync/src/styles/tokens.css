@@ -41,6 +41,10 @@
   --accent: #0d7a70; --accent-hover: #0a625a; --accent-soft: #dff1ee; --accent-wash: #edf6f4; --on-accent: #ffffff;
   --good: #15803d; --warn: #b45309; --bad: #b91c1c;
 
+  /* table header band: a step darker than the content it heads, so every table's head reads as a head. Derived from the
+     surfaces (it follows light, dark and every tint); tests keep --th-ink readable on it. */
+  --th-bg: color-mix(in srgb, var(--surface-3) 70%, var(--surface)); --th-ink: var(--ink-2); --th-line: var(--line-strong);
+
   /* the shift types and party. -ink is for text; the base is for drawn marks (bars, dots). */
   --day: #a15c07; --day-ink: #a15c07; --day-soft: #fdf0d8;
   --night: #4f46e5; --night-soft: #e9e8fd;

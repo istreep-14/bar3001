@@ -16,7 +16,8 @@ import styles from './ShiftLog.module.css';
  * stacked lists as the drawer. The drawer does not also open on this page. */
 const CREW_SHOWN = 3;
 
-export function ShiftLog({ views, by, openId }: { views: ShiftView[]; by: GroupBy; openId: string | null }) {
+/** `inline` = rows open into a card in place (the Log). Off, a row opens the drawer instead (the Dashboard's short list). */
+export function ShiftLog({ views, by, openId, inline = true }: { views: ShiftView[]; by: GroupBy; openId: string | null; inline?: boolean }) {
   const groups = groupShifts(views, by);
   const grouped = by !== 'none';
   return (
@@ -37,7 +38,7 @@ export function ShiftLog({ views, by, openId }: { views: ShiftView[]; by: GroupB
             </div>
           )}
           <div class={styles.rows} role="list" aria-label={g.label || 'Shifts'}>
-            {g.views.map(v => <Row key={v.shift.id} v={v} by={by} open={openId === v.shift.id} />)}
+            {g.views.map(v => <Row key={v.shift.id} v={v} by={by} open={inline && openId === v.shift.id} selected={openId === v.shift.id} />)}
           </div>
         </div>
       ))}
@@ -45,7 +46,7 @@ export function ShiftLog({ views, by, openId }: { views: ShiftView[]; by: GroupB
   );
 }
 
-function Row({ v, by, open }: { v: ShiftView; by: GroupBy; open: boolean }) {
+function Row({ v, by, open, selected }: { v: ShiftView; by: GroupBy; open: boolean; selected: boolean }) {
   const sh = v.shift, id = sh.id;
   const time = sh.start != null && sh.end != null ? `${clockPlain(sh.start)} – ${clockPlain(sh.end)}` : clockPlain(sh.start);
   if (isPending(v)) {
@@ -66,7 +67,7 @@ function Row({ v, by, open }: { v: ShiftView; by: GroupBy; open: boolean }) {
   }
   const shown = v.crew.slice(0, CREW_SHOWN);
   return (
-    <div class={styles.item} data-open={open ? '' : undefined} role="listitem">
+    <div class={styles.item} data-open={open ? '' : undefined} data-selected={selected && !open ? '' : undefined} role="listitem">
       <button type="button" class={`${styles.grid} ${styles.row}`} data-row aria-expanded={open} onClick={() => openSheet(id)}>
         <span />
         <span class={styles.day}>{open ? rowDay(sh.date, 'none') : rowDay(sh.date, by)}</span>

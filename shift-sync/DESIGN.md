@@ -6,7 +6,7 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
 
 ## Structure
 - **Shell:** the rail sits on the grey canvas (no painted bar), then the page. It lists three groups with their pages: *Shifts*
-  (Overview, Log, Calendar, Other income), *Crew* (Crew, People) and *Settings*; below them New shift, the sync state and the
+  (Dashboard, Log, Calendar, Insights, Other income), *Crew* (Crew, People) and *Settings*; below them New shift, the sync state and the
   light/dark switch (see *Rail, groups and pages*). On a phone the groups are a bottom tab bar, the group's pages a pill strip,
   and a top bar carries the sync state and New shift.
 - **Every page is one panel:** a head (title left, its controls right) and a body. A page with two views has a tab row on the
@@ -16,7 +16,7 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   `ShiftDetails`: an opened row on the Log, the side card on the Calendar, and elsewhere the **drawer** (a floating card *over*
   the page's right edge on desktop, never resizing it; a sheet on phone). Clicking outside the drawer, its close button, or the
   open row again closes it; another row swaps it. The pencil or Edit opens the form.
-- **Routes** (`router.ts`): `#/overview #/summary #/log #/calendar #/hub/{income,week,crew} #/people #/settings/{wages,sync,look,data}`,
+- **Routes** (`router.ts`): `#/dashboard` (the landing page) `#/overview #/summary #/log #/calendar #/hub/{income,week,crew} #/people #/settings/{wages,sync,look,data}`,
   plus `?shift=<id>` (open shift), `?form=<id|new>&date=` (form), `?person=<id|new>`. Retired routes (`#/earnings`, `#/rate`,
   `#/journal`, `#/log/multi`, `#/settings`, `#/hub`) land on their replacement.
 
@@ -50,8 +50,8 @@ One page of areas (Hourly wage, Google Sheet, Appearance, Your data), each a gre
 their area. Hourly wage shows what the wage comes to this month as a share of the total, with the mix bar.
 
 ## Rail, groups and pages
-Rail one is three groups: **Shifts** (Overview, Log, Calendar, Other income), **Crew** (Crew, People) and **Settings** (one page). A page
-with two views has a tab row on the canvas above its panel, each view its own route: Overview is *Trends* (`#/overview`) and *Totals*
+Rail one is three groups: **Shifts** (Dashboard, Log, Calendar, Insights, Other income), **Crew** (Crew, People) and **Settings** (one page). A page
+with two views has a tab row on the canvas above its panel, each view its own route: Insights is *Trends* (`#/overview`) and *Totals*
 (`#/summary`); Crew is *Week* (`#/hub/week`) and *Every shift* (`#/hub/crew`). Settings is one page whose areas are still linked
 (`#/settings/wages` and so on). Retired pages land somewhere sensible: `#/journal` and `#/log/multi` open the Log. Below the groups:
 New shift, the sync state, and a one-tap light/dark switch. On a phone the groups are the bottom bar and the group's pages a pill strip
@@ -81,7 +81,15 @@ delta, spark on one line). Used by the Overview tiles, the Calendar's month line
 Add a KPI by composing these, not by adding a card.
 
 
-## Overview
+## Dashboard
+The landing page (`#/dashboard`, and anything unknown): one week at a glance and a door to every other page. The week is this week once it
+has a shift with money in, else last week, and a switch picks either. Across the top, six figures (tips, tips/hr, hours, shifts, other,
+total) against the week before; a running week is compared with the same days of last week (`lib/dashboard.ts`, tested). Under them, that
+week and the one before as the Log's own grouped list (rows open the drawer here). Beside them: day capsules (height = hours, outlined = no
+shift, accent outline = waiting on tips), best nights by tips/hr over 12 weeks, shifts waiting on tips with Fill in tips, and the crew with
+hours only. Each card is the part its full page uses and ends in a link to that page.
+
+## Insights (was Overview)
 Recent first, and trends over noise. Its own two controls (not the Log's period): the span (this week, 2 weeks, this month) and the trend
 length (12, 26, 52 weeks, all). Top to bottom: **tiles** for the span against the equal span before it (total income, tips per hour,
 total per hour, hours) each with a `Delta` (arrow + %, never colour alone; hours is neutral); one **insight** line (newest shift vs your last 4
@@ -109,6 +117,8 @@ in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of 
   "Fill in tips" button, not a row of dashes. It counts in the band's chip, not its total.
 - The mix bar lives only where a shift is opened (card, drawer, form Overview), never in a row or band.
 - Chips (`.chip`) are words in small solid blocks, sentence case: count, Party, Waiting on tips. No mono caps.
+- **Table heads are a band:** every column head (`.tbl thead th`, the Log's head row, the crew timeline's ruler row) sits on `--th-bg`
+  (a step darker than the content) with `--th-ink` semibold text and a `--th-line` rule under it. Row heads down the side stay plain cells.
 - No small caps anywhere: labels, table heads, weekday headers and pills are sentence case in semibold, never spaced uppercase.
 
 ## People
