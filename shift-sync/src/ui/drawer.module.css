@@ -55,3 +55,10 @@
 .check { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lead); min-height: var(--ctl-h); }
 .check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
 .hintInline { color: var(--ink-2); font-size: var(--fs-meta); }
+
+/* person view: shifts worked together, the month once and the days under it */
+.together { display: grid; }
+.togetherMonth { margin: var(--s-2) 0 var(--s-1); font-size: var(--fs-body); font-weight: var(--fw-bold); color: var(--ink); }
+.togetherRow { display: flex; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-2); font: inherit; font-size: var(--fs-body); text-align: left; cursor: pointer; }
+.togetherRow:hover { background: var(--surface-2); color: var(--ink); }
+.togetherDay { font-weight: var(--fw-semi); color: var(--ink); }

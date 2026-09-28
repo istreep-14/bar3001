@@ -227,6 +227,11 @@
 .side-block { display: grid; gap: var(--s-2); justify-items: start; }
 .side-togs { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .side-note { margin: 0; font-size: var(--fs-meta); line-height: 1.45; }
+/* the Calendar's open shift: a white card in the side column (what you act on sits on the top surface) */
+.day-card { justify-items: stretch; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }
+.day-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2); }
+.day-card-head .h-title { margin: 0; }
+.day-card-actions { display: flex; gap: var(--s-2); }
 .stats { display: grid; margin: 0; }
 .stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); padding: 0.6rem 0; border-top: 1px solid var(--line-soft); }
 .stats > div:first-child { border-top: 0; padding-top: 0; }

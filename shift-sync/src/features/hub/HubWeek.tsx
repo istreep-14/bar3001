@@ -9,6 +9,8 @@ import type { Cell } from '../../lib/hub.ts';
 import { mondayOf } from '../../lib/periods.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { TypeIcon } from '../../ui/Badges.tsx';
+import { isDesktop } from '../../ui/viewport.ts';
+import { CrewTimeline } from './CrewTimeline.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { TimeField } from '../../ui/TimeField.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
@@ -21,6 +23,10 @@ import styles from './Hub.module.css';
 const monday = signal(mondayOf(today()));
 const extra = signal<string[]>([]);
 const editing = signal<{ view: ShiftView; staff_id: string; name: string } | null>(null);
+/* Two views of the same week: Timeline (days down, a bar per bartender on one time ruler) and Grid (bartenders down, days across). */
+type View = 'timeline' | 'grid';
+const view = signal<View>((() => { try { return localStorage.getItem('crew:view') === 'grid' ? 'grid' : 'timeline'; } catch { return 'timeline'; } })());
+const setView = (v: View) => { view.value = v; try { localStorage.setItem('crew:view', v); } catch { /* private mode */ } };
 
 export function HubWeek() {
   const people = liveStaff.value.map(p => ({ id: p.id, name: p.name, is_user: p.is_user }));
@@ -31,6 +37,12 @@ export function HubWeek() {
   return (
     <section class="panel" aria-labelledby="hw-title">
       <PanelHead title="Crew week" id="hw-title">
+        {isDesktop.value && (
+          <div class="seg" role="radiogroup" aria-label="Crew week view">
+            <label><input type="radio" name="crew-view" checked={view.value === 'timeline'} onChange={() => setView('timeline')} /><span>Timeline</span></label>
+            <label><input type="radio" name="crew-view" checked={view.value === 'grid'} onChange={() => setView('grid')} /><span>Grid</span></label>
+          </div>
+        )}
         <span class={styles.range} aria-live="polite">{shortDate(g.days[0]!)} – {shortDate(g.days[6]!)}</span>
         <div class={styles.nav}>
           {!thisWeek && <button type="button" class="linkbtn" onClick={() => { monday.value = mondayOf(today()); }}>This week</button>}
@@ -39,6 +51,9 @@ export function HubWeek() {
         </div>
       </PanelHead>
       <div class="panel-body flush">
+        {isDesktop.value && view.value === 'timeline' ? (
+          <CrewTimeline days={g.days} shiftsPerDay={g.shiftsPerDay} dayHours={g.dayHours} onEdit={(v, staff_id, name) => { editing.value = { view: v, staff_id, name }; }} />
+        ) : (
         <div class={styles.scroll}>
           <table class={`tbl ${styles.grid}`} aria-label="Crew hours this week">
             <thead>
@@ -74,6 +89,7 @@ export function HubWeek() {
             </tfoot>
           </table>
         </div>
+        )}
         <div class={styles.addbar}>
           <label class={styles.add}>
             <span class="label-text">Add a bartender to this week</span>

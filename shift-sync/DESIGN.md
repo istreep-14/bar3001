@@ -41,6 +41,10 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
 - `features/shift/ShiftDetails.tsx`: the one read-only shift block (mix bar + Time / Crew / Money stacked lists), used by the drawer and
   the Log's opened row. `ui/MixBar.tsx`: the income stacked bar, coloured from the `--cat-*` tokens, always named in the list beside it.
 
+## Settings
+One page of areas (Hourly wage, Google Sheet, Appearance, Your data), each a grey panel with its title. The rail's links still land on
+their area. Hourly wage shows what the wage comes to this month as a share of the total, with the mix bar.
+
 ## Rail, groups and pages
 Rail one is four groups: **Shift** (Overview, Calendar, Journal, Log, Summary), **Hub** (Crew week, Crew log, Other income), **People**, **Settings**
 (Appearance, Hourly wage, Google Sheet, Your data). Rail two lists the group's pages, so a settings area or a hub table is a page you navigate to, never
@@ -56,10 +60,12 @@ The primary colour (presets or any custom colour) is deepened or lightened until
 grouped rows, hovers and filled cells. tokens.css holds only the static defaults and the status colours; never hard-code a neutral.
 
 ## Calendar, Summary, Hub
-- **Calendar:** `Month` (big cards) or `3 months` (three stacked months beside a KPI line, a month table, tips-and-rate by week, best and slowest by rate).
+- **Calendar:** on desktop the opened shift shows in the side column beside the month (`ShiftDetails`, so the floating drawer stays shut),
+  with the month's numbers under it. `Month` (big cards) or `3 months` (three stacked months beside a KPI line, a month table, tips-and-rate by week, best and slowest by rate).
   A day is shaded by its tips per hour against the median of the shifts in view: above leans on the primary colour, below on amber, deeper = further out.
 - **Summary:** the Log's grouped-row totals as a table: by week, month, year, weekday, type or party, every column summed, change pills for time groups.
-- **Hub:** *Crew week* (bartenders as rows, Mon–Sun across; click a cell to set start and end), *Crew log* (every crew line, times edit in place),
+- **Hub:** *Crew week* as a **Timeline** (days down, one 12-hour ruler across from `lib/ruler.ts`, a bar per bartender, yours in the
+  accent; hours only) or a **Grid** (bartenders as rows, Mon–Sun across); click a bar or a cell to set start and end, *Crew log* (every crew line, times edit in place),
   *Other income* (every income line, edit in place). All write through `data/store.ts` (`saveCrewLine`, `saveIncomeLine`) and sync like any edit.
 
 ## KPI parts (`ui/kpi.tsx`)
@@ -102,7 +108,8 @@ in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of 
 - Chips (`.chip`) are words in small solid blocks, sentence case: count, Party, Waiting on tips. No mono caps.
 
 ## People
-An identity-only roster (no shift counts, so it can't read as a leaderboard). Name is the unique handle, one person is "me", roles
+An identity-only roster (no shift counts, so it can't read as a leaderboard). A person's card lists the shifts they were on
+("Worked together"), the month said once, with their times and nothing else: no counts, hours or money. Name is the unique handle, one person is "me", roles
 are free text. It syncs to the Staff tab.
 
 ## Rules that keep it from drifting

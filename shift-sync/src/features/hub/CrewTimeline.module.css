@@ -1,0 +1,18 @@
+/* Days down the side, one ruler across, a bar per bartender. The ruler column is shared by every row. */
+.tl { display: grid; gap: var(--s-1); padding: var(--s-2) var(--s-4) var(--s-4); background: var(--surface); }
+.row { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 6rem; align-items: center; column-gap: var(--s-4); padding: var(--s-2) var(--s-2); border-radius: var(--r-md); }
+.row[data-today] { background: var(--surface-2); }
+.row :global(.r) { text-align: right; }
+.head { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink-2); }
+.ticks { position: relative; height: 1.25rem; }
+.tick { position: absolute; top: 0; transform: translateX(-50%); font-size: var(--fs-meta); color: var(--ink-3); white-space: nowrap; }
+.tick:first-child { transform: none; }
+.day { display: flex; align-items: center; gap: var(--s-2); white-space: nowrap; }
+.lanes { display: grid; gap: 3px; min-width: 0; }
+.lane { position: relative; height: 1.5rem; border-radius: var(--r-sm); background: var(--surface-2); }
+.bar { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 var(--s-2); border: 0; border-radius: var(--r-sm); background: color-mix(in srgb, var(--accent) 22%, var(--surface)); color: var(--ink); font: inherit; font-size: var(--fs-meta); font-weight: var(--fw-semi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; min-width: 4px; }
+.bar:hover { background: color-mix(in srgb, var(--accent) 34%, var(--surface)); }
+.bar[data-you] { background: var(--accent); color: var(--on-accent); }
+.nobody { cursor: default; background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); color: var(--ink-2); font-weight: var(--fw-normal); }
+.off { font-size: var(--fs-meta); color: var(--ink-3); }
+.hrs { font-weight: var(--fw-semi); }

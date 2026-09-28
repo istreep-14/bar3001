@@ -45,8 +45,8 @@ export function App() {
   const open = ready.value ? sheet.value : null, who = ready.value ? person.value : null, editing = ready.value ? form.value : null;
   const group = GROUPS.find(g => g.pages.some(p => p.id === current))!;
   const solo = group.pages.length === 1;
-  // On the Log (desktop) an open shift is a card inside the list, so the floating drawer stays shut there.
-  const inline = desktop && current === 'log' && !!open;
+  // On the Log and the Calendar (desktop) an open shift shows inside the page, so the floating drawer stays shut there.
+  const inline = desktop && (current === 'log' || current === 'calendar') && !!open;
   const drawer = inline ? who : open ?? who;
   const floating = desktop && !!drawer;
   useEffect(() => {

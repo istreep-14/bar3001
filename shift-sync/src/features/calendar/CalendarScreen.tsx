@@ -1,14 +1,21 @@
 import { signal } from '@preact/signals';
 import { useState } from 'preact/hooks';
-import { liveViews } from '../../data/store.ts';
+import { liveViews, viewById } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
-import { openForm, openSheet } from '../../router.ts';
+import { dollars, hours, longDate, moneyWhole, perHour } from '../../lib/format.ts';
+import { summarize } from '../../lib/stats.ts';
+import { closeSheet, openForm, openSheet, sheet } from '../../router.ts';
+import { Icon } from '../../ui/Icon.tsx';
+import { StatList } from '../../ui/kpi.tsx';
+import { isDesktop } from '../../ui/viewport.ts';
+import { ShiftDetails } from '../shift/ShiftDetails.tsx';
 import { MONTH_NAMES, MonthCalendar, MonthNav } from '../../ui/MonthCalendar.tsx';
 import type { Month } from '../../ui/MonthCalendar.tsx';
 import { StackView } from './StackView.tsx';
 
 /* Calendar, two ways. Month: one big month where a day with a shift is one card that opens it and an empty day is one button that starts a
- * new shift. Three months: the months stacked with their totals, table, chart and best / slowest lists beside them. Either way a day is
+ * new shift. On desktop the opened shift shows in the side column beside the month (the same ShiftDetails as the Log's card and the
+ * drawer, so the floating drawer stays shut here), with the month's totals under it. Three months: the months stacked with their totals, table, chart and best / slowest lists beside them. Either way a day is
  * shaded by its tips per hour against the typical shift in view. The month and its nav are the panel head. */
 type View = 'month' | 'stack';
 const view = signal<View>((() => { try { return localStorage.getItem('cal:view') === 'stack' ? 'stack' : 'month'; } catch { return 'month'; } })());
@@ -34,11 +41,49 @@ export function CalendarScreen() {
           <MonthNav month={month} onMonth={setMonth} />
         </div>
       </header>
-      <div class="panel-body">
-        {stack
-          ? <StackView all={liveViews.value} end={month} />
-          : <MonthCalendar mode="browse" views={liveViews.value} month={month} onMonth={setMonth} onOpen={id => openSheet(id)} onNew={d => openForm('new', d)} />}
-      </div>
+      {stack ? <div class="panel-body"><StackView all={liveViews.value} end={month} /></div> : (
+        <div class="split">
+          <div class="panel-body">
+            <MonthCalendar mode="browse" views={liveViews.value} month={month} onMonth={setMonth} onOpen={id => openSheet(id)} onNew={d => openForm('new', d)} />
+          </div>
+          {isDesktop.value && <DaySide month={month} />}
+        </div>
+      )}
     </section>
+  );
+}
+
+/** The side column: the open shift as stacked lists, then the month in numbers. */
+function DaySide({ month }: { month: Month }) {
+  const v = sheet.value ? viewById(sheet.value) : undefined;
+  const key = `${month.y}-${String(month.m + 1).padStart(2, '0')}`;
+  const s = summarize(liveViews.value.filter(x => x.shift.date.startsWith(key)));
+  return (
+    <aside class="panel-body side" aria-label="Selected day">
+      {v ? (
+        <div class="side-block day-card">
+          <div class="day-card-head">
+            <h3 class="h-title">{longDate(v.shift.date)}</h3>
+            <button type="button" class="btn btn-quiet btn-icon" aria-label="Close" onClick={closeSheet}><Icon name="x" /></button>
+          </div>
+          <ShiftDetails v={v} layout="stack" />
+          <div class="day-card-actions">
+            <button type="button" class="btn btn-primary" onClick={() => openForm(v.shift.id)}><Icon name="edit" /> Edit shift</button>
+          </div>
+        </div>
+      ) : (
+        <div class="side-block"><p class="muted side-note">Pick a shift to see it here. An empty day starts a new one.</p></div>
+      )}
+      <div class="side-block">
+        <h3 class="label">{MONTH_NAMES[month.m]}</h3>
+        <StatList items={[
+          { label: 'Shifts', value: s.shifts },
+          { label: 'Hours', value: hours(s.hours) },
+          { label: 'Tips', value: moneyWhole(s.tips) },
+          { label: 'Rate', value: perHour(s.tph), hint: 'Tips over hours worked' },
+          { label: 'Total', value: dollars(s.total), hint: 'Tips, estimated wage and other income' }
+        ]} />
+      </div>
+    </aside>
   );
 }
