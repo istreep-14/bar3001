@@ -13,7 +13,6 @@ const LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export function MiniCalendar({ views, onOpen }: { views: ShiftView[]; onOpen: (id: string) => void }) {
   const today = todayText();
   const [view, setView] = useState({ y: +today.slice(0, 4), m: +today.slice(5, 7) - 1 });
-  const key = `${view.y}-${String(view.m + 1).padStart(2, '0')}`;
   const days = byDate(views), cells = monthGrid(view.y, view.m);
   const total = (d: string) => (days.get(d) ?? []).reduce((a, v) => a + v.total, 0);
   const best = Math.max(0, ...cells.filter(c => c.inMonth).map(c => total(c.date)));

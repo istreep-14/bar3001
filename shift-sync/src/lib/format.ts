@@ -55,7 +55,7 @@ export const shortDate = (d: string): string =>
 
 export { toHHMM };
 
-/** 'Sep 20 – 26', the calendar week (Sunday start) that contains d. */
+/** 'Sep 21 – 27, 2026', the calendar week (Monday to Sunday) that contains d. */
 export const weekLabel = (d: string): string => {
   const a = weekStart(d), b = addDays(a, 6);
   const same = a.slice(0, 7) === b.slice(0, 7);

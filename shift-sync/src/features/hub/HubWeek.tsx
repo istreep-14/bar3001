@@ -2,11 +2,10 @@ import { signal } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { hoursWorked, toHHMM, toMin } from '../../core/core.generated.js';
 import { liveStaff, liveViews, removeCrewLine, saveCrewLine } from '../../data/store.ts';
-import { addDays, today } from '../../lib/dates.ts';
+import { addDays, today, weekStart } from '../../lib/dates.ts';
 import { clockPlain, clockShort, dec1, shortDate, weekdayShort } from '../../lib/format.ts';
 import { crewWeek } from '../../lib/hub.ts';
 import type { Cell } from '../../lib/hub.ts';
-import { mondayOf } from '../../lib/periods.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { TypeIcon } from '../../ui/Badges.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
@@ -20,7 +19,7 @@ import styles from './Hub.module.css';
 /* Crew week: every bartender as a row, Monday to Sunday across, each cell that person's hours on that day's shift.
  * Click a cell to set or change their start and end; hours are worked out from the times. A day with no shift can't hold hours,
  * so its cells are blank until the shift is logged. */
-const monday = signal(mondayOf(today()));
+const monday = signal(weekStart(today()));
 const extra = signal<string[]>([]);
 const editing = signal<{ view: ShiftView; staff_id: string; name: string } | null>(null);
 /* Two views of the same week: Timeline (days down, a bar per bartender on one time ruler) and Grid (bartenders down, days across). */
@@ -33,7 +32,7 @@ export function HubWeek() {
   const g = crewWeek(liveViews.value, monday.value, people, extra.value);
   const shown = new Set(g.rows.map(r => r.staff_id));
   const roster = liveStaff.value.filter(p => !shown.has(p.id) && p.status === 'active');
-  const thisWeek = monday.value === mondayOf(today());
+  const thisWeek = monday.value === weekStart(today());
   return (
     <section class="panel" aria-labelledby="hw-title">
       <PanelHead title="Crew week" id="hw-title">
@@ -45,7 +44,7 @@ export function HubWeek() {
         )}
         <span class={styles.range} aria-live="polite">{shortDate(g.days[0]!)} – {shortDate(g.days[6]!)}</span>
         <div class={styles.nav}>
-          {!thisWeek && <button type="button" class="linkbtn" onClick={() => { monday.value = mondayOf(today()); }}>This week</button>}
+          {!thisWeek && <button type="button" class="linkbtn" onClick={() => { monday.value = weekStart(today()); }}>This week</button>}
           <button type="button" class="icon-btn" aria-label="Previous week" onClick={() => { monday.value = addDays(monday.value, -7); }}><Icon name="left" /></button>
           <button type="button" class="icon-btn" aria-label="Next week" onClick={() => { monday.value = addDays(monday.value, 7); }}><Icon name="chevron" /></button>
         </div>

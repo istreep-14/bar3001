@@ -31,9 +31,9 @@ test('month groups keep arrival order, count pending apart, and total only the d
   assert.match(g[1]!.label, /September/);
 });
 
-test('week groups start on Sunday; flat is one unlabelled group', () => {
-  const views = ['2026-09-26', '2026-09-20', '2026-09-19'].map((date, i) => toView(shift({ id: String(i), date }), []));
-  assert.deepEqual(groupShifts(views, 'week').map(x => x.views.length), [2, 1]);
+test('week groups start on Monday; flat is one unlabelled group', () => {
+  const views = ['2026-09-28', '2026-09-27', '2026-09-21', '2026-09-20'].map((date, i) => toView(shift({ id: String(i), date }), []));
+  assert.deepEqual(groupShifts(views, 'week').map(x => [x.key, x.views.length]), [['2026-09-28', 1], ['2026-09-21', 2], ['2026-09-14', 1]]);
   const flat = groupShifts(views, 'none');
   assert.equal(flat.length, 1);
   assert.equal(flat[0]!.label, '');

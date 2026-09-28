@@ -15,7 +15,7 @@ import { ShiftLog } from '../log/ShiftLog.tsx';
 import styles from './DashboardScreen.module.css';
 
 /* Dashboard: this week at a glance, and a door to every other page. The numbers across the top are this week against
- * last week (the same Sunday-to-Saturday weeks the Log groups by). Under them, the last two weeks as the Log's own grouped
+ * last week (the same Monday-to-Sunday weeks the Log groups by). Under them, the last two weeks as the Log's own grouped
  * list; beside them this week day by day, your best nights, shifts waiting on tips and who you worked with. Every card is
  * the same part the full page uses and ends in a link to that page. Opening a shift here opens the drawer. */
 /** Which week the top strip shows: null = pick for me (this week once it has a shift with money in, else last week). */

@@ -9,7 +9,10 @@ export const addDays = (d: string, n: number): string => iso(ms(d) + n * DAY);
 export const daysBetween = (a: string, b: string): number => Math.round((ms(b) - ms(a)) / DAY);
 /** 0 = Sunday. */
 export const weekday = (d: string): number => new Date(ms(d)).getUTCDay();
-export const weekStart = (d: string, firstDay = 0): string => addDays(d, -((weekday(d) - firstDay + 7) % 7));
+/** The one week the whole app uses: Monday to Sunday (the calendar grid, the Log's week groups, the Dashboard, Insights,
+ *  Totals and Crew week all read it). Change it here and nowhere else. */
+export const WEEK_START = 1;
+export const weekStart = (d: string, firstDay = WEEK_START): string => addDays(d, -((weekday(d) - firstDay + 7) % 7));
 
 const pad = (n: number) => String(n).padStart(2, '0');
 export const ymd = (y: number, m: number, d: number): string => iso(Date.UTC(y, m, d));   // m is 0-based; overflow rolls over

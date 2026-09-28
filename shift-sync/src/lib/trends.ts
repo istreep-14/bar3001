@@ -1,5 +1,5 @@
-import { addDays, daysBetween, parts, ymd } from './dates.ts';
-import { mondayOf, weekdayIndex } from './periods.ts';
+import { addDays, daysBetween, parts, ymd, weekStart } from './dates.ts';
+import { weekdayIndex } from './periods.ts';
 import { addMonths } from './scope.ts';
 import { summarize } from './stats.ts';
 import type { ShiftView } from './stats.ts';
@@ -15,7 +15,7 @@ export interface Window { from: string; to: string; prevFrom: string; prevTo: st
 export function focusWindow(f: Focus, today: string): Window {
   const win = (from: string, prevFrom: string, prevTo: string, label: string, prev: string): Window =>
     ({ from, to: today, prevFrom, prevTo, days: daysBetween(from, today) + 1, label, prev });
-  if (f === 'week') { const from = mondayOf(today); return win(from, addDays(from, -7), addDays(today, -7), 'This week', 'last week'); }
+  if (f === 'week') { const from = weekStart(today); return win(from, addDays(from, -7), addDays(today, -7), 'This week', 'last week'); }
   if (f === 'fortnight') { const from = addDays(today, -13); return win(from, addDays(from, -14), addDays(today, -14), 'Last 2 weeks', 'the 2 weeks before'); }
   const { y, m } = parts(today);
   return win(ymd(y, m, 1), ymd(y, m - 1, 1), addMonths(today, -1), 'This month', 'last month');
@@ -42,7 +42,7 @@ export interface WeekPoint {
 
 /** One point per Monday–Sunday week from `first` to `last` (both Mondays), oldest first. */
 export function weeklyBetween(all: ShiftView[], first: string, last: string, today: string): WeekPoint[] {
-  const thisWeek = mondayOf(today), out: WeekPoint[] = [];
+  const thisWeek = weekStart(today), out: WeekPoint[] = [];
   for (let k = first, guard = 0; k <= last && guard < 1200; k = addDays(k, 7), guard++) {
     const s = summarize(inRange(all, k, addDays(k, 6)));
     out.push({ key: k, n: s.shifts, hours: s.hours, tips: s.tips, total: s.total, tph: s.tph, smooth: summarize(inRange(all, addDays(k, -21), addDays(k, 6))).tph, partial: k === thisWeek });
@@ -52,9 +52,9 @@ export function weeklyBetween(all: ShiftView[], first: string, last: string, tod
 
 /** The last `count` weeks up to this one, or every week since the first shift when null. */
 export function weeklySeries(all: ShiftView[], today: string, count: number | null): WeekPoint[] {
-  const thisWeek = mondayOf(today);
+  const thisWeek = weekStart(today);
   const oldest = all.map(v => v.shift.date).sort()[0];
-  const first = count != null ? addDays(thisWeek, -7 * (count - 1)) : oldest ? mondayOf(oldest) : thisWeek;
+  const first = count != null ? addDays(thisWeek, -7 * (count - 1)) : oldest ? weekStart(oldest) : thisWeek;
   return weeklyBetween(all, first, thisWeek, today);
 }
 

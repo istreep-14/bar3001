@@ -1,4 +1,4 @@
-import { addDays, monthKey, parts, weekday, ymd } from './dates.ts';
+import { addDays, monthKey, parts, weekday, ymd, weekStart } from './dates.ts';
 import { startOf } from './scope.ts';
 import type { Scope } from './scope.ts';
 import { summarize } from './stats.ts';
@@ -9,7 +9,6 @@ import type { ShiftView, Summary } from './stats.ts';
  * the way a bar week does. */
 
 /** Monday of the week a date falls in. */
-export const mondayOf = (d: string): string => addDays(d, -((weekday(d) + 6) % 7));
 /** 0 = Monday. */
 export const weekdayIndex = (d: string): number => (weekday(d) + 6) % 7;
 
@@ -31,7 +30,7 @@ const blank = (key: string): Bucket => ({ key, n: 0, hours: 0, tips: 0, wage: 0,
 export function periods(views: ShiftView[], from: string, to: string): { monthly: boolean; buckets: Bucket[] } {
   const spanDays = Math.max(1, Math.round((Date.parse(to + 'T00:00:00Z') - Date.parse(from + 'T00:00:00Z')) / 86_400_000));
   const monthly = spanDays > 26 * 7;
-  const keyOf = (d: string) => (monthly ? monthKey(d) : mondayOf(d));
+  const keyOf = (d: string) => (monthly ? monthKey(d) : weekStart(d));
   const step = (k: string) => (monthly ? monthKey(ymd(parts(k + '-01').y, parts(k + '-01').m + 1, 1)) : addDays(k, 7));
   const map = new Map<string, Bucket>();
   for (let k = keyOf(from), guard = 0; k <= keyOf(to) && guard < 2000; k = step(k), guard++) map.set(k, blank(k));

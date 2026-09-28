@@ -4,8 +4,8 @@ import { summarize } from './stats.ts';
 import type { ShiftView, Summary } from './stats.ts';
 import { pctChange } from './trends.ts';
 
-/* What the Dashboard shows, worked out in one place. Weeks start on Sunday, the same weeks the Log groups by, so a
- * number here always matches a band there. Pure: pass today in. */
+/* What the Dashboard shows, worked out in one place. Weeks are the app's one week (Monday to Sunday, `WEEK_START`),
+ * the same weeks the Log groups by, so a number here always matches a band there. Pure: pass today in. */
 
 export interface Day { date: string; hours: number; tips: number; views: ShiftView[] }
 export interface WeekCompare {
@@ -16,7 +16,7 @@ export interface WeekCompare {
   before: Summary;
   /** Change against last week, per figure; null when last week had none of it. */
   delta: { tips: number | null; hours: number | null; tph: number | null; total: number | null; extra: number | null };
-  /** Sunday to Saturday, this week. */
+  /** Monday to Sunday, the week shown. */
   days: Day[];
 }
 
@@ -24,7 +24,7 @@ const inRange = (views: ShiftView[], from: string, to: string) =>
   views.filter(v => v.shift.date >= from && v.shift.date <= to && !isPending(v));
 
 /** `offset` 0 = this week, -1 = last week. A finished week is compared with the whole week before it; the running week
- *  only with the same days of last week (Sunday to today's weekday), or Monday would always read as a big drop. */
+ *  only with the same days of last week (Monday to today's weekday), or Monday would always read as a big drop. */
 export function weekCompare(views: ShiftView[], today: string, offset = 0): WeekCompare {
   const start = addDays(weekStart(today), offset * 7), end = addDays(start, 6);
   const partial = today >= start && today < end;

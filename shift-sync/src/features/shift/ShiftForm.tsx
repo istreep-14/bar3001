@@ -3,7 +3,7 @@ import { CATEGORIES, defaultShiftType, hoursWorked, tipsPerHour, toHHMM, toMin, 
 import type { Category, ShiftType } from '../../core/core.generated.js';
 import { liveStaff, liveViews, liveWages, personById, ready, removeShift, saveShift, undoRemove, viewById } from '../../data/store.ts';
 import { today, weekday } from '../../lib/dates.ts';
-import { DASH, clockPlain, dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { clockPlain, dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
 import { partsOf } from '../../lib/groups.ts';
 import { summarize } from '../../lib/stats.ts';
 import { closeDrawer, go, guard, sheetDate } from '../../router.ts';

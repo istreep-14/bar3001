@@ -16,7 +16,6 @@ interface Form { name: string; first: string; last: string; roles: string[]; id_
 const blank = (): Form => ({ name: '', first: '', last: '', roles: [], id_number: '', manager: false, is_user: false, status: 'active', notes: '' });
 const fromPerson = (p: Staff): Form => ({ name: p.name, first: p.first ?? '', last: p.last ?? '', roles: p.roles, id_number: p.id_number ?? '', manager: p.manager, is_user: p.is_user, status: p.status, notes: p.notes ?? '' });
 const orNull = (s: string) => s.trim() || null;
-const fullName = (p: Staff) => [p.first, p.last].filter(Boolean).join(' ');
 
 /* The person drawer: same contract as the shift drawer. Existing people open in view mode, the pencil edits,
  * a new person opens in edit. Identity only: no shift counts or hours (activity lives in the Log). */

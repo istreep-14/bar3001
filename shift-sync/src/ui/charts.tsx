@@ -214,7 +214,7 @@ export function ComboChart({ title, sub, data, fmtBar, fmtLine, barLabel, lineLa
         <div class="area">
           {left.ticks.map(v => <div class="gl" key={v} style={{ bottom: (v / left.top) * 100 + '%' }} />)}
           <div class="cols">
-            {data.map((d, i) => (
+            {data.map(d => (
               <button type="button" class={'col' + (d.partial ? ' partial' : '')} key={d.title} aria-label={`${d.title}: ${d.rows.map(r => `${r.name} ${r.value}`).join(', ')}`} {...t.bind(d.title, d.rows)}>
                 <div class="bar" style={{ height: (d.bar / left.top) * 100 + '%' }}><i class="part k-acc" /></div>
               </button>

@@ -1,8 +1,7 @@
 import { byDate, monthGrid, rateScale } from '../../lib/calendar.ts';
 import type { RateScale } from '../../lib/calendar.ts';
-import { addDays, today, ymd } from '../../lib/dates.ts';
+import { addDays, today, ymd, weekStart } from '../../lib/dates.ts';
 import { dec1, dollars, hours, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
-import { mondayOf } from '../../lib/periods.ts';
 import { summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { summaryRows } from '../../lib/summary.ts';
@@ -117,7 +116,7 @@ function MonthTable({ all, months }: { all: ShiftView[]; months: Month[] }) {
 }
 
 function Weekly({ all, from, to }: { all: ShiftView[]; from: string; to: string }) {
-  const series = weeklyBetween(all, mondayOf(from), mondayOf(to), today());
+  const series = weeklyBetween(all, weekStart(from), weekStart(to), today());
   const every = Math.max(1, Math.ceil(series.length / 8));
   return (
     <ComboChart title="Tips and rate by week" sub="the line is tips per hour, smoothed over 4 weeks" height={170}

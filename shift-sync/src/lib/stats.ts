@@ -77,7 +77,7 @@ export const rateTone = (tph: number | null, avg: number | null): 'good' | 'bad'
   tph == null || avg == null || avg === 0 ? null : tph >= avg * 1.2 ? 'good' : tph <= avg * 0.8 ? 'bad' : null;
 
 export interface Week { start: string; views: ShiftView[]; summary: Summary }
-/** Groups newest-first views into calendar weeks (Sunday start). */
+/** Groups newest-first views into calendar weeks (Monday to Sunday, `WEEK_START`). */
 export function groupByWeek(views: ShiftView[]): Week[] {
   const out: Week[] = [];
   for (const v of views) {
