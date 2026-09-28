@@ -249,7 +249,7 @@ export function ShiftForm({ id }: { id: string }) {
                   <div class={styles.homeBlock}>
                     <h3 class={styles.subhead}>Time{h != null && <span class={styles.homeSub}> · {hours(h)}</span>}</h3>
                     {timeFields}
-                    <button type="button" class="linkbtn" onClick={() => show('time')}>Compare with your past {form.date ? weekdayLong(form.date) : ''} shifts</button>
+                    <button type="button" class="linkbtn" onClick={() => show('time')}>{form.date ? `Compare with your past ${weekdayLong(form.date)} shifts` : 'Compare with your past shifts'}</button>
                   </div>
                   <div class={styles.homeBlock}>
                     <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {money(tph)}/hr</span>}</h3>

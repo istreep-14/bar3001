@@ -24,7 +24,7 @@ import styles from './app.module.css';
 
 /* Shell = grey canvas, one rail of text links grouped by section, then main.
  * The rail does not paint a bar; the content panel's left edge is what marks it. The drawer floats over the page's right edge while a
- * shift or person is open (it never resizes the page); a click anywhere outside it closes it. On a phone the four sections are a bottom tab bar, and that section's pages are a strip. */
+ * shift or person is open (it never resizes the page); a click anywhere outside it closes it. On a phone the three groups are a bottom tab bar, and that group's pages are a strip. A page with two views gets a tab row. */
 interface Tab { id: Screen; label: string }
 /** A page in the rail. `tabs` = one page with two views, each its own route (so still a link), switched from a tab row;
  *  `also` = other routes that belong to this page (the rail marks it current on them). */

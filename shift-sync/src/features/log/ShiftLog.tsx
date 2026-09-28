@@ -20,7 +20,7 @@ export function ShiftLog({ views, by, openId }: { views: ShiftView[]; by: GroupB
   const groups = groupShifts(views, by);
   const grouped = by !== 'none';
   return (
-    <div class={styles.log} data-grouped={grouped ? '' : undefined} role="list" aria-label="Shifts" onKeyDown={moveFocus}>
+    <div class={styles.log} data-grouped={grouped ? '' : undefined} onKeyDown={moveFocus}>
       <div class={`${styles.grid} ${styles.head}`} aria-hidden="true">
         <span />{/* indent */}
         <span>{grouped ? 'Day' : 'Shift'}</span><span>Time</span><span class="r">Hours</span><span class="r">Tips</span><span class="r">Tips / hr</span><span class="r">Total</span><span>Crew</span><span />
@@ -36,7 +36,7 @@ export function ShiftLog({ views, by, openId }: { views: ShiftView[]; by: GroupB
               <span class={`r num ${styles.bandTotal}`}>{g.done ? dollars(g.total) : DASH}</span>
             </div>
           )}
-          <div class={styles.rows}>
+          <div class={styles.rows} role="list" aria-label={g.label || 'Shifts'}>
             {g.views.map(v => <Row key={v.shift.id} v={v} by={by} open={openId === v.shift.id} />)}
           </div>
         </div>

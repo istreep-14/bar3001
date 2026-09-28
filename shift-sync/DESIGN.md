@@ -5,23 +5,27 @@ something looks, change this file and the token or component it names, in the sa
 Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), rebuilt as Preact components.
 
 ## Structure
-- **Shell:** a dark two-tier rail, then the page. Tier one (80px) picks a group: *Shift*, *People*, *Settings*. Tier two (212px)
-  lists the group's pages: Shift has *Overview*, *Calendar*, *Log*. A group with one page has no tier two. A sticky top bar
-  holds the sync status and **New shift**. On a phone the five pages are a bottom tab bar.
-- **Every page is one panel:** a head (title left, its controls right) and a body. Nothing else sits on the page background,
-  and nothing inside is boxed again: a table runs edge to edge (`panel-body flush`), charts are a heading and a plot. On desktop
-  there is no top bar: the rail carries New shift and the sync state (the top bar is phone only). The Log is a table on desktop
-  and cards on a phone; its grouping and period controls live in the panel head, not in a toolbar row above the table.
-- **Two levels:** you browse pages; you enter or edit a shift in a **dialog** (the form). A shift's read-only look is the
-  **drawer** (a floating card *over* the page's right edge on desktop, never resizing it; a sheet on phone). Clicking anywhere
-  outside it, the close button, or the open row again closes it; another row swaps it. The pencil opens the form.
-- **Routes** (`router.ts`): `#/overview #/calendar #/log #/people #/settings`, plus `?shift=<id>` (drawer), `?form=<id|new>&date=`
-  (form), `?person=<id|new>`. `#/earnings` and `#/rate` land on Overview.
+- **Shell:** the rail sits on the grey canvas (no painted bar), then the page. It lists three groups with their pages: *Shifts*
+  (Overview, Log, Calendar, Other income), *Crew* (Crew, People) and *Settings*; below them New shift, the sync state and the
+  light/dark switch (see *Rail, groups and pages*). On a phone the groups are a bottom tab bar, the group's pages a pill strip,
+  and a top bar carries the sync state and New shift.
+- **Every page is one panel:** a head (title left, its controls right) and a body. A page with two views has a tab row on the
+  canvas above its panel. Nothing inside a panel is boxed again except what you act on (an opened row, the Calendar's day card).
+  The Log's grouping and period controls live in the panel head, not in a toolbar row above the list.
+- **Two levels:** you browse pages; you enter or edit a shift in a **dialog** (the form). A shift's read-only look is
+  `ShiftDetails`: an opened row on the Log, the side card on the Calendar, and elsewhere the **drawer** (a floating card *over*
+  the page's right edge on desktop, never resizing it; a sheet on phone). Clicking outside the drawer, its close button, or the
+  open row again closes it; another row swaps it. The pencil or Edit opens the form.
+- **Routes** (`router.ts`): `#/overview #/summary #/log #/calendar #/hub/{income,week,crew} #/people #/settings/{wages,sync,look,data}`,
+  plus `?shift=<id>` (open shift), `?form=<id|new>&date=` (form), `?person=<id|new>`. Retired routes (`#/earnings`, `#/rate`,
+  `#/journal`, `#/log/multi`, `#/settings`, `#/hub`) land on their replacement.
 
 ## Tokens (`tokens.css`)
 - **Surfaces:** page `--bg` < panel `--surface` (1px `--line`, soft shadow) < raised (dialog, drawer, tooltip: `--shadow`).
   `--surface-2` is an input's or tile's fill, `--surface-3` a hover. Dark mode is written twice; keep the two blocks identical.
-- **Type:** Poppins, self-hosted. Title 16, body 14, small 12, eyebrow 11 caps, tiles 22/30. A mouse gets a denser scale.
+- **Type:** Poppins, self-hosted. Title 16, body 14, small 12, labels 12 semibold (sentence case), tiles 22/30. A mouse gets a denser scale.
+- **Times:** always 12-hour. Reading form `6:00 PM` (`clockPlain`) in rows, cards, lists and labels; the compact `6:00p` (`clockShort`)
+  only inside dense cells (calendar days, the crew grid); every editable time is a `TimeField`.
 - **Spacing:** 4px scale (`--s-1..7`). **Radii:** 8, 12, 16, pill. **Accent:** teal.
 - **Marks:** day amber, night indigo, party rose, income sources one token each. A mark is never colour alone (letter, word or label).
 
@@ -61,13 +65,13 @@ text is four steps (ink, ink-2, ink-3, ink-4) *solved* to keep 5.3:1 / 4.5:1 or 
 The primary colour (presets or any custom colour) is deepened or lightened until it reads as text. `--accent-wash` is the faint primary tint used for
 grouped rows, hovers and filled cells. tokens.css holds only the static defaults and the status colours; never hard-code a neutral.
 
-## Calendar, Summary, Hub
+## Calendar, Totals, Crew, Other income
 - **Calendar:** on desktop the opened shift shows in the side column beside the month (`ShiftDetails`, so the floating drawer stays shut),
   with the month's numbers under it. `Month` (big cards) or `3 months` (three stacked months beside a KPI line, a month table, tips-and-rate by week, best and slowest by rate).
   A day is shaded by its tips per hour against the median of the shifts in view: above leans on the primary colour, below on amber, deeper = further out.
-- **Summary:** the Log's grouped-row totals as a table: by week, month, year, weekday, type or party, every column summed, change pills for time groups.
-- **Hub:** *Crew week* as a **Timeline** (days down, one 12-hour ruler across from `lib/ruler.ts`, a bar per bartender, yours in the
-  accent; hours only) or a **Grid** (bartenders as rows, Mon–Sun across); click a bar or a cell to set start and end, *Crew log* (every crew line, times edit in place),
+- **Totals** (Overview's second view, `#/summary`): the shifts in the period folded into a table: by week, month, year, weekday, type or party, every column summed, change pills for time groups.
+- **Crew** (*Week* and *Every shift* views) and **Other income:** *Week* as a **Timeline** (days down, one 12-hour ruler across from `lib/ruler.ts`, a bar per bartender, yours in the
+  accent; hours only) or a **Grid** (bartenders as rows, Mon–Sun across); click a bar or a cell to set start and end; *Every shift* (every crew line, times edit in place with compact `TimeField`s);
   *Other income* (every income line, edit in place). All write through `data/store.ts` (`saveCrewLine`, `saveIncomeLine`) and sync like any edit.
 
 ## KPI parts (`ui/kpi.tsx`)

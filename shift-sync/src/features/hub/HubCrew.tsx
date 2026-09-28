@@ -54,7 +54,7 @@ export function HubCrew() {
 
   return (
     <section class="panel fill" aria-labelledby="hc-title">
-      <PanelHead title="Crew log" id="hc-title">
+      <PanelHead title="Every shift" id="hc-title">
         <label class={styles.filter}><span class="sr-only">Bartender</span>
           <select class="input" value={who.value} onChange={e => { who.value = e.currentTarget.value; }} aria-label="Show one bartender">
             <option value="">Everyone</option>
