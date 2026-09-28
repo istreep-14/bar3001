@@ -6,3 +6,7 @@
 .list { border-top: 1px solid var(--line); }
 
 .body { min-height: 0; }
+.scroll { overflow: auto; }
+/* phone: the group label is the week or month once, bold, with its total */
+.bandName { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); }
+.weekHead { font-size: var(--fs-body); padding: var(--s-3) var(--s-1) var(--s-1); }

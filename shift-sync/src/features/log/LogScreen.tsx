@@ -1,42 +1,40 @@
+import { signal } from '@preact/signals';
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
 import { sheetProblems, state, syncMessage } from '../../data/sync.ts';
-import { shortDate, money, moneyWhole, hours, clockShort, dollars, perHour, isPastYear, weekdayShort, DASH } from '../../lib/format.ts';
-import { groupByWeek, summarize, weekEnd } from '../../lib/stats.ts';
-import type { ShiftView } from '../../lib/stats.ts';
-import { openForm, openSheet, sheet } from '../../router.ts';
-import { StatList } from '../../ui/kpi.tsx';
-import { DateCell } from '../../ui/DateCell.tsx';
+import { DASH, dollars, hours, moneyWhole, perHour } from '../../lib/format.ts';
+import { GROUP_BYS, groupShifts } from '../../lib/groups.ts';
+import type { GroupBy } from '../../lib/groups.ts';
+import { summarize } from '../../lib/stats.ts';
+import { openForm, sheet } from '../../router.ts';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { StatList } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
-import { Table } from '../../ui/Table.tsx';
-import type { Column } from '../../ui/Table.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftCard } from './ShiftCard.tsx';
+import { ShiftLog } from './ShiftLog.tsx';
 import styles from './LogScreen.module.css';
+
+/* The Log: every shift in the period, grouped by month or week (or flat). Desktop is the grouped list with rows that
+ * open in place; a phone gets the same groups as cards. Grouping is remembered per device. */
+const KEY = 'log-group';
+const readBy = (): GroupBy => {
+  try { const v = localStorage.getItem(KEY); if (GROUP_BYS.some(g => g.id === v)) return v as GroupBy; } catch { /* private mode */ }
+  return 'month';
+};
+const groupBy = signal<GroupBy>(readBy());
+const setGroupBy = (by: GroupBy) => { groupBy.value = by; try { localStorage.setItem(KEY, by); } catch { /* private mode */ } };
 
 export function LogScreen() {
   const all = liveViews.value;
   const views = scopedViews(all);
   const s = summarize(views);
-  const weeks = groupByWeek(views);
+  const by = groupBy.value;
   const problems = sheetProblems.value;
   const selected = sheet.value;
-  const showTable = isDesktop.value;   // desktop is the table; a phone gets cards
-
-  /* Shift, Hours and Tips are the facts of the row and read a little bolder; Day, Start, End and Tips/hr
-     are the supporting detail and stay at normal weight. No pill or second line under any of them. */
-  const columns: Column<ShiftView>[] = [
-    { key: 'date', head: 'Shift', className: 'fit strong', sort: v => v.shift.date, cell: v => <DateCell d={v.shift.date} /> },
-    { key: 'day', head: 'Day', className: 'fit', sort: v => v.shift.date, cell: v => <span class="daylabel">{weekdayShort(v.shift.date)}</span> },
-    { key: 'start', head: 'Start', className: 'fit', sort: v => v.shift.start, cell: v => v.shift.start != null ? clockShort(v.shift.start) : <span class="muted">{DASH}</span> },
-    { key: 'end', head: 'End', className: 'fit', sort: v => v.shift.end, cell: v => v.shift.end != null ? clockShort(v.shift.end) : <span class="muted">{DASH}</span> },
-    { key: 'hours', head: 'Hours', className: 'fit strong', sort: v => v.hours, cell: v => hours(v.hours) },
-    { key: 'tips', head: 'Tips', className: 'fit strong', sort: v => v.shift.tips, cell: v => dollars(v.shift.tips) },
-    { key: 'rate', head: 'Tips/hr', className: 'fit', sort: v => v.tph, cell: v => perHour(v.tph) }
-  ];
+  const desktop = isDesktop.value;
 
   const alerts = <>
     {state.value === 'failed' && (
@@ -55,15 +53,22 @@ export function LogScreen() {
       ? <EmptyState title="No shifts in this period">Widen the period above, or choose All, to see the rest.</EmptyState>
       : null;
 
+  const groupControl = (
+    <div class="seg" role="radiogroup" aria-label="Group shifts">
+      {GROUP_BYS.map(g => (
+        <label key={g.id}><input type="radio" name="log-group" checked={by === g.id} onChange={() => setGroupBy(g.id)} /><span>{g.label}</span></label>
+      ))}
+    </div>
+  );
+
   return (
-    <section class={`panel ${showTable ? 'fill' : ''}`} aria-labelledby="log-title">
-      <PanelHead title="Shift log" id="log-title"><ScopeControl /></PanelHead>
-      {showTable ? (
+    <section class={`panel ${desktop ? 'fill' : ''}`} aria-labelledby="log-title">
+      <PanelHead title="Shift log" id="log-title">{groupControl}<ScopeControl /></PanelHead>
+      {desktop ? (
         <div class="split">
-          <div class={`panel-body flush ${styles.body}`}>
+          <div class={`panel-body flush ${styles.body} ${styles.scroll}`}>
             {alerts}
-            {empty ?? <Table fill paginate label="Shifts" rows={views} columns={columns} rowKey={v => v.shift.id} onRow={v => openSheet(v.shift.id)} selectedId={selected}
-              defaultSort={{ key: 'date', dir: 'desc' }} />}
+            {empty ?? <ShiftLog views={views} by={by} openId={selected} />}
           </div>
           <aside class="panel-body side" aria-label="This period">
             <div class="side-block">
@@ -82,13 +87,13 @@ export function LogScreen() {
       ) : (
         <div class={`panel-body ${styles.body}`}>
           {alerts}
-          {empty ?? weeks.map(w => (
-            <section key={w.start} class={styles.week} aria-label={`Week of ${shortDate(w.start)}`}>
+          {empty ?? groupShifts(views, by === 'none' ? 'week' : by).map(g => (
+            <section key={g.key} class={styles.week} aria-label={g.label}>
               <div class={styles.weekHead}>
-                <h2 class="label">{shortDate(w.start)} – {shortDate(weekEnd(w.start))}{isPastYear(weekEnd(w.start)) && `, ${weekEnd(w.start).slice(0, 4)}`}</h2>
-                <span class="num muted">{money(w.summary.total)}</span>
+                <h2 class={styles.bandName}>{g.label}</h2>
+                <span class="num">{g.done ? dollars(g.total) : DASH}</span>
               </div>
-              <ul class={styles.list}>{w.views.map(v => <ShiftCard key={v.shift.id} v={v} avg={s.tph} selected={selected === v.shift.id} />)}</ul>
+              <ul class={styles.list}>{g.views.map(v => <ShiftCard key={v.shift.id} v={v} avg={s.tph} selected={selected === v.shift.id} />)}</ul>
             </section>
           ))}
         </div>

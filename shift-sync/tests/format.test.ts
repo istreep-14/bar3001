@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DASH, clock, clockShort, dateCell, dec1, int, isPastYear, longDate, timeRange, weekLabel } from '../src/lib/format.ts';
+import { DASH, clock, clockPlain, clockShort, dateCell, dec1, int, isPastYear, longDate, timeRange, weekLabel } from '../src/lib/format.ts';
 
 test('clock is exact and fixed-width so times align', () => {
   assert.equal(clock(17 * 60), '05:00 PM');
@@ -51,3 +51,11 @@ test('the year shows only for a past year, in the drawer title', () => {
   assert.match(longDate(`${y - 1}-03-04`), new RegExp(String(y - 1)));
 });
 
+
+test('reading times are 12-hour with AM/PM and no leading zero', () => {
+  assert.equal(clockPlain(18 * 60), '6:00 PM');
+  assert.equal(clockPlain(2 * 60 + 30), '2:30 AM');
+  assert.equal(clockPlain(0), '12:00 AM');
+  assert.equal(clockPlain(12 * 60 + 15), '12:15 PM');
+  assert.equal(clockPlain(null), '');
+});

@@ -191,8 +191,9 @@ export function HBars({ title, sub, data, fmt, empty = 'Nothing to compare yet.'
 }
 
 /* ── the shift ribbon: shifts laid along the clock, one lane each (you, then each bartender) ── */
-export interface Lane { name: string; start: number | null; end: number | null; cls: 'seg-work' | 'seg-crew' }
-const hourLabel = (m: number) => { const h = Math.floor(m / 60) % 24; return `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`; };
+/** seg-work: this shift · seg-crew: a bartender on it · seg-past: an earlier shift drawn for reference (the form's Time page). */
+export interface Lane { name: string; start: number | null; end: number | null; cls: 'seg-work' | 'seg-crew' | 'seg-past' }
+const hourLabel = (m: number) => { const h = Math.floor(m / 60) % 24; return `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`; };
 const clockText = (m: number) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${h % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${h < 12 ? 'AM' : 'PM'}`; };
 export function Ribbon({ lanes, slim = true }: { lanes: Lane[]; slim?: boolean }) {
   const timed = lanes.filter(l => l.start != null && l.end != null).map(l => ({ ...l, s: l.start!, e: l.end! <= l.start! ? l.end! + 1440 : l.end! }));
