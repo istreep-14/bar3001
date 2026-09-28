@@ -28,8 +28,6 @@ export const clockShort = (min: number | null): string =>
 /** Reading form: '6:00 PM', '12:15 AM'. No leading zero and never 24-hour; for rows where times sit in a sentence-like cell. */
 export const clockPlain = (min: number | null): string =>
   min == null ? '' : `${Math.floor(min / 60) % 12 || 12}:${String(min % 60).padStart(2, '0')} ${min < 720 ? 'AM' : 'PM'}`;
-export const timeRange = (start: number | null, end: number | null): string =>
-  start == null || end == null ? '' : `${clock(start)} – ${clock(end)}`;
 
 /** One decimal for hours in tables: 8.2, 9.5. */
 export const dec1 = (n: number | null | undefined): string => (n == null ? DASH : n.toFixed(1));

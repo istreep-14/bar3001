@@ -1,9 +1,8 @@
 import type { ComponentChildren } from 'preact';
 
-/* Small KPI parts, the vocabulary the Overview tiles, the Journal, the Calendar's month line and the Log's footer share:
+/* Small KPI parts, the vocabulary the Overview tiles, the Calendar's month line and the side columns share:
  *   Spark      a few points of trend, no axes
  *   DeltaPill  the change against something, arrow + percent (never colour alone)
- *   Meter      one figure against its ceiling (rate vs your best, hours vs the 40-hour week)
  *   MiniStat   label, value, and optionally a delta and a spark, on one line
  * Decorative graphics are aria-hidden; the number next to them says the same thing in words. */
 
@@ -29,13 +28,6 @@ export function DeltaPill({ pct, neutral }: { pct: number | null; neutral?: bool
   if (pct == null) return null;
   const r = Math.round(pct), tone = neutral || r === 0 ? 'flat' : r > 0 ? 'up' : 'down';
   return <span class={'dpill ' + tone}>{r > 0 ? '▲' : r < 0 ? '▼' : '▬'} {Math.abs(r)}%</span>;
-}
-
-/** A thin bar: `value` out of `max`. */
-export function Meter({ value, max, label }: { value: number | null; max: number; label: string }) {
-  if (value == null || !(max > 0)) return <span class="meter empty" aria-hidden="true" />;
-  const pct = Math.max(2, Math.min(100, (value / max) * 100));
-  return <span class="meter" role="img" aria-label={label} title={label}><i style={{ width: pct + '%' }} /></span>;
 }
 
 /** A shift's start-to-end span over a fixed 24-hour track, so its place in the day reads at a glance.

@@ -33,8 +33,8 @@ export function HubCrew() {
     .filter(r => !who.value || r.c.staff_id === who.value);
   const hoursSum = rows.reduce((a, r) => a + (hoursWorked(r.c.start, r.c.end) ?? 0), 0);
   const time = (r: Row, key: 'start' | 'end') => (
-    <input class={styles.cellin} type="time" defaultValue={toHHMM(r.c[key])} key={r.c.id + key + r.c[key]} aria-label={`${r.name} ${key} on ${r.v.shift.date}`}
-      onChange={e => void run(() => saveCrewLine({ id: r.c.id, shift_id: r.c.shift_id, staff_id: r.c.staff_id, start: key === 'start' ? toMin(e.currentTarget.value) : r.c.start, end: key === 'end' ? toMin(e.currentTarget.value) : r.c.end }))} />
+    <TimeField compact label={`${r.name} ${key} on ${r.v.shift.date}`} value={toHHMM(r.c[key])} pm={key === 'start'}
+      onChange={v => { const m = v ? toMin(v) : null; void run(() => saveCrewLine({ id: r.c.id, shift_id: r.c.shift_id, staff_id: r.c.staff_id, start: key === 'start' ? m : r.c.start, end: key === 'end' ? m : r.c.end })); }} />
   );
   const columns: Column<Row>[] = [
     { key: 'date', head: 'Shift', sort: r => r.v.shift.date, cell: r => (

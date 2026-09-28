@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { hoursWorked, toHHMM, toMin } from '../../core/core.generated.js';
 import { liveStaff, liveViews, removeCrewLine, saveCrewLine } from '../../data/store.ts';
 import { addDays, today } from '../../lib/dates.ts';
-import { clockShort, dec1, shortDate, weekdayShort } from '../../lib/format.ts';
+import { clockPlain, clockShort, dec1, shortDate, weekdayShort } from '../../lib/format.ts';
 import { crewWeek } from '../../lib/hub.ts';
 import type { Cell } from '../../lib/hub.ts';
 import { mondayOf } from '../../lib/periods.ts';
@@ -63,7 +63,7 @@ export function HubWeek() {
                   <th key={d} scope="col" class={d === today() ? styles.today : undefined}>
                     <span class={styles.dhead}>{weekdayShort(d)} <b>{+d.slice(8)}</b></span>
                     <span class={styles.dshift}>{g.shiftsPerDay[i]!.map(v => (
-                      <span key={v.shift.id} title={`${v.shift.shift_type ?? 'Shift'} ${clockShort(v.shift.start)}–${clockShort(v.shift.end)}`}><TypeIcon type={v.shift.shift_type} /></span>
+                      <span key={v.shift.id} title={`${v.shift.shift_type ?? 'Shift'} ${clockPlain(v.shift.start)} – ${clockPlain(v.shift.end)}`}><TypeIcon type={v.shift.shift_type} /></span>
                     ))}</span>
                   </th>
                 ))}
@@ -113,7 +113,7 @@ function CellButtons({ cell, staff_id, name }: { cell: Cell; staff_id: string; n
         const h = line ? hoursWorked(line.start, line.end) : null;
         return (
           <button type="button" key={view.shift.id} class={line ? styles.on : styles.empty} onClick={() => { editing.value = { view, staff_id, name }; }}
-            aria-label={line ? `${name}, ${cell.date}: ${clockShort(line.start)} to ${clockShort(line.end)}. Edit` : `Add ${name} to the ${cell.date} shift`}>
+            aria-label={line ? `${name}, ${cell.date}: ${clockPlain(line.start)} to ${clockPlain(line.end)}. Edit` : `Add ${name} to the ${cell.date} shift`}>
             {line ? <><span class={styles.times}>{clockShort(line.start)}–{clockShort(line.end)}</span>{h != null && <b>{dec1(h)}h</b>}</> : <Icon name="plus" />}
           </button>
         );
@@ -147,7 +147,7 @@ function HoursDialog() {
   return (
     <dialog ref={ref} class={styles.dialog} aria-labelledby="hd-title" onClose={close} onCancel={close} onClick={ev => { if (ev.target === ref.current) close(); }}>
       <form onSubmit={save} class={styles.dform}>
-        <header><h2 id="hd-title">{e.name}</h2><p>{weekdayShort(sh.date)}, {shortDate(sh.date)} · shift {clockShort(sh.start)}–{clockShort(sh.end)}</p></header>
+        <header><h2 id="hd-title">{e.name}</h2><p>{weekdayShort(sh.date)}, {shortDate(sh.date)} · shift {clockPlain(sh.start)} – {clockPlain(sh.end)}</p></header>
         <div class={styles.two}>
           <TimeField label="Start" value={start} onChange={setStart} />
           <TimeField label="End" value={end} pm={false} onChange={setEnd} />

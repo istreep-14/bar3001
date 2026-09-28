@@ -201,8 +201,8 @@ export function ShiftForm({ id }: { id: string }) {
       </div>
     </div>
   );
-  const tipsField = (
-    <label class="field"><span class="label-text">Tips</span>
+  const tipsField = (hideLabel = false) => (
+    <label class="field"><span class={hideLabel ? 'sr-only' : 'label-text'}>Tips</span>
       <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={form.tips} placeholder="0.00" aria-invalid={!!errors.tips} onInput={e => set({ tips: e.currentTarget.value })} />
       {err('tips')}
     </label>
@@ -253,7 +253,7 @@ export function ShiftForm({ id }: { id: string }) {
                   </div>
                   <div class={styles.homeBlock}>
                     <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {money(tph)}/hr</span>}</h3>
-                    {tipsField}
+                    {tipsField(true)}
                     <button type="button" class="linkbtn" onClick={() => show('misc')}>Add other income</button>
                   </div>
                   <div class={styles.summary} aria-live="polite">
@@ -313,7 +313,7 @@ export function ShiftForm({ id }: { id: string }) {
 
             {page === 'tips' && (
               <div class={styles.pane} role="tabpanel">
-                {tipsField}
+                {tipsField()}
                 <Facts items={[
                   tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${moneyWhole(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${moneyWhole(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
                   { label: 'Total income', value: money(total) }

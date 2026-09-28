@@ -1,4 +1,4 @@
-import { dayLabel, dec1, hours, money, timeRange } from '../../lib/format.ts';
+import { clockPlain, dayLabel, dec1, hours, money } from '../../lib/format.ts';
 import { rateTone } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { openSheet } from '../../router.ts';
@@ -7,7 +7,7 @@ import styles from './ShiftCard.module.css';
 
 /** Card view of a shift. Fires the same openSheet as a table row; selection is an accent border. */
 export function ShiftCard({ v, avg, selected }: { v: ShiftView; avg: number | null; selected: boolean }) {
-  const { shift: s } = v, d = dayLabel(s.date), time = timeRange(s.start, s.end);
+  const { shift: s } = v, d = dayLabel(s.date), time = s.start != null && s.end != null ? `${clockPlain(s.start)} – ${clockPlain(s.end)}` : '';
   const sources = [...new Set(v.income.map(i => i.category))];
   return (
     <li>

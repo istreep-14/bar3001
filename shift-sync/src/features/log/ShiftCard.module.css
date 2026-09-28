@@ -3,7 +3,7 @@
 .card[aria-current='true'] { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
 /* The date, drawn rather than written: a shift IS its date. No box, so nothing nests. */
 .date { display: grid; justify-items: center; line-height: 1.1; }
-.month { font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.month { font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--ink-2); }
 .day { font-size: var(--fs-hero); font-weight: var(--fw-bold); }
 .body { display: grid; gap: 2px; min-width: 0; }
 .head { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lead); }

@@ -135,39 +135,6 @@ export function ColumnChart({ title, sub, data, fmt, height = 168, empty = 'Noth
   );
 }
 
-/* ── dots on a line: one dot per shift, coloured by its type; `avg` draws a reference line ── */
-export interface DotDatum { xlabel: string; title: string; y: number; cls: string; rows: TipRow[] }
-export function DotLine({ title, sub, data, fmt, valueLabel = 'Value', avg = null, height = 168, empty = 'Log a few shifts to see them here.', legend }: {
-  title: string; sub?: string; data: DotDatum[]; fmt: (v: number) => string; valueLabel?: string; avg?: number | null; height?: number; empty?: string; legend?: { cls: string; label: string }[];
-}) {
-  const t = useTip();
-  if (data.length < 2) return <EmptyFigure title={title} text={empty} />;
-  const scale = niceScale(Math.max(...data.map(d => d.y), avg ?? 0));
-  const pos = (i: number) => 3 + (i / (data.length - 1)) * 94, yPct = (v: number) => (v / scale.top) * 100;
-  const every = Math.max(1, Math.ceil(data.length / 5)), last = data.length - 1;
-  const xl = (d: DotDatum, i: number) => (i % every === 0 || (i === last && last % every >= Math.ceil(every / 2)) ? d.xlabel : '');
-  return (
-    <figure class="viz" role="group" aria-label={title} ref={t.host}>
-      <Cap title={title} sub={sub} />
-      <div class="plot" style={{ '--plot-h': height + 'px' }}>
-        <div class="yaxis" aria-hidden="true">{scale.ticks.map(v => <span class="yt" key={v} style={{ bottom: yPct(v) + '%' }}>{fmt(v)}</span>)}</div>
-        <div class="area">
-          {scale.ticks.map(v => <div class="gl" key={v} style={{ bottom: yPct(v) + '%' }} />)}
-          {avg != null && <div class="avgline" style={{ bottom: yPct(avg) + '%' }}><span>avg {fmt(avg)}</span></div>}
-          <svg class="line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <polyline points={data.map((d, i) => `${pos(i).toFixed(2)},${(100 - yPct(d.y)).toFixed(2)}`).join(' ')} vector-effect="non-scaling-stroke" />
-          </svg>
-          {data.map((d, i) => <button type="button" key={i} class={'pt ' + d.cls} aria-label={`${d.title}: ${fmt(d.y)}`} style={{ left: pos(i) + '%', bottom: yPct(d.y) + '%' }} {...t.bind(d.title, d.rows)} />)}
-        </div>
-        <div class="xaxis xaxis-free" aria-hidden="true">{data.map((d, i) => <span class="xl" key={i} style={{ left: pos(i) + '%' }}>{xl(d, i)}</span>)}</div>
-      </div>
-      {legend && <Legend items={legend} />}
-      <TableView headers={['Shift', valueLabel]} rows={data.map(d => [d.title, fmt(d.y)])} />
-      {t.node}
-    </figure>
-  );
-}
-
 /* ── horizontal bars: a handful of categories, the value at the tip ── */
 export interface HBarDatum { label: string; note?: string; value: number | null; cls?: string; title?: string }
 export function HBars({ title, sub, data, fmt, empty = 'Nothing to compare yet.' }: { title: string; sub?: string; data: HBarDatum[]; fmt: (v: number) => string; empty?: string }) {
