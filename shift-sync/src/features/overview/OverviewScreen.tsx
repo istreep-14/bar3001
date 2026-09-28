@@ -41,7 +41,7 @@ export function OverviewScreen() {
   return (
     <section class="panel" aria-labelledby="ov-title">
       <header class="panel-head">
-        <h2 id="ov-title">Overview</h2>
+        <h2 id="ov-title">Insights</h2>
         <div class="panel-tools">
           <div class="seg" role="radiogroup" aria-label="Recent span">
             {FOCUS.map(f => <label key={f.id}><input type="radio" name="ov-focus" checked={focus.value === f.id} onChange={() => { focus.value = f.id; save('ov:focus', f.id); }} /><span>{f.label}</span></label>)}

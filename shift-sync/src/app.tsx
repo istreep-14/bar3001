@@ -2,6 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { flipTheme, mode } from './data/settings.ts';
 import { ready } from './data/store.ts';
 import { CalendarScreen } from './features/calendar/CalendarScreen.tsx';
+import { DashboardScreen } from './features/dashboard/DashboardScreen.tsx';
 import { HubCrew } from './features/hub/HubCrew.tsx';
 import { HubIncome } from './features/hub/HubIncome.tsx';
 import { HubWeek } from './features/hub/HubWeek.tsx';
@@ -32,7 +33,8 @@ interface Page { id: Screen; label: string; icon: IconName; tabs?: Tab[]; also?:
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }
 const GROUPS: Group[] = [
   { id: 'shift', label: 'Shifts', icon: 'log', pages: [
-    { id: 'overview', label: 'Overview', icon: 'chart', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
+    { id: 'dashboard', label: 'Dashboard', icon: 'chart' },
+    { id: 'overview', label: 'Insights', icon: 'trend', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
     { id: 'log', label: 'Log', icon: 'table' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' },
     { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
   { id: 'crew', label: 'Crew', icon: 'users', pages: [
@@ -114,6 +116,7 @@ export function App() {
               {page.tabs.map(t => <a key={t.id} href={`#/${t.id}`} class={styles.tab} aria-current={current === t.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(t.id); }}>{t.label}</a>)}
             </nav>
           )}
+          {current === 'dashboard' && <DashboardScreen />}
           {current === 'overview' && <OverviewScreen />}
           {current === 'calendar' && <CalendarScreen />}
           {current === 'log' && <LogScreen />}

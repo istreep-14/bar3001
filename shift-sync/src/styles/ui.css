@@ -82,10 +82,13 @@ select.input { appearance: none; padding-right: var(--s-6);
 /* a tighter version for a table whose cells are two lines deep: less air, so a row of stacked figures
    doesn't read taller than it needs to be. Opt in per page with a `.tbl-tight` ancestor. */
 .tbl-tight .tbl th, .tbl-tight .tbl td { padding: 0.3rem 0.65rem; }
-.tbl th {
-  position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--line);
-  font-size: var(--fs-meta); font-weight: var(--fw-med); color: var(--ink-3); white-space: nowrap;
+.tbl th { white-space: nowrap; }
+/* the header band: column heads only (row heads down the side, like a bartender's name, stay plain cells) */
+.tbl thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--th-bg); border-bottom: 1px solid var(--th-line);
+  font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--th-ink);
 }
+.tbl :is(tbody, tfoot) th { border-bottom: 1px solid var(--line-soft); color: var(--ink); font-weight: var(--fw-med); }
 .tbl td { border-bottom: 1px solid var(--line-soft); color: var(--ink); }
 .tbl tbody tr:last-child td { border-bottom: 0; }
 .tbl :is(th, td).l { text-align: left; }

@@ -17,7 +17,7 @@ export function CrewTimeline({ days, shiftsPerDay, dayHours, onEdit }: {
   const t = today();
   return (
     <div class={styles.tl} role="table" aria-label="Crew times this week">
-      <div class={styles.row} role="row">
+      <div class={`${styles.row} ${styles.headRow}`} role="row">
         <span role="columnheader" class={styles.head}>Day</span>
         <span role="columnheader" class={styles.ticks}>
           {r.ticks.map(m => <span key={m} class={styles.tick} style={{ left: `${((m - r.origin) / r.length) * 100}%` }}>{tickLabel(m)}</span>)}
