@@ -9,8 +9,8 @@ import { DrawerFrame } from '../../ui/DrawerFrame.tsx';
 import type { FrameApi } from '../../ui/DrawerFrame.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { toast } from '../../ui/toast.tsx';
-import styles from '../../ui/drawer.module.css';
 import { StatusMark } from './StatusMark.tsx';
+import styles from '../../ui/drawer.module.css';
 
 interface Form { name: string; first: string; last: string; roles: string[]; id_number: string; manager: boolean; is_user: boolean; status: 'active' | 'inactive'; notes: string }
 const blank = (): Form => ({ name: '', first: '', last: '', roles: [], id_number: '', manager: false, is_user: false, status: 'active', notes: '' });
