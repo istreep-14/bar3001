@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DASH, clock, clockPlain, clockShort, clockTight, dateCell, dec1, hours, hoursBare, int, isPastYear, longDate, weekLabel } from '../src/lib/format.ts';
+import { DASH, clock, clockPlain, clockShort, clockTight, dateCell, dec1, hours, hoursBare, int, isPastYear, longDate, money, perHour, perHourWhole, weekLabel } from '../src/lib/format.ts';
 
 test('clock is exact and fixed-width so times align', () => {
   assert.equal(clock(17 * 60), '05:00 PM');
@@ -18,6 +18,14 @@ test('table figures round to whole numbers; absent is a dash', () => {
   assert.equal(int(240), '240');
   assert.equal(int(0), '0');
   assert.equal(int(null), DASH);
+});
+
+test('a rate reads one way: two decimals like money, per hour; whole only where that cannot fit', () => {
+  assert.equal(perHour(12.4), money(12.4) + '/hr');
+  assert.match(perHour(12.4), /12\.40\/hr$/);
+  assert.match(perHourWhole(12.4), /12\/hr$/);
+  assert.equal(perHour(null), DASH);
+  assert.equal(perHourWhole(undefined), DASH);
 });
 
 test('date cells are fixed width', () => {

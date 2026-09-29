@@ -4,7 +4,7 @@ import { liveViews, personById, ready } from '../../data/store.ts';
 import { addDays, today } from '../../lib/dates.ts';
 import { bestShifts, waiting, weekCompare } from '../../lib/dashboard.ts';
 import { isPending } from '../../lib/groups.ts';
-import { dec1, dollars, hours, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
 import { DeltaPill } from '../../ui/kpi.tsx';
@@ -115,7 +115,7 @@ export function DashboardScreen() {
             </div>
             <dl class={styles.list}>
               <div><dt>Hours</dt><dd class="num">{hours(w.now.hours)} <span class="muted">of 40</span></dd></div>
-              <div><dt>Best day</dt><dd class="num">{bestDay ? `${weekdayShort(bestDay.date)} · ${money(bestDay.tips / bestDay.hours)}/hr` : '—'}</dd></div>
+              <div><dt>Best day</dt><dd class="num">{bestDay ? `${weekdayShort(bestDay.date)} · ${perHour(bestDay.tips / bestDay.hours)}` : '—'}</dd></div>
             </dl>
           </Card>
 

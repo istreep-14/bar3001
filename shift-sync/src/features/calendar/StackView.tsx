@@ -1,7 +1,7 @@
 import { byDate, monthGrid, rateScale } from '../../lib/calendar.ts';
 import type { RateScale } from '../../lib/calendar.ts';
 import { addDays, today, ymd, weekStart } from '../../lib/dates.ts';
-import { dec1, dollars, hours, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
+import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { summaryRows } from '../../lib/summary.ts';
@@ -49,7 +49,7 @@ export function StackView({ all, end, count = 3 }: { all: ShiftView[]; end: Mont
           <MiniStat label="Shifts" value={s.shifts} pct={pctChange(s.shifts, before.shifts)} neutral hint={`Against the ${count} months before`} />
           <MiniStat label="Hours" value={hours(s.hours)} pct={pctChange(s.hours, before.hours)} neutral />
           <MiniStat label="Tips" value={moneyWhole(s.tips)} pct={pctChange(s.tips, before.tips)} />
-          <MiniStat label="Rate" value={s.tph == null ? '—' : `$${s.tph.toFixed(1)}/hr`} pct={pctChange(s.tph, before.tph)} hint="Tips over hours worked" />
+          <MiniStat label="Rate" value={perHour(s.tph)} pct={pctChange(s.tph, before.tph)} hint="Tips over hours worked" />
           <MiniStat label="Total" value={moneyWhole(s.total)} pct={pctChange(s.total, before.total)} />
         </div>
         <MonthTable all={all} months={months} />
@@ -71,7 +71,7 @@ function MiniMonth({ month, all, scale }: { month: Month; all: ShiftView[]; scal
     <section class={styles.month} aria-label={`${MONTH_NAMES[month.m]} ${month.y}`}>
       <header class={styles.mhead}>
         <h3>{MONTH_NAMES[month.m]} <span>{month.y}</span></h3>
-        <span class={styles.mstats}>{s.shifts} shift{s.shifts === 1 ? '' : 's'}{s.tph != null && <> · <b>${s.tph.toFixed(1)}</b>/hr</>}</span>
+        <span class={styles.mstats}>{s.shifts} shift{s.shifts === 1 ? '' : 's'}{s.tph != null && <> · <b>{perHour(s.tph)}</b></>}</span>
       </header>
       <div class={styles.grid}>
         {LETTERS.map((l, i) => <span key={i} class={styles.dow} aria-hidden="true">{l}</span>)}
@@ -84,8 +84,8 @@ function MiniMonth({ month, all, scale }: { month: Month; all: ShiftView[]; scal
           const d = summarize(list), h = scale?.at(d.tph);
           return (
             <button type="button" key={c.date} class={`${styles.day} ${styles.has} ${c.date === now ? styles.today : ''}`} data-side={h?.side} style={h ? { '--heat': String(h.mag) } : undefined}
-              onClick={() => openSheet(list[0]!.shift.id)} title={`${weekdayShort(c.date)} ${shortDate(c.date)} · ${d.tph == null ? 'no rate' : '$' + d.tph.toFixed(1) + '/hr'} · ${moneyWhole(d.total)}`}
-              aria-label={`Open ${shortDate(c.date)}: ${moneyWhole(d.total)}${d.tph != null ? ', $' + d.tph.toFixed(0) + ' an hour in tips' : ''}`}>
+              onClick={() => openSheet(list[0]!.shift.id)} title={`${weekdayShort(c.date)} ${shortDate(c.date)} · ${d.tph == null ? 'no rate' : perHour(d.tph)} · ${moneyWhole(d.total)}`}
+              aria-label={`Open ${shortDate(c.date)}: ${moneyWhole(d.total)}${d.tph != null ? `, ${money(d.tph)} an hour in tips` : ''}`}>
               <span class={styles.n}>{n}</span><b class={styles.rate}>{d.tph == null ? '—' : Math.round(d.tph)}</b>
             </button>
           );
@@ -120,10 +120,10 @@ function Weekly({ all, from, to }: { all: ShiftView[]; from: string; to: string 
   const every = Math.max(1, Math.ceil(series.length / 8));
   return (
     <ComboChart title="Tips and rate by week" sub="the line is tips per hour, smoothed over 4 weeks" height={170}
-      fmtBar={moneyWhole} fmtLine={v => `$${+v.toFixed(0)}`} barLabel="Tips" lineLabel="Tips per hour" smoothLabel="Smoothed tips per hour"
+      fmtBar={moneyWhole} fmtLine={moneyWhole} barLabel="Tips" lineLabel="Tips per hour" smoothLabel="Smoothed tips per hour"
       data={series.map((p, i) => ({
         xlabel: i % every === 0 ? shortDate(p.key) : '', title: `Week of ${weekdayShort(p.key)}, ${shortDate(p.key)}${p.partial ? ' (so far)' : ''}`, bar: p.tips, line: p.tph, smooth: p.smooth, partial: p.partial,
-        rows: [{ name: 'tips', value: moneyWhole(p.tips) }, { name: 'per hour that week', value: p.tph == null ? '—' : `$${p.tph.toFixed(1)}` }, { name: `${p.n} shift${p.n === 1 ? '' : 's'}`, value: hours(p.hours) }]
+        rows: [{ name: 'tips', value: moneyWhole(p.tips) }, { name: 'per hour that week', value: money(p.tph) }, { name: `${p.n} shift${p.n === 1 ? '' : 's'}`, value: hours(p.hours) }]
       }))} />
   );
 }
@@ -140,7 +140,7 @@ function RankList({ title, views, dir }: { title: string; views: ShiftView[]; di
               <button type="button" onClick={() => openSheet(v.shift.id)}>
                 <span class={styles.rdate}>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</span>
                 <TypeIcon type={v.shift.shift_type} />
-                <b class={dir === 'best' ? styles.hi : styles.lo}>${v.tph!.toFixed(1)}/hr</b>
+                <b class={dir === 'best' ? styles.hi : styles.lo}>{perHour(v.tph)}</b>
                 <span class={styles.rtotal}>{moneyWhole(v.total)}</span>
               </button>
             </li>

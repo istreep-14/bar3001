@@ -2,7 +2,7 @@ import type { MutableRef } from 'preact/hooks';
 import { CATEGORIES, defaultShiftType, wageRateFor } from '../../../core/core.generated.js';
 import type { Category, ShiftType, Local, Staff } from '../../../core/core.generated.js';
 import { liveViews, liveWages, me, personById } from '../../../data/store.ts';
-import { dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../../lib/format.ts';
+import { dec1, hours, longDate, money, perHour, shortDate, weekdayShort } from '../../../lib/format.ts';
 import type { IncomePart } from '../../../lib/groups.ts';
 import type { ShiftView, Summary } from '../../../lib/stats.ts';
 import { go } from '../../../router.ts';
@@ -90,7 +90,7 @@ export function HomePage({ c }: { c: Ctx }) {
           <button type="button" class="linkbtn" onClick={() => show('time')}>{form.date ? `Compare with your past ${weekdayLong(form.date)} shifts` : 'Compare with your past shifts'}</button>
         </div>
         <div class={styles.homeBlock}>
-          <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {money(tph)}/hr</span>}</h3>
+          <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {perHour(tph)}</span>}</h3>
           <TipsField c={c} hideLabel />
           <button type="button" class="linkbtn" onClick={() => show('misc')}>Add other income</button>
         </div>
@@ -149,7 +149,7 @@ export function TypePage({ c }: { c: Ctx }) {
               <input type="radio" name="type" value={t} checked={form.type === t}
                 onClick={() => { typeTouched.current = true; set({ type: form.type === t ? '' : t }); }} onChange={() => {}} />
               <b>{t === 'day' ? 'Day' : 'Night'}</b>
-              <span class={styles.typehist}>{a.tph != null ? `${moneyWhole(a.tph)}/hr in tips over ${a.shifts} shift${a.shifts === 1 ? '' : 's'}` : 'No shifts of this type yet'}</span>
+              <span class={styles.typehist}>{a.tph != null ? `${perHour(a.tph)} in tips over ${a.shifts} shift${a.shifts === 1 ? '' : 's'}` : 'No shifts of this type yet'}</span>
             </label>
           );
         })}
@@ -165,7 +165,7 @@ export function TipsPage({ c }: { c: Ctx }) {
     <div class={styles.pane} role="tabpanel">
       <TipsField c={c} />
       <Facts items={[
-        tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${moneyWhole(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${moneyWhole(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
+        tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${perHour(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${perHour(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
         { label: 'Total income', value: money(total) }
       ]} />
     </div>
@@ -181,7 +181,7 @@ export function WagePage({ c }: { c: Ctx }) {
           <>
             <span class="label">Estimated wage</span>
             <span class={styles.amt}>{money(wageEst)}</span>
-            <span class={styles.why}>{dec1(h)}h × ${wageRateFor(liveWages.value, form.date)}/hr, the hourly wage in effect on {form.date ? longDate(form.date) : 'that day'}</span>
+            <span class={styles.why}>{dec1(h)}h × {perHour(wageRateFor(liveWages.value, form.date))}, the hourly wage in effect on {form.date ? longDate(form.date) : 'that day'}</span>
           </>
         ) : (
           <>

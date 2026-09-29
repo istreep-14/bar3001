@@ -121,6 +121,9 @@ in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of 
 
 ## Money and rates
 - **Tips per hour** is tips ÷ hours and nothing else. It is the only ranking metric. Wage and other income never enter it.
+- **A rate is written one way:** `perHour` in `lib/format.ts`, '$12.40/hr', two decimals like all money. Where the unit
+  already sits beside it (a Rate column head, a small '/hr' span, a label that says per hour) the figure is `money` of the
+  same number. `perHourWhole` ('$12/hr') only where two decimals cannot fit, a calendar day's chip; chart axes use `moneyWhole`.
 - **Wage** is estimated (hours × the hourly wage in effect that day, from Settings), never stored, and counts toward **Total**.
 - **$/HR** in the Log is everything earned per hour; it is a figure, not a ranking.
 
@@ -196,8 +199,8 @@ totals row pinned to the bottom. Below 70rem the grid scrolls sideways rather th
   figure space, so digits and colons line up down a column. (Monospaced faces were tried and set aside.)
 - **Sizes:** the one-value columns read a size up from the two-line cells (Tips and Tip rate 16px, the hours 15px, the
   crew's faces 30px, the status pill 28px tall); rows are 36px, the two-line cells set tight to fill them, so a single figure fills its row instead of looking lost in it.
-- **Totals row:** every done shift the search and filters leave, not only this page: hours, tips, tip rate (all tips over all
-  hours) and the bar's hours. It is the page's summary, so there's no side panel.
+- **Totals row:** every done shift the search and filters leave, not only this page: hours, tips, tip rate (tips over hours
+  across the shifts that have both, the same Rate as the side panels) and the bar's hours. It is the page's summary, so there's no side panel.
 - A row opens the shift in the drawer; a shift short of its numbers reads greyed. On a phone: Date, Time & hours and Tips.
 
 ## People

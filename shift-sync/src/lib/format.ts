@@ -11,8 +11,12 @@ export const money = (n: number | null | undefined): string => (n == null ? DASH
 export const moneyWhole = (n: number): string => money0.format(n);
 /** Whole dollars in a sentence, or a dash when the figure is absent. */
 export const dollars = (n: number | null | undefined): string => (n == null ? DASH : moneyWhole(n));
-/** '$12.4/hr', or a dash when there is no rate. */
-export const perHour = (n: number | null | undefined): string => (n == null ? DASH : `$${n.toFixed(1)}/hr`);
+/** A rate: '$12.40/hr', two decimals like all money, or a dash when there is none. Every rate the app shows is this (or,
+ *  where the unit already sits beside it, in a column head or its own small span, `money` of the same figure), so a
+ *  rate reads the same on every page. */
+export const perHour = (n: number | null | undefined): string => (n == null ? DASH : `${money2.format(n)}/hr`);
+/** Whole dollars an hour, only where two decimals cannot fit (a calendar day's chip): '$12/hr'. */
+export const perHourWhole = (n: number | null | undefined): string => (n == null ? DASH : `${money0.format(n)}/hr`);
 
 export const hours = (h: number | null | undefined): string => (h == null ? DASH : `${+h.toFixed(1)}h`);
 /** The same figure with no unit, for where the unit is already plain (the Log's clock ring, under an Hours head): 8, 6.5. */

@@ -1,6 +1,6 @@
 import { personById, removeShift, undoRemove } from '../data/store.ts';
 import type { ComponentChildren } from 'preact';
-import { DASH, clockTight, dollars, fullDate, hours, hoursBare, money } from '../lib/format.ts';
+import { DASH, clockTight, dollars, fullDate, hours, hoursBare, money, perHour } from '../lib/format.ts';
 import { groupShifts, shiftStatus } from '../lib/groups.ts';
 import { clockArc, lean, scaleColor, standing } from '../lib/meters.ts';
 import type { GroupBy } from '../lib/groups.ts';
@@ -149,7 +149,7 @@ function Rate({ tph, ctx }: { tph: number; ctx: Context }) {
   const tone = scaleColor(l, 'var(--ink-2)', 75);
   const diff = ctx.avg == null ? null : tph - ctx.avg;
   const says = at == null || diff == null || ctx.avg == null ? undefined
-    : `Better than ${Math.round(at * 100)}% of the shifts here\n${Math.abs(diff) < 0.005 ? 'Right on' : `${money(Math.abs(diff))}/hr ${diff > 0 ? 'above' : 'below'}`} your average ${money(ctx.avg)}/hr`;
+    : `Better than ${Math.round(at * 100)}% of the shifts here\n${Math.abs(diff) < 0.005 ? 'Right on' : `${perHour(Math.abs(diff))} ${diff > 0 ? 'above' : 'below'}`} your average ${perHour(ctx.avg)}`;
   return (
     <span class={`${styles.rate} ${says ? 'tip' : ''}`} data-tip={says} style={{ '--tone': tone }}>
       <span class={`num ${styles.ratePill}`}>{money(tph)}</span>

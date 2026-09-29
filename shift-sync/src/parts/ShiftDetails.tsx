@@ -1,6 +1,6 @@
 import { hoursWorked } from '../core/core.generated.js';
 import { personById } from '../data/store.ts';
-import { DASH, clockPlain, dec1, hours, money } from '../lib/format.ts';
+import { DASH, clockPlain, dec1, hours, money, perHour } from '../lib/format.ts';
 import { incomeParts } from '../lib/groups.ts';
 import type { ShiftView } from '../lib/stats.ts';
 import { MixBar, MixKey } from '../ui/MixBar.tsx';
@@ -51,13 +51,13 @@ export function ShiftDetails({ v, layout, onEdit }: { v: ShiftView; layout: 'sta
           {cap('Money', 'misc', 'other income')}
           <dl class={styles.kv}>
             {/* tips/hr here is this record's own arithmetic, not a ranking metric (Rate stays tips-only). */}
-            <div><dt><MixKey token="--cat-tips" />Tips</dt><dd class="num">{v.tph != null && <small>{money(v.tph)}/hr</small>}{money(sh.tips)}</dd></div>
-            {v.wage != null && <div><dt><MixKey token="--cat-wage" />Wage <span class={styles.note}>estimated</span></dt><dd class="num"><small>{dec1(v.hours)}h × ${v.wageRate}/hr</small>{money(v.wage)}</dd></div>}
+            <div><dt><MixKey token="--cat-tips" />Tips</dt><dd class="num">{v.tph != null && <small>{perHour(v.tph)}</small>}{money(sh.tips)}</dd></div>
+            {v.wage != null && <div><dt><MixKey token="--cat-wage" />Wage <span class={styles.note}>estimated</span></dt><dd class="num"><small>{dec1(v.hours)}h × {perHour(v.wageRate)}</small>{money(v.wage)}</dd></div>}
             {v.income.map(i => (
               <div key={i.id}><dt><MixKey token={`--cat-${i.category.toLowerCase()}`} />{i.category}{i.note && <span class={styles.note}>{i.note}</span>}</dt><dd class="num">{money(i.amount)}</dd></div>
             ))}
             {sh.other ? <div><dt><MixKey token="--cat-other" />Other <span class={styles.note}>earlier entry</span></dt><dd class="num">{money(sh.other)}</dd></div> : null}
-            <div class={styles.total}><dt>Total</dt><dd class="num">{v.perHour != null && <small>{money(v.perHour)}/hr</small>}{money(v.total)}</dd></div>
+            <div class={styles.total}><dt>Total</dt><dd class="num">{v.perHour != null && <small>{perHour(v.perHour)}</small>}{money(v.total)}</dd></div>
           </dl>
         </section>
       </div>

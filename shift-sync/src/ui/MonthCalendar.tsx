@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { addDays, today as todayText } from '../lib/dates.ts';
 import { byDate, monthGrid, rateScale } from '../lib/calendar.ts';
-import { clockShort, hours, moneyWhole, shortDate, weekdayShort } from '../lib/format.ts';
+import { clockShort, hours, moneyWhole, perHour, perHourWhole, shortDate, weekdayShort } from '../lib/format.ts';
 import { summarize } from '../lib/stats.ts';
 import type { ShiftView } from '../lib/stats.ts';
 import { pctChange } from '../lib/trends.ts';
@@ -101,7 +101,7 @@ export function MonthCalendar({ mode, views, selected = null, exclude = null, mo
                     <span class="sc-tags"><TypeIcon type={v.shift.shift_type} />{v.shift.party && <PartyIcon />}</span>
                   </span>
                   <strong class="sc-total">{moneyWhole(v.total)}</strong>
-                  <span class="sc-sub">{v.tph != null && <b>{`$${v.tph.toFixed(0)}/hr`}</b>}{v.tph != null && v.hours ? ' · ' : ''}{v.hours ? hours(v.hours) : v.tph == null ? 'no hours' : ''}</span>
+                  <span class="sc-sub">{v.tph != null && <b>{perHourWhole(v.tph)}</b>}{v.tph != null && v.hours ? ' · ' : ''}{v.hours ? hours(v.hours) : v.tph == null ? 'no hours' : ''}</span>
                   {v.shift.start != null && v.shift.end != null && <span class="sc-time">{clockShort(v.shift.start)}–{clockShort(v.shift.end)}</span>}
                 </button>
               ))}
@@ -116,7 +116,7 @@ export function MonthCalendar({ mode, views, selected = null, exclude = null, mo
             <MiniStat label="Shifts" value={totals.shifts} pct={pctChange(totals.shifts, before.shifts)} neutral hint="Against last month" />
             <MiniStat label="Hours" value={hours(totals.hours)} pct={pctChange(totals.hours, before.hours)} neutral />
             <MiniStat label="Tips" value={moneyWhole(totals.tips)} pct={pctChange(totals.tips, before.tips)} />
-            <MiniStat label="Rate" value={totals.tph == null ? '—' : `$${totals.tph.toFixed(1)}/hr`} pct={pctChange(totals.tph, before.tph)} hint="Tips over hours worked" />
+            <MiniStat label="Rate" value={perHour(totals.tph)} pct={pctChange(totals.tph, before.tph)} hint="Tips over hours worked" />
             <MiniStat label="Total" value={moneyWhole(totals.total)} pct={pctChange(totals.total, before.total)} />
           </div>}
       </div>

@@ -1,4 +1,4 @@
-import { DASH, int, money } from '../lib/format.ts';
+import { DASH, int, perHour } from '../lib/format.ts';
 import { Icon } from './Icon.tsx';
 
 /** Day/night pill: word + color (+ icon unless `bare`, the table form), so it survives without color. */
@@ -38,7 +38,7 @@ export function RatePill({ tph, tone, whole }: { tph: number | null; tone: 'good
   return (
     <span class="rate" data-tone={tone ?? undefined}>
       {tone && <Icon name={tone === 'good' ? 'up' : 'down'} />}
-      {money(tph)}/hr
+      {perHour(tph)}
       {tone && <span class="sr-only">{hint}</span>}
     </span>
   );

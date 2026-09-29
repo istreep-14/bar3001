@@ -8,6 +8,7 @@ import { DASH, clockParts, dec1, dollars, money, weekdayShort } from '../../lib/
 import { shiftStatus } from '../../lib/groups.ts';
 import type { ShiftStatus } from '../../lib/groups.ts';
 import { lean, scaleColor, standing } from '../../lib/meters.ts';
+import { summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { CrewPhotos } from '../../parts/CrewPhotos.tsx';
 import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
@@ -87,15 +88,16 @@ export function ShiftTable() {
   const PHONE: Record<string, number> = { date: 0.95, time: 1.55, tips: 0.75 };
   const shown = isDesktop.value ? columns : columns.filter(c => c.key in PHONE).map(c => ({ ...c, weight: PHONE[c.key], groupStart: false }));
 
-  // Totals of every done shift shown (all pages), under their columns. Tip rate is all the tips over all the hours.
+  // Totals of every done shift shown (all pages), under their columns. Tip rate is tips over hours across the shifts that have both.
   const counted = rows.filter(done);
   const sum = (f: (v: ShiftView) => number | null | undefined) => counted.reduce((a, v) => a + (f(v) ?? 0), 0);
   const worked = sum(v => v.hours), tips = sum(v => v.shift.tips), bar = sum(v => v.crewHours);
+  const tph = summarize(counted).tph;   // only shifts with both tips and hours, the same Rate as every other page
   const foot = {
     date: <span class={styles.footLabel}>Totals<small>{counted.length} done {counted.length === 1 ? 'shift' : 'shifts'}</small></span>,
     time: <span class={styles.tmFoot}><span class="fig fig-key">{dec1(worked)}<span class="fig-unit">h</span></span></span>,
     tips: <span class="fig fig-key">{dollars(tips)}</span>,
-    rate: worked ? <span class="fig fig-key">{money(tips / worked)}<span class="fig-unit">/hr</span></span> : DASH,
+    rate: tph != null ? <span class="fig fig-key">{money(tph)}<span class="fig-unit">/hr</span></span> : DASH,
     crew: bar ? <span class={styles.footLabel}><span class="fig fig-key">{dec1(bar)}<span class="fig-unit">h</span></span><small>on the bar</small></span> : null
   };
 
