@@ -100,8 +100,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl tbody tr { transition: background var(--dur) var(--ease); }
 .tbl tbody tr[data-row] { cursor: pointer; }
 .tbl tbody tr[data-row]:hover { background: var(--surface-2); }
-.tbl tbody tr[aria-selected='true'] { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
-.tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
+.tbl tbody tr[aria-current='true'] { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
 /* grouped rows (Table `group`): no rule inside a block; between blocks, a separator row (a hairline with a little air) */
 .tbl[data-grouped] tbody td { border-bottom: 0; }
 .tbl tbody tr.tbl-sep td { height: var(--s-3); padding: 0; background: linear-gradient(var(--line-soft), var(--line-soft)) center / 100% 1px no-repeat; }
@@ -126,21 +126,21 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-log .tbl tbody td:last-child { border-top-right-radius: var(--r-md); border-bottom-right-radius: var(--r-md); }
 .tbl-log .tbl[data-grouped] tbody tr:not([data-first]) td { border-top-left-radius: 0; border-top-right-radius: 0; }
 .tbl-log .tbl[data-grouped] tbody tr:not([data-last]) td { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-.tbl-log .tbl tbody tr[data-row]:hover, .tbl-log .tbl tbody tr[aria-selected='true'] { background: none; }
+.tbl-log .tbl tbody tr[data-row]:hover, .tbl-log .tbl tbody tr[aria-current='true'] { background: none; }
 /* a row's tone (Table `tone`): yours has a faint gold fill, a manager's a faint blue one (yours wins if you're both); an inactive
    person's reads greyed out, the way an offline member does. The fill deepens on hover and when selected instead of being
    replaced, so the row still says whose it is. */
 .tbl tbody tr[data-tone='me'] td { background: var(--me-wash); }
 .tbl tbody tr[data-tone='manager'] td { background: var(--mgr-wash); }
 .tbl-log .tbl tbody tr[data-tone='me'][data-row]:hover td { background: color-mix(in srgb, var(--me) 15%, var(--surface)); }
-.tbl-log .tbl tbody tr[data-tone='me'][aria-selected='true'] td { background: color-mix(in srgb, var(--me) 20%, var(--surface)); }
+.tbl-log .tbl tbody tr[data-tone='me'][aria-current='true'] td { background: color-mix(in srgb, var(--me) 20%, var(--surface)); }
 .tbl-log .tbl tbody tr[data-tone='manager'][data-row]:hover td { background: color-mix(in srgb, var(--mgr) 12%, var(--surface)); }
-.tbl-log .tbl tbody tr[data-tone='manager'][aria-selected='true'] td { background: color-mix(in srgb, var(--mgr) 16%, var(--surface)); }
+.tbl-log .tbl tbody tr[data-tone='manager'][aria-current='true'] td { background: color-mix(in srgb, var(--mgr) 16%, var(--surface)); }
 .tbl tbody tr[data-tone='muted'] td, .tbl tbody tr[data-tone='muted'] :is(.who-name, .role-name) { color: var(--ink-3); }
 .tbl tbody tr[data-tone='muted'] :is(.avatar, .role) { opacity: 0.6; }
 .tbl-log .tbl tbody tr[data-row]:hover td { background: var(--surface-2); }
-.tbl-log .tbl tbody tr[aria-selected='true'] td { background: var(--accent-wash); }
-.tbl-log .tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.tbl-log .tbl tbody tr[aria-current='true'] td { background: var(--accent-wash); }
+.tbl-log .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 /* set widths (columns with a `weight`): shares of the width, a draggable edge between heads, and cells that cut off with an
    ellipsis instead of pushing their neighbours. A phone scrolls the table sideways rather than crushing it. */
 .tbl-fixed .tbl { table-layout: fixed; min-width: 52rem; }
@@ -172,8 +172,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-grid .tbl .r .th-sort { flex-direction: row-reverse; }
 .tbl-grid .tbl td { height: var(--grid-row); background: var(--surface); white-space: nowrap; }
 .tbl-grid .tbl tbody tr[data-row]:hover td { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }   /* toward the ink: darker in light, lighter in dark */
-.tbl-grid .tbl tbody tr[aria-selected='true'] td { background: var(--accent-wash); }
-.tbl-grid .tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent), inset -1px 0 0 var(--line-soft); }
+.tbl-grid .tbl tbody tr[aria-current='true'] td { background: var(--accent-wash); }
+.tbl-grid .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent), inset -1px 0 0 var(--line-soft); }
 .tbl-grid .tbl tbody tr:last-child td { border-bottom: 1px solid var(--line-soft); }
 /* keyboard focus on a row: the row's own edges, not an outline the sticky column would cut */
 .tbl-grid .tbl tbody tr:focus-visible { outline: none; }
@@ -195,7 +195,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl td.chev { width: 2rem; color: var(--ink-3); text-align: center; }
 .tbl td.chev .icon { width: 1rem; height: 1rem; vertical-align: middle; }
 .tbl td.chev.when { width: 100%; padding-right: var(--s-3); text-align: right; }   /* the list's slack goes here, so the columns sit together */
-.tbl-log .tbl tbody tr[aria-selected='true'] td.chev { color: var(--ink); }
+.tbl-log .tbl tbody tr[aria-current='true'] td.chev { color: var(--ink); }
 .who { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; white-space: nowrap; vertical-align: middle; }
 /* a person in two lines: the short name (with its marks and ID) on top, the full name small under it */
 .who-lines { display: grid; gap: 1px; min-width: 0; padding-top: 2px; line-height: 1.2; }   /* nudged down: the top line sits nearer the row's middle */

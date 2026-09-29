@@ -1,7 +1,7 @@
 import { personById, removeShift, undoRemove } from '../data/store.ts';
 import type { ComponentChildren } from 'preact';
 import { DASH, clockTight, dollars, fullDate, hours, hoursBare } from '../lib/format.ts';
-import { groupShifts, shiftStatus } from '../lib/groups.ts';
+import { STATUS_LABEL, groupShifts, shiftStatus } from '../lib/groups.ts';
 import { clockArc } from '../lib/meters.ts';
 import type { GroupBy } from '../lib/groups.ts';
 import { rateContext } from '../lib/stats.ts';
@@ -102,21 +102,24 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
   const crewSays = names.length ? names.join(', ') + (v.crewCount > names.length ? ` and ${v.crewCount - names.length} more` : '') : undefined;
   const time = sh.start != null && sh.end != null ? `${clockTight(sh.start)} → ${clockTight(sh.end)}`
     : sh.start != null ? `${clockTight(sh.start)} →` : sh.end != null ? `→ ${clockTight(sh.end)}` : null;
+  // The column heads are drawn for the eye only (the row is one button), so each figure carries its column's name for a
+  // screen reader, and a shift short of its money says where it stands.
+  const named = (label: string, figure: ComponentChildren) => <><span class="sr-only">{label} </span>{figure}</>;
   const cell: Record<LogCol, () => ComponentChildren> = {
     type: () => sh.shift_type && <span class={styles.type} data-kind={sh.shift_type}><Icon name={sh.shift_type === 'day' ? 'sun' : 'moon'} label={sh.shift_type === 'day' ? 'Day shift' : 'Night shift'} /></span>,
     party: () => sh.party && <PartyIcon />,
     hours: () => <Hours v={v} />,
-    tips: () => <span class={`num ${done ? styles.tips : ''}`}>{done ? dollars(sh.tips) : DASH}</span>,
-    rate: () => (done && v.tph != null ? <RateFigure tph={v.tph} ctx={ctx} /> : DASH),
-    wage: () => <span class={`num ${styles.quiet}`}>{done && v.wage != null ? dollars(v.wage) : ''}</span>,
-    other: () => <span class={`num ${styles.quiet}`}>{done && v.extra ? dollars(v.extra) : ''}</span>,
-    total: () => (done ? <Total v={v} /> : <span class="num">{DASH}</span>),
+    tips: () => <span class={`num ${done ? styles.tips : ''}`}>{done ? named('Tips', dollars(sh.tips)) : DASH}</span>,
+    rate: () => (done && v.tph != null ? named('Rate', <RateFigure tph={v.tph} ctx={ctx} />) : DASH),
+    wage: () => <span class={`num ${styles.quiet}`}>{done && v.wage != null ? named('Wage', dollars(v.wage)) : ''}</span>,
+    other: () => <span class={`num ${styles.quiet}`}>{done && v.extra ? named('Other', dollars(v.extra)) : ''}</span>,
+    total: () => (done ? named('Total', <Total v={v} />) : <span class="num">{DASH}</span>),
     crew: () => <>{v.crewCount > 0 && <CrewPhotos crew={shown} more={v.crewCount - shown.length} />}{crewSays && <span class="sr-only">{crewSays}</span>}</>
   };
   return (
     <div class={styles.item} data-open={open ? '' : undefined} data-selected={selected && !open ? '' : undefined} data-status={status} role="listitem">
       <button type="button" class={`${styles.grid} ${styles.row}`} data-row aria-expanded={open} onClick={() => openSheet(id)} title={fullDate(sh.date)}>
-        <DayCell date={sh.date} chip sub={time && <span class={styles.times}>{time}</span>} />
+        <DayCell date={sh.date} chip sub={time || !done ? <>{time && <span class={styles.times}>{time}</span>}{!done && <span class="sr-only">, {STATUS_LABEL[status].toLowerCase()}</span>}</> : undefined} />
         {cols.map(c => c.key === 'crew'
           ? <span key={c.key} class={`${styles.crew} ${crewSays ? 'tip' : ''}`} data-tip={crewSays}>{cell.crew()}</span>
           : <span key={c.key} class={c.align === 'c' ? styles.icon : c.align}>{cell[c.key]()}</span>)}

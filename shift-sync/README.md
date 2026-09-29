@@ -57,12 +57,13 @@ keep that possible.
 Nothing imports upward. Read the list below as "may import":
 
 ```
-app.tsx                 -> features/, parts/, ui/, router.ts
+app.tsx                 -> features/, parts/, ui/, data/, router.ts
 features/<page>/        -> parts/, ui/, data/, lib/, router.ts   (never another features/ folder)
 parts/                  -> ui/, data/store.ts, data/sync.ts, lib/, router.ts   (never features/)
 ui/                     -> lib/, router.ts, data/scope.ts, data/persisted.ts
                                                     (never data/store.ts or data/sync.ts)
-data/                   -> lib/, core.generated.js
+data/                   -> other data/, lib/, core.generated.js
+router.ts               -> nothing in src/
 lib/                    -> other lib/, core.generated.js
                                               (never data/, never preact, never the DOM)
 core.generated.js       -> nothing at all
@@ -73,10 +74,11 @@ The two lines that carry the most weight:
 - **`lib/` is pure.** Nothing in it imports `data/`, `preact` or the store, and every helper
   takes its data as an argument. That is why 19 of the 20 files are directly unit-tested with
   no mocking, and it is worth protecting — it is the reason the interesting logic is testable
-  at all. The two deliberate exceptions are `dates.today()` (reads the clock — see item 10 in
-  [ISSUES.md](ISSUES.md)) and `id.uid()`'s `crypto.randomUUID` fallback.
-- **`ui/` may not reach the store**, `parts/` may. `tests/layers.test.ts` checks this, but
-  only weakly — see [ISSUES.md](ISSUES.md#8-the-layering-test-is-two-regexes-over-raw-text).
+  at all. The deliberate exceptions read the clock: `dates.today()`, `format.isPastYear()`
+  and `id.uid()`'s `crypto.randomUUID` fallback.
+- **`ui/` may not reach the store**, `parts/` may. `tests/layers.test.ts` finds every import
+  in `src/`, resolves it to the file it names and checks it against the list above, so a
+  different quote style, relative depth or re-export can't slip past.
 
 `core/` is the sync rules and the row shapes. It has no imports of its own and does no I/O,
 which is what lets the *same file* run in the browser, in Node tests, and in Apps Script.

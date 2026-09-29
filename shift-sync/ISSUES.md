@@ -49,21 +49,10 @@ read or write data". In practice:
 bug. But the doc and the test both overstate the boundary, and that gap is what would let the
 next `ui/` component quietly start reading the store.
 
-### 8. The layering test is two regexes over raw text
-`tests/layers.test.ts` is 18 lines and enforces exactly two things:
-`from '../data/(store|sync).ts'` is banned in `ui/`, and `from '../features/` is banned in
-`parts/`. Both are substring matches on file contents, so they miss:
-
-- `data/scope.ts`, `data/persisted.ts`, `data/settings.ts`, `data/db.ts`, `data/roles.ts` —
-  all fair game in `ui/`, and two are already used there (#7).
-- Double quotes, a different relative depth, an `index.ts` specifier, or a re-export
-  through another file.
-- Any rule at all about `features/<page>/` importing another `features/<page>/`, which the
-  docs claim is also forbidden.
-
-**Fix:** walk the import graph with TypeScript's own resolver instead of matching text. A
-`tsc`-based or `eslint-plugin-import` rule catches every case the regex misses and fails on
-rename rather than on a formatting change.
+### 8. (fixed) The layering test was two regexes over raw text
+`tests/layers.test.ts` now finds every import in `src/` (either quote, `import`, `export ... from`, `import()`), resolves
+it to the file it names, and checks it against each layer's list from the README, features-to-features included. A
+planted `ui/` import of the store and a `parts/` import of a page, in double quotes, both fail it.
 
 ### 9. `tsconfig.json` does not cover `scripts/` or `core/`
 `include` is `["src", "tests", "vite.config.ts"]`. The migration scripts are covered

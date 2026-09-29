@@ -52,15 +52,13 @@ export function Roles() {
 /** One role: its pill, how many people have it, and its rank arrows; opened, its name, colour and icon. Each change saves. */
 function RoleRow({ r, first, last, people, run }: { r: Role; first: boolean; last: boolean; people: number; run: (fn: () => Promise<unknown>) => Promise<void> }) {
   const save = (patch: Partial<Pick<Role, 'name' | 'color' | 'icon'>>) => run(() => saveRole({ id: r.id, name: r.name, color: r.color, icon: r.icon, sort: r.sort, ...patch }));
-  const stop = (fn: () => void) => (e: Event) => { e.preventDefault(); e.stopPropagation(); fn(); };
+  // The rank arrows sit beside the summary, not in it: a summary is itself a button, and a button can't hold buttons.
   return (
-    <details class={styles.role}>
+    <div class={styles.role}>
+    <details>
       <summary>
         <RoleBadge name={r.name} color={r.color} icon={r.icon} />
         <span class="muted">{people} {people === 1 ? 'person' : 'people'}</span>
-        <span class={styles.spacer} />
-        <button type="button" class="btn btn-quiet btn-icon" aria-label={`Rank ${r.name} higher`} disabled={first} onClick={stop(() => void run(() => moveRole(r.id, -1)))}><Icon name="up" /></button>
-        <button type="button" class="btn btn-quiet btn-icon" aria-label={`Rank ${r.name} lower`} disabled={last} onClick={stop(() => void run(() => moveRole(r.id, 1)))}><Icon name="down" /></button>
       </summary>
       <div class={styles.roleBody}>
         <label class="field"><span class="label-text">Name</span>
@@ -87,5 +85,10 @@ function RoleRow({ r, first, last, people, run }: { r: Role; first: boolean; las
         </div>
       </div>
     </details>
+    <span class={styles.rank}>
+      <button type="button" class="btn btn-quiet btn-icon" aria-label={`Rank ${r.name} higher`} disabled={first} onClick={() => void run(() => moveRole(r.id, -1))}><Icon name="up" /></button>
+      <button type="button" class="btn btn-quiet btn-icon" aria-label={`Rank ${r.name} lower`} disabled={last} onClick={() => void run(() => moveRole(r.id, 1))}><Icon name="down" /></button>
+    </span>
+    </div>
   );
 }

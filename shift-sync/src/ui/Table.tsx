@@ -164,7 +164,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
               return (
                 <Fragment key={id}>
                   {group && first && i > 0 && <tr class="tbl-sep" aria-hidden="true"><td colSpan={columns.length} /></tr>}
-                  <tr data-row={onRow ? '' : undefined} data-first={group && first ? '' : undefined}  data-last={last ? '' : undefined} data-tone={tone?.(r)} data-tall={tall ? '' : undefined} tabIndex={onRow ? 0 : undefined} aria-selected={on ? 'true' : undefined}
+                  <tr data-row={onRow ? '' : undefined} data-first={group && first ? '' : undefined}  data-last={last ? '' : undefined} data-tone={tone?.(r)} data-tall={tall ? '' : undefined} tabIndex={onRow ? 0 : undefined} aria-current={on ? 'true' : undefined}
                     onClick={() => onRow?.(r)}
                     onKeyDown={ev => {
                       const el = ev.currentTarget as HTMLElement;
