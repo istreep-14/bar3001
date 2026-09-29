@@ -23,6 +23,9 @@ interface Reply {
 }
 
 let running = false, again = false;
+/** How long a sync waits for the Sheet: its script can queue behind another sync for 15 seconds, then read every tab. */
+const TIMEOUT = 60_000;
+const NOT_DATA = 'The Sheet\'s script didn\'t answer with data. Check that the URL ends in /exec and the deployment is shared with Anyone.';
 
 const takeIn = <T extends { id: string }>(sig: Signal<Record<string, T>>, rows: T[]) => {
   if (rows.length) sig.value = { ...sig.value, ...Object.fromEntries(rows.map(r => [r.id, r])) };
@@ -49,9 +52,13 @@ export async function sync(): Promise<void> {
     const dirtyWages = Object.values(wageRows.value).filter(r => r._dirty).map(stripLocal);
     const dirtyRoles = Object.values(roleRows.value).filter(r => r._dirty).map(stripLocal);
     const { api, token } = settings.value;
-    // No Content-Type header on purpose: text/plain avoids a CORS preflight Apps Script can't answer.
-    const res = await fetch(api, { method: 'POST', body: JSON.stringify({ token, rows: dirtyRows, income: dirtyIncome, staff: dirtyStaff, crew: dirtyCrew, wages: dirtyWages, roles: dirtyRoles }) });
-    const data = (await res.json()) as Reply;
+    // No Content-Type header on purpose: text/plain avoids a CORS preflight Apps Script can't answer. A request that never
+    // answers would hold `running` forever and every later sync would wait behind it, so it gives up after a while.
+    const res = await fetch(api, { method: 'POST', signal: AbortSignal.timeout(TIMEOUT),
+      body: JSON.stringify({ token, rows: dirtyRows, income: dirtyIncome, staff: dirtyStaff, crew: dirtyCrew, wages: dirtyWages, roles: dirtyRoles }) });
+    if (!res.ok) throw new Error(`The Sheet's script answered ${res.status}. Check the web app URL in Settings.`);
+    // A wrong URL or a deployment that isn't shared with Anyone answers with a Google page, not data.
+    const data = (await res.json().catch(() => { throw new Error(NOT_DATA); })) as Reply;
     if (data.error) throw new Error(data.error === 'auth' ? 'Token rejected. Check the connection settings.' : data.error);
     // Reconcile against the live signals, so edits made while the request was in flight survive. A tab that comes back
     // empty keeps this device's rows and marks them to be written back (core's reconcileClient); `emptied` says which.
@@ -94,7 +101,8 @@ export async function sync(): Promise<void> {
     syncState.value = 'idle';
   } catch (err) {
     syncState.value = 'failed';
-    syncMessage.value = err instanceof Error ? err.message : 'Sync failed';
+    syncMessage.value = err instanceof DOMException && err.name === 'TimeoutError' ? 'The Sheet took too long to answer. It will try again.'
+      : err instanceof Error ? err.message : 'Sync failed';
     console.error(err);
   } finally {
     running = false;

@@ -219,8 +219,6 @@
 .mark.mean { border-left: 2px dashed var(--warn); }
 .refline { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--ink-2); pointer-events: none; }
 .refline span { position: absolute; right: 0; bottom: 3px; padding: 0 var(--s-1); background: var(--surface); font-size: 11px; color: var(--ink-2); }
-.delta { font-weight: var(--fw-med); white-space: nowrap; }
-.delta.up { color: var(--good); } .delta.down { color: var(--warn); }
 .insight { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface-2); font-size: var(--fs-body); }
 .insight b { font-weight: var(--fw-semi); }
 .ovtwo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }

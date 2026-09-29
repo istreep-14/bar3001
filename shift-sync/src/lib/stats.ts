@@ -1,6 +1,6 @@
 import { crewHours, hoursWorked, sumIncome, tipsPerHour, totalIncome, wageFor, wageRateFor } from '../core/core.generated.js';
 import type { Crew, Income, Local, Shift, Wage } from '../core/core.generated.js';
-import { addDays, weekStart } from './dates.ts';
+import { weekStart } from './dates.ts';
 import { isPending } from './groups.ts';
 
 /** A shift joined with its live income lines and every derived number. Never stored. */
@@ -101,4 +101,3 @@ export function groupByWeek(views: ShiftView[]): Week[] {
   return out;
 }
 
-export const weekEnd = (start: string): string => addDays(start, 6);

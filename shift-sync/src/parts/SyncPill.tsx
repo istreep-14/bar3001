@@ -11,20 +11,15 @@ const ago = (t: number): string => {
 };
 
 /** Always says what state the data is in, with an icon and words (never color alone). */
-export function SyncPill({ compact }: { compact?: boolean }) {
+export function SyncPill() {
   const s = state.value, n = pendingCount.value;
-  let icon: IconName = 'check', text = lastSynced.value ? `Synced ${ago(lastSynced.value)}` : 'Synced', short = 'Synced', tone = '';
+  let icon: IconName = 'check', text = lastSynced.value ? `Synced ${ago(lastSynced.value)}` : 'Synced', tone = '';
   let onClick: () => void = () => void sync();
-  if (s === 'unconfigured') { icon = 'cloudOff'; text = 'Not connected'; short = 'Connect'; tone = styles.warn!; onClick = () => go('settings/sync'); }
-  else if (s === 'syncing') { icon = 'refresh'; text = 'Syncing'; short = 'Syncing'; tone = styles.spin!; }
-  else if (s === 'offline') { icon = 'cloudOff'; text = n ? `Offline, ${n} to sync` : 'Offline'; short = 'Offline'; }
-  else if (s === 'failed') { icon = 'alert'; text = 'Sync failed, retry'; short = 'Retry'; tone = styles.warn!; }
-  else if (n) { icon = 'refresh'; text = `${n} to sync`; short = `${n} to sync`; }
-  if (compact) return (
-    <button class={`${styles.compact} ${tone}`} onClick={onClick} title={s === 'failed' ? syncMessage.value : text} aria-label={text}>
-      <Icon name={icon} /><span>{short}</span>
-    </button>
-  );
+  if (s === 'unconfigured') { icon = 'cloudOff'; text = 'Not connected'; tone = styles.warn!; onClick = () => go('settings/sync'); }
+  else if (s === 'syncing') { icon = 'refresh'; text = 'Syncing'; tone = styles.spin!; }
+  else if (s === 'offline') { icon = 'cloudOff'; text = n ? `Offline, ${n} to sync` : 'Offline'; }
+  else if (s === 'failed') { icon = 'alert'; text = 'Sync failed, retry'; tone = styles.warn!; }
+  else if (n) { icon = 'refresh'; text = `${n} to sync`; }
   return (
     <button class={`${styles.pill} ${tone}`} onClick={onClick} title={s === 'failed' ? syncMessage.value : undefined}>
       <Icon name={icon} /> {text}

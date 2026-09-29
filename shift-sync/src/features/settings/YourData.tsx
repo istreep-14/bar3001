@@ -6,13 +6,16 @@ import { toast } from '../../ui/toast.tsx';
 import styles from './SettingsScreen.module.css';
 
 const csvCell = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+const cents = (n: number | null) => (n == null ? '' : Math.round(n * 100) / 100);
+/** Every shift with its figures. `total` is tips + wage + other income, so all three are columns and it adds up. */
 function exportCsv() {
-  const head = ['date', 'start', 'end', 'shift_type', 'hours', 'tips', 'other_income', 'total', 'notes'];
-  const rows = liveViews.value.map(v => [v.shift.date, toHHMM(v.shift.start), toHHMM(v.shift.end), v.shift.shift_type, v.hours ?? '', v.shift.tips ?? '', v.extra, v.total, v.shift.notes]);
+  const head = ['date', 'start', 'end', 'shift_type', 'hours', 'tips', 'wage', 'other_income', 'total', 'notes'];
+  const rows = liveViews.value.map(v => [v.shift.date, toHHMM(v.shift.start), toHHMM(v.shift.end), v.shift.shift_type, cents(v.hours), v.shift.tips ?? '',
+    cents(v.wage), cents(v.extra), cents(v.total), v.shift.notes]);
   const blob = new Blob([[head, ...rows].map(r => r.map(csvCell).join(',')).join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = 'shifts.csv'; a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 30_000);   // revoked at once, Safari can cancel the download it just started
 }
 
 /** One or more bundle files, in the order chosen (an earlier file wins where a later one repeats a shift). */

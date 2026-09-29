@@ -98,9 +98,14 @@ It is the one place a sync or money rule may live.
 **Boot.** `main.tsx` renders, then `store.boot()` loads all six IndexedDB tables into
 signals, then `sync.startSync()` wires the change handler and does a first sync.
 
-**A write.** Every write is the same three steps, in `store.ts`: update the signal, persist
-to IndexedDB, ask sync to run. Components read signals and change data only through the
-store's actions — there is no other write path.
+**A write.** Every write is the same three steps, in `store.ts`'s `commit`: update the signals,
+persist to IndexedDB in one transaction (a shift and its income and crew land together or not
+at all), ask sync to run. If the device refuses the write, the signals are put back and the
+error goes to the caller. Components read signals and change data only through the store's
+actions — there is no other write path.
+
+A sync that gets no answer gives up after 60 seconds, so a hung request can't block every
+sync after it.
 
 **A sync.** `sync.ts` POSTs only the rows flagged `_dirty` to the Apps Script endpoint,
 receives the full merged set back, and reconciles it with `reconcileClient` from core. These

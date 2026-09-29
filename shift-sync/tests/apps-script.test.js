@@ -38,7 +38,7 @@ function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [
   const ctx = {
     SpreadsheetApp: { getActive: () => ({ getSheetByName: (n) => sheets[n], getSpreadsheetTimeZone: () => 'UTC' }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: () => 'T' }) },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (s) => ({ setMimeType: () => JSON.parse(s) }) },
     Utilities: { getUuid: () => 'gen' + (++uuid), formatDate: (d, tz, pattern) => (pattern === 'HH:mm' ? d.toISOString().slice(11, 16) : d.toISOString().slice(0, 10)) },
     Date, JSON, Object, Number, String, Math, Array
@@ -55,6 +55,13 @@ const row = (o = {}) => ({ id: 'a', date: '2026-09-25', start: 1080, end: 120, t
 
 test('rejects wrong token', () => {
   assert.equal(harness().post({ token: 'x', rows: [] }).error, 'auth');
+});
+
+test('a sync that can\'t get the lock answers with an error as data', () => {
+  const h = harness();
+  h.ctx.LockService = { getScriptLock: () => ({ tryLock: () => false, releaseLock() {} }) };
+  assert.match(h.post({ token: 'T', rows: [row()] }).error, /busy/);
+  assert.equal(h.grid.length, 1);
 });
 
 test('appends new rows in Sheet format and returns full set', () => {

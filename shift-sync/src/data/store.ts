@@ -1,4 +1,5 @@
 import { computed, signal } from '@preact/signals';
+import type { Signal } from '@preact/signals';
 import { stripLocal, validateCrew, validateIncome, validateRole, validateRow, validateStaff, validateWage } from '../core/core.generated.js';
 import type { Category, Crew, Income, Local, Role, Shift, Staff, Wage } from '../core/core.generated.js';
 import { uid } from '../lib/id.ts';
@@ -6,10 +7,11 @@ import { planImport } from '../lib/bundle.ts';
 import type { Bundle, Plan } from '../lib/bundle.ts';
 import { byRecent, toView } from '../lib/stats.ts';
 import type { ShiftView } from '../lib/stats.ts';
-import { loadAll, putMany } from './db.ts';
+import { loadAll, putAll } from './db.ts';
+import type { AllTables, TableName } from './db.ts';
 
-/* In-memory mirror of IndexedDB. Components read signals; only the actions below write.
- * Every write is: update signal -> persist -> ask sync to run. */
+/* In-memory mirror of IndexedDB. Components read signals; only the actions below write, and all of them through `commit`:
+ * update the signals, persist in one transaction, ask sync to run. */
 export const shifts = signal<Record<string, Local<Shift>>>({});
 export const incomeRows = signal<Record<string, Local<Income>>>({});
 export const wageRows = signal<Record<string, Local<Wage>>>({});
@@ -21,6 +23,29 @@ export const ready = signal(false);
 let onChange: () => void = () => {};
 /** sync.ts registers itself here so the store doesn't import it (no cycle). */
 export const setChangeHandler = (fn: () => void) => { onChange = fn; };
+
+const SIGNALS: { [K in TableName]: Signal<Record<string, AllTables[K][number]>> } =
+  { rows: shifts, income: incomeRows, staff: staffRows, crew: crewRows, wages: wageRows, roles: roleRows };
+
+/** Every write: show it (so a check that follows at once, a second tap, already sees it), store it in one transaction (a
+ *  shift and its lines land together or not at all), then ask sync to run. If the device refuses the write (storage full,
+ *  say), what was shown is put back and the error goes to the caller, so the screen never shows what isn't stored. */
+async function commit(ch: Partial<AllTables>): Promise<void> {
+  const names = (Object.keys(ch) as TableName[]).filter(n => ch[n]?.length);
+  if (!names.length) return;
+  const undo: (() => void)[] = [];
+  for (const n of names) {
+    const sig = SIGNALS[n] as unknown as Signal<Record<string, { id: string }>>, rows = ch[n] as { id: string }[], prev = sig.value;
+    sig.value = { ...prev, ...Object.fromEntries(rows.map(r => [r.id, r])) };
+    undo.push(() => {
+      const now = { ...sig.value };
+      for (const r of rows) if (now[r.id] === r) { if (prev[r.id]) now[r.id] = prev[r.id]!; else delete now[r.id]; }
+      sig.value = now;
+    });
+  }
+  try { await putAll(ch); } catch (err) { undo.forEach(u => u()); throw err; }
+  onChange();
+}
 
 /** Hourly wage entries, oldest first. Each applies from its date until the next one's. */
 export const liveWages = computed<Local<Wage>[]>(() =>
@@ -114,11 +139,7 @@ export async function saveShift(draft: ShiftDraft, lines: IncomeDraft[], crew: C
     crewTouched.push({ ...validateCrew({ id: c.id ?? uid(), shift_id: id, staff_id: c.staff_id, name: c.name, start: c.start, end: c.end, updated_at: now, deleted: false }), _dirty: true });
   }
 
-  shifts.value = { ...shifts.value, [id]: shift };
-  incomeRows.value = { ...incomeRows.value, ...Object.fromEntries(touched.map(r => [r.id, r])) };
-  crewRows.value = { ...crewRows.value, ...Object.fromEntries(crewTouched.map(r => [r.id, r])) };
-  await Promise.all([putMany('rows', [shift]), putMany('income', touched), putMany('crew', crewTouched)]);
-  onChange();
+  await commit({ rows: [shift], income: touched, crew: crewTouched });
   return id;
 }
 
@@ -134,11 +155,7 @@ export async function removeShift(id: string): Promise<Removed | null> {
   const goneCrew = crew.map((c): Local<Crew> => ({ ...c, deleted: true, updated_at: now, _dirty: true }));
   const gone: Local<Shift> = { ...shift, deleted: true, updated_at: now, _dirty: true };
   const goneLines = lines.map((i): Local<Income> => ({ ...i, deleted: true, updated_at: now, _dirty: true }));
-  shifts.value = { ...shifts.value, [id]: gone };
-  incomeRows.value = { ...incomeRows.value, ...Object.fromEntries(goneLines.map(r => [r.id, r])) };
-  crewRows.value = { ...crewRows.value, ...Object.fromEntries(goneCrew.map(r => [r.id, r])) };
-  await Promise.all([putMany('rows', [gone]), putMany('income', goneLines), putMany('crew', goneCrew)]);
-  onChange();
+  await commit({ rows: [gone], income: goneLines, crew: goneCrew });
   return { shift: stripLocal(shift), income: lines.map(stripLocal), crew: crew.map(stripLocal) };
 }
 
@@ -146,12 +163,8 @@ export async function undoRemove({ shift, income, crew }: Removed) {
   const now = Date.now();
   const back: Local<Shift> = { ...shift, deleted: false, updated_at: now, _dirty: true };
   const backLines = income.map((i): Local<Income> => ({ ...i, deleted: false, updated_at: now, _dirty: true }));
-  shifts.value = { ...shifts.value, [back.id]: back };
   const backCrew = crew.map((c): Local<Crew> => ({ ...c, deleted: false, updated_at: now, _dirty: true }));
-  incomeRows.value = { ...incomeRows.value, ...Object.fromEntries(backLines.map(r => [r.id, r])) };
-  crewRows.value = { ...crewRows.value, ...Object.fromEntries(backCrew.map(r => [r.id, r])) };
-  await Promise.all([putMany('rows', [back]), putMany('income', backLines), putMany('crew', backCrew)]);
-  onChange();
+  await commit({ rows: [back], income: backLines, crew: backCrew });
 }
 
 /* ── Staff (the employee roster: identity only) ─────────────────────────────── */
@@ -171,9 +184,7 @@ export async function saveStaff(draft: StaffDraft): Promise<string> {
   const person: Local<Staff> = { ...validateStaff({ ...draft, id, name, updated_at: now, deleted: false }), _dirty: true };
   const touched: Local<Staff>[] = [person];
   if (person.is_user) for (const p of Object.values(staffRows.value)) if (p.id !== id && p.is_user && !p.deleted) touched.push({ ...p, is_user: false, updated_at: now, _dirty: true });
-  staffRows.value = { ...staffRows.value, ...Object.fromEntries(touched.map(r => [r.id, r])) };
-  await putMany('staff', touched);
-  onChange();
+  await commit({ staff: touched });
   return id;
 }
 
@@ -182,17 +193,13 @@ export async function removeStaff(id: string): Promise<Staff | null> {
   const p = staffRows.value[id];
   if (!p) return null;
   const gone: Local<Staff> = { ...p, deleted: true, updated_at: Date.now(), _dirty: true };
-  staffRows.value = { ...staffRows.value, [id]: gone };
-  await putMany('staff', [gone]);
-  onChange();
+  await commit({ staff: [gone] });
   return stripLocal(p);
 }
 
 export async function undoRemoveStaff(p: Staff) {
   const back: Local<Staff> = { ...p, deleted: false, updated_at: Date.now(), _dirty: true };
-  staffRows.value = { ...staffRows.value, [p.id]: back };
-  await putMany('staff', [back]);
-  onChange();
+  await commit({ staff: [back] });
 }
 
 /* ── Roles (each role's colour, icon and rank) ─────────────────────────────── */
@@ -218,10 +225,7 @@ export async function saveRole(draft: RoleDraft): Promise<string> {
       people.push({ ...validateStaff({ ...p, role: p.role ? swap(p.role) : null, roles: p.roles.map(swap), updated_at: now }), _dirty: true });
     }
   }
-  roleRows.value = { ...roleRows.value, [id]: rec };
-  if (people.length) staffRows.value = { ...staffRows.value, ...Object.fromEntries(people.map(p => [p.id, p])) };
-  await Promise.all([putMany('roles', [rec]), putMany('staff', people)]);
-  onChange();
+  await commit({ roles: [rec], staff: people });
   return id;
 }
 
@@ -232,9 +236,7 @@ export async function moveRole(id: string, by: -1 | 1): Promise<void> {
   [list[i], list[j]] = [list[j]!, list[i]!];
   const now = Date.now();
   const touched = list.flatMap((r, k): Local<Role>[] => (r.sort === k ? [] : [{ ...r, sort: k, updated_at: now, _dirty: true }]));
-  roleRows.value = { ...roleRows.value, ...Object.fromEntries(touched.map(r => [r.id, r])) };
-  await putMany('roles', touched);
-  onChange();
+  await commit({ roles: touched });
 }
 
 /** Soft delete. People keep the role's name as plain text (no colour, no icon) until it is set up again. */
@@ -242,17 +244,13 @@ export async function removeRole(id: string): Promise<Role | null> {
   const r = roleRows.value[id];
   if (!r || r.deleted) return null;
   const gone: Local<Role> = { ...r, deleted: true, updated_at: Date.now(), _dirty: true };
-  roleRows.value = { ...roleRows.value, [id]: gone };
-  await putMany('roles', [gone]);
-  onChange();
+  await commit({ roles: [gone] });
   return stripLocal(r);
 }
 
 export async function undoRemoveRole(r: Role) {
   const back: Local<Role> = { ...r, deleted: false, updated_at: Date.now(), _dirty: true };
-  roleRows.value = { ...roleRows.value, [r.id]: back };
-  await putMany('roles', [back]);
-  onChange();
+  await commit({ roles: [back] });
 }
 
 /* ── Hourly wage (your employer's rate, by the date it starts) ───────────────── */
@@ -263,9 +261,7 @@ export async function saveWage(draft: WageDraft): Promise<string> {
   const id = draft.id ?? uid();
   if (Object.values(wageRows.value).some(w => !w.deleted && w.id !== id && w.date === draft.date)) throw new Error('There is already a wage starting on that date.');
   const rec: Local<Wage> = { ...validateWage({ id, date: draft.date, rate: draft.rate, note: draft.note ?? null, updated_at: Date.now(), deleted: false }), _dirty: true };
-  wageRows.value = { ...wageRows.value, [id]: rec };
-  await putMany('wages', [rec]);
-  onChange();
+  await commit({ wages: [rec] });
   return id;
 }
 
@@ -273,9 +269,7 @@ export async function removeWage(id: string): Promise<Wage | null> {
   const w = wageRows.value[id];
   if (!w) return null;
   const gone: Local<Wage> = { ...w, deleted: true, updated_at: Date.now(), _dirty: true };
-  wageRows.value = { ...wageRows.value, [id]: gone };
-  await putMany('wages', [gone]);
-  onChange();
+  await commit({ wages: [gone] });
   return stripLocal(w);
 }
 
@@ -289,14 +283,7 @@ export async function importBundle(b: Bundle): Promise<Plan> {
     staff: Object.values(staffRows.value).filter(p => !p.deleted)
   }, Date.now());
   const dirty = <T extends object>(rs: T[]): Local<T>[] => rs.map(r => ({ ...r, _dirty: true }));
-  const [s, i, p, c, w] = [dirty(plan.rows), dirty(plan.income), dirty(plan.staff), dirty(plan.crew), dirty(plan.wages)];
-  wageRows.value = { ...wageRows.value, ...Object.fromEntries(w.map(r => [r.id, r])) };
-  shifts.value = { ...shifts.value, ...Object.fromEntries(s.map(r => [r.id, r])) };
-  incomeRows.value = { ...incomeRows.value, ...Object.fromEntries(i.map(r => [r.id, r])) };
-  staffRows.value = { ...staffRows.value, ...Object.fromEntries(p.map(r => [r.id, r])) };
-  crewRows.value = { ...crewRows.value, ...Object.fromEntries(c.map(r => [r.id, r])) };
-  await Promise.all([putMany('rows', s), putMany('income', i), putMany('staff', p), putMany('crew', c), putMany('wages', w)]);
-  if (s.length + i.length + p.length + c.length + w.length) onChange();
+  await commit({ rows: dirty(plan.rows), income: dirty(plan.income), staff: dirty(plan.staff), crew: dirty(plan.crew), wages: dirty(plan.wages) });
   return plan;
 }
 
@@ -307,35 +294,27 @@ export async function saveCrewLine(l: CrewLine): Promise<string> {
   const now = Date.now();
   const existing = Object.values(crewRows.value).find(c => !c.deleted && c.shift_id === l.shift_id && (c.id === l.id || c.staff_id === l.staff_id));
   const row: Local<Crew> = { ...validateCrew({ id: existing?.id ?? l.id ?? uid(), shift_id: l.shift_id, staff_id: l.staff_id, name: personById(l.staff_id)?.name ?? existing?.name ?? null, start: l.start, end: l.end, updated_at: now, deleted: false }), _dirty: true };
-  crewRows.value = { ...crewRows.value, [row.id]: row };
-  await putMany('crew', [row]);
-  onChange();
+  await commit({ crew: [row] });
   return row.id;
 }
 export async function removeCrewLine(id: string): Promise<Crew | null> {
   const old = crewRows.value[id];
   if (!old || old.deleted) return null;
   const gone: Local<Crew> = { ...old, deleted: true, updated_at: Date.now(), _dirty: true };
-  crewRows.value = { ...crewRows.value, [id]: gone };
-  await putMany('crew', [gone]);
-  onChange();
+  await commit({ crew: [gone] });
   return stripLocal(old);
 }
 
 export interface IncomeLine { id?: string; shift_id: string; category: Category; amount: number; note: string | null }
 export async function saveIncomeLine(l: IncomeLine): Promise<string> {
   const row: Local<Income> = { ...validateIncome({ id: l.id ?? uid(), shift_id: l.shift_id, category: l.category, amount: l.amount, note: l.note, updated_at: Date.now(), deleted: false }), _dirty: true };
-  incomeRows.value = { ...incomeRows.value, [row.id]: row };
-  await putMany('income', [row]);
-  onChange();
+  await commit({ income: [row] });
   return row.id;
 }
 export async function removeIncomeLine(id: string): Promise<Income | null> {
   const old = incomeRows.value[id];
   if (!old || old.deleted) return null;
   const gone: Local<Income> = { ...old, deleted: true, updated_at: Date.now(), _dirty: true };
-  incomeRows.value = { ...incomeRows.value, [id]: gone };
-  await putMany('income', [gone]);
-  onChange();
+  await commit({ income: [gone] });
   return stripLocal(old);
 }

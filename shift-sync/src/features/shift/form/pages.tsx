@@ -116,7 +116,7 @@ export function DatePage({ c }: { c: Ctx }) {
           <input class="input" type="date" value={form.date} aria-invalid={!!errors.date} required onInput={e => set({ date: e.currentTarget.value })} />
         </label>
         <p class={styles.datenote + (sameDay.length ? ' ' + styles.warn : '')}>
-          {form.date ? (sameDay.length ? `This day already holds ${sameDay.map(v => (v.shift.shift_type ? (v.shift.shift_type === 'day' ? 'a day' : 'a night') : 'a')).join(' and ')} shift. A second one is fine.` : longDate(form.date)) : 'Pick a day, or leave it blank for now.'}
+          {form.date ? (sameDay.length ? `This day already holds ${sameDay.map(v => (v.shift.shift_type ? (v.shift.shift_type === 'day' ? 'a day' : 'a night') : 'a')).join(' and ')} shift. A second one is fine.` : longDate(form.date)) : 'Pick a day.'}
         </p>
       </div>
       {err('date')}

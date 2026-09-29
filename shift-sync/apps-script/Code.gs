@@ -130,7 +130,8 @@ function onEdit(e) {
  * A missing key is treated as an empty list, so an older app still works. */
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(15000);
+  // Another device's sync holds the lock: say so as data, not as an error page the app can't read.
+  if (!lock.tryLock(15000)) return json({ error: 'The Sheet is busy with another sync. It will try again.' });
   try {
     var body = JSON.parse(e.postData.contents);
     if (body.token !== PropertiesService.getScriptProperties().getProperty('TOKEN')) {

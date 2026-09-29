@@ -54,18 +54,10 @@ It now names `src/parts/ShiftDetails.tsx`.
 ### 5. (fixed) `DESIGN.md` named `Delta` where Insights uses `DeltaPill`
 The doc no longer names `charts.Delta`, which is still dead code (#6).
 
-### 6. Three pieces of dead code
-- **`src/ui/Cur.tsx`** — the entire file. `Cur` is exported and imported nowhere.
-- **`src/lib/stats.ts:97` `weekEnd`** — exported, referenced nowhere.
-- **`src/ui/charts.tsx:272` `Delta`** — exported, referenced nowhere, and a functional
-  duplicate of `kpi.tsx:27` `DeltaPill`.
-
-`tsconfig.json` has `noUnusedLocals`, but that only catches *locals*. Exported symbols are
-never flagged, so this class of rot is invisible to CI. `Cur.tsx` is a whole file that
-survived because nothing imports it and nothing checks.
-
-**Fix:** delete all three. If you want the safety net, the cheapest real one is a
-`knip`-style unused-export check in CI.
+### 6. (fixed) Dead code
+`ui/Cur.tsx`, `charts.Delta` (and its `.delta` CSS), `stats.weekEnd`, `SyncPill`'s unused `compact` form and the rail's
+per-page icons, which nothing drew, are gone. Exported symbols still aren't checked by `noUnusedLocals`, so the class of
+rot remains possible; a `knip`-style unused-export check in CI is the cheap net.
 
 ### 7. The "ui/ is props-driven" rule is not what the code does
 `DESIGN.md:134` and the `layers.test.ts` header both say `ui/` parts "may navigate, never

@@ -267,10 +267,3 @@ export function Histogram({ title, sub, h, fmt }: { title: string; sub?: string;
     </figure>
   );
 }
-
-/* ── a change against the span before: an arrow and a percentage (never colour alone). `neutral` = no good or bad (hours). ── */
-export function Delta({ pct, vs, neutral }: { pct: number | null; vs: string; neutral?: boolean }) {
-  if (pct == null) return <span class="muted">nothing to compare yet</span>;
-  const r = Math.round(pct), tone = neutral || r === 0 ? 'flat' : r > 0 ? 'up' : 'down';
-  return <span class={'delta ' + tone}>{r > 0 ? '▲' : r < 0 ? '▼' : '▬'} {Math.abs(r)}% <span class="muted">vs {vs}</span></span>;
-}

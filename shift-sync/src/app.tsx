@@ -29,19 +29,19 @@ import { isDesktop } from './ui/viewport.ts';
 interface Tab { id: Screen; label: string }
 /** A page in the rail. `tabs` = one page with two views, each its own route (so still a link), switched from a tab row;
  *  `also` = other routes that belong to this page (the rail marks it current on them). */
-interface Page { id: Screen; label: string; icon: IconName; tabs?: Tab[]; also?: Screen[] }
+interface Page { id: Screen; label: string; tabs?: Tab[]; also?: Screen[] }
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }
 const GROUPS: Group[] = [
   { id: 'shift', label: 'Shifts', icon: 'log', pages: [
-    { id: 'dashboard', label: 'Dashboard', icon: 'chart' },
-    { id: 'overview', label: 'Insights', icon: 'trend', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
-    { id: 'log', label: 'Log', icon: 'table' }, { id: 'table', label: 'Table', icon: 'table' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' },
-    { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'overview', label: 'Insights', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
+    { id: 'log', label: 'Log' }, { id: 'table', label: 'Table' }, { id: 'calendar', label: 'Calendar' },
+    { id: 'hub/income', label: 'Other income' }] },
   { id: 'crew', label: 'Crew', icon: 'users', pages: [
-    { id: 'hub/week', label: 'Crew', icon: 'calendar', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
-    { id: 'people', label: 'People', icon: 'users' }] },
+    { id: 'hub/week', label: 'Crew', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
+    { id: 'people', label: 'People' }] },
   { id: 'settings', label: 'Settings', icon: 'settings', pages: [
-    { id: 'settings/wages', label: 'Settings', icon: 'settings', also: ['settings/roles', 'settings/look', 'settings/sync', 'settings/data'] }] }
+    { id: 'settings/wages', label: 'Settings', also: ['settings/roles', 'settings/look', 'settings/sync', 'settings/data'] }] }
 ];
 const owns = (p: Page, s: Screen) => p.id === s || !!p.tabs?.some(t => t.id === s) || !!p.also?.includes(s);
 

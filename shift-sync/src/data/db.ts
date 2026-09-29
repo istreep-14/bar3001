@@ -44,11 +44,14 @@ async function run<T>(names: TableName[], mode: IDBTransactionMode, fn: (s: Reco
 export const loadAll = <K extends TableName>(name: K) =>
   run<Tables[K][]>([name], 'readonly', s => s[name].getAll());
 
-/** Upsert records in one transaction. */
-export const putMany = <K extends TableName>(name: K, records: Tables[K][]) =>
-  run<void>([name], 'readwrite', s => { records.forEach(r => s[name].put(r)); });
-
 export type AllTables = { [K in TableName]: Tables[K][] };
+
+/** Upserts rows into any of the tables in one transaction: all of them are stored, or none are. */
+export function putAll(ch: Partial<AllTables>): Promise<void> {
+  const names = (Object.keys(ch) as TableName[]).filter(n => ch[n]?.length);
+  if (!names.length) return Promise.resolve();
+  return run<void>(names, 'readwrite', s => { for (const n of names) for (const r of ch[n]!) s[n].put(r); });
+}
 type AnyRow = Local<{ id: string; updated_at: number }>;
 
 /** Writes the merged set a sync hands back, every table in one transaction. What the database holds is read in that same
