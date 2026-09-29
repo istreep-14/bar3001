@@ -21,7 +21,10 @@ export const PRESETS: { label: string; scope: Scope }[] = [
   { label: '1y', scope: { mode: 'last', n: 1, unit: 'years' } },
   { label: 'All', scope: { mode: 'all' } }
 ];
-export const DEFAULT_SCOPE: Scope = PRESETS[1]!.scope;
+const copyScope = (s: Scope): Scope =>
+  s.mode === 'last' ? { mode: 'last', n: s.n, unit: s.unit } : s.mode === 'range' ? { mode: 'range', from: s.from, to: s.to } : { mode: 'all' };
+/** The period a new device starts on: the 30-day preset, copied so editing that preset object later cannot move the default. */
+export const DEFAULT_SCOPE: Scope = copyScope(PRESETS[1]!.scope);
 export const MAX_N = 999;
 
 export const sameScope = (a: Scope, b: Scope): boolean =>

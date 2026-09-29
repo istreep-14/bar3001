@@ -12,6 +12,7 @@ import { MeBadge } from '../../../ui/MeBadge.tsx';
 import { MixBar, MixKey } from '../../../ui/MixBar.tsx';
 import { MonthCalendar } from '../../../ui/MonthCalendar.tsx';
 import { TimeField } from '../../../ui/TimeField.tsx';
+import { CrewPicker } from '../CrewPicker.tsx';
 import { minutes, newLine, weekdayLong } from './model.ts';
 import type { Errors, Form, Line, Member, PageId } from './model.ts';
 import styles from '../ShiftForm.module.css';
@@ -230,9 +231,7 @@ export function CrewPage({ c }: { c: Ctx }) {
     <div class={styles.pane} role="tabpanel">
       <h3 class="label">Who worked</h3>
       {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people" onClick={e => { e.preventDefault(); go('people'); }}>People</a> page.</p> : (
-        <div class={styles.pills}>
-          {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user && <MeBadge />}</button>)}
-        </div>
+        <CrewPicker people={roster} selected={inCrew} onAdd={addMember} onRemove={id => setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== id) })} />
       )}
       {roster.length > 0 && !meOnRoster() && <p class={styles.hint}>Mark one person as "This is me" on the People page to add yourself in one tap.</p>}
       <h3 class="label">Their shift</h3>

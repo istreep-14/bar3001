@@ -60,12 +60,6 @@
 .pname { display: flex; align-items: baseline; gap: var(--s-2); min-height: var(--ctl-h); align-self: center; font-weight: var(--fw-semi); }
 .person .pname { grid-column: 1 / -1; }
 .pname small { font-weight: var(--fw-normal); color: var(--ink-2); font-size: var(--fs-meta); }
-.pills { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.pill { min-height: 2rem; padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-body); transition: background-color var(--dur), border-color var(--dur); }
-.pill:hover { border-color: var(--accent); background: var(--surface-3); }
-.pill[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: var(--fw-semi); }
-.pill[aria-pressed='true'] :global(.me-badge) { color: inherit; }
-.pill[aria-pressed='true']::after { content: ' ✕'; font-weight: var(--fw-normal); opacity: 0.8; }
 .check { display: flex; align-items: flex-start; gap: var(--s-3); padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface-2); cursor: pointer; }
 .check input { width: 1.25rem; height: 1.25rem; margin: 2px 0 0; accent-color: var(--accent); }
 .check:has(input:checked) { border-color: var(--party); background: var(--party-soft); }

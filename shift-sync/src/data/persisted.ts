@@ -25,3 +25,23 @@ export function persisted<T>(key: string, ok: (v: unknown) => v is T, fallback: 
 
 /** A validator for one of a fixed set of values. */
 export const oneOf = <T extends string | number>(values: readonly T[]) => (v: unknown): v is T => values.includes(v as T);
+
+/** A bag of settings: missing storage, bad JSON or a non-object falls back to `defaults`, and a saved object is merged
+ *  over them so a field added later still has a value. `set` patches the bag and writes the whole thing back. */
+export function persistedObject<T extends object>(key: string, defaults: T, store: Store | null = browser()): [Signal<T>, (patch: Partial<T>) => void] {
+  const read = (): T => {
+    try {
+      const raw = store?.getItem(key);
+      if (raw == null) return { ...defaults };
+      const v: unknown = JSON.parse(raw);
+      if (!v || typeof v !== 'object' || Array.isArray(v)) return { ...defaults };
+      return { ...defaults, ...(v as Partial<T>) };
+    } catch { return { ...defaults }; }
+  };
+  const s = signal<T>(read());
+  const set = (patch: Partial<T>) => {
+    s.value = { ...s.value, ...patch };
+    try { store?.setItem(key, JSON.stringify(s.value)); } catch { /* private mode */ }
+  };
+  return [s, set];
+}

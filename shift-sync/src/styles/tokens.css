@@ -19,6 +19,8 @@
   /* type: 4 weights (400 body, 500 figures, 600 labels, 700 hero) */
   --fs-micro: 0.6875rem; --fs-meta: 0.75rem; --fs-body: 0.875rem; --fs-lead: 0.875rem;
   --fs-title: 1rem; --fs-hero: 1.25rem; --fs-display: 1.875rem;
+  /* The Log's two figure sizes, in px in the contract (15 and 17). They stay put when a mouse densifies the ladder above. */
+  --fs-fig: 0.9375rem; --fs-tips: 1.0625rem;
   --fw-normal: 400; --fw-med: 500; --fw-semi: 600; --fw-bold: 700;
 
   /* spacing: 4px base */

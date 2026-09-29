@@ -1,4 +1,5 @@
 import { effect, signal } from '@preact/signals';
+import { persistedObject } from './persisted.ts';
 import { DEFAULT_LOOK, buildTheme } from '../lib/theme.ts';
 import type { Contrast, Mode } from '../lib/theme.ts';
 
@@ -6,22 +7,12 @@ export type Theme = 'system' | 'light' | 'dark';
 export interface Settings { api: string; token: string; theme: Theme; accent: string; tint: string; contrast: Contrast;
   bgLight: string; bgDark: string; avatarBgLight: string; avatarBgDark: string }
 
-/* Per-device convenience only; the shift data itself lives in IndexedDB.
- * The key is unchanged from the single-file app so existing connections carry over. */
+/* Per-device convenience only; the shift data itself lives in IndexedDB. Same helper as every other remembered choice
+ * (`persisted.ts`). The key is unchanged from the single-file app so an existing connection carries over. */
 const KEY = 'conf';
 const DEFAULTS: Settings = { api: '', token: '', theme: 'system', ...DEFAULT_LOOK };
-const read = (): Settings => {
-  try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
-  catch { return { ...DEFAULTS }; }
-};
-
-export const settings = signal<Settings>(read());
+export const [settings, saveSettings] = persistedObject<Settings>(KEY, DEFAULTS);
 export const connected = () => !!(settings.value.api && settings.value.token);
-
-export function saveSettings(patch: Partial<Settings>) {
-  settings.value = { ...settings.value, ...patch };
-  try { localStorage.setItem(KEY, JSON.stringify(settings.value)); } catch { /* private mode: keep in memory */ }
-}
 
 /** Which of light/dark is showing right now, whatever the setting (System follows the device). */
 const dark = window.matchMedia('(prefers-color-scheme: dark)');

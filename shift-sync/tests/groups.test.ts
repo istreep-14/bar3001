@@ -12,6 +12,7 @@ test('a shift with no tips and no other income is pending, anything with money i
   assert.equal(isPending(toView(shift({ tips: null, end: null }), [])), true);
   assert.equal(isPending(toView(shift({ tips: null }), [inc()])), false);
   assert.equal(isPending(toView(shift({ tips: null, other: 5 }), [])), false);
+  assert.equal(isPending(toView(shift({ tips: null, other: 0 }), [])), true);   // 0 is no money, same as blank
   assert.equal(isPending(toView(shift({ tips: 0 }), [])), false);
 });
 

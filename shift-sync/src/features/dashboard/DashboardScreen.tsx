@@ -10,6 +10,7 @@ import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
 import { DeltaPill } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
+import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
 import { ShiftLog } from '../../parts/ShiftLog.tsx';
 import type { LogCol } from '../../parts/ShiftLog.tsx';
 import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
@@ -150,7 +151,7 @@ export function DashboardScreen() {
           <Card title={offset === 0 ? 'Crew this week' : 'Crew last week'} to="hub/week" link="Open crew week">
             {crewRows.length === 0 ? <p class="muted side-note">No one logged on that week's shifts.</p> : (
               <dl class={styles.list}>
-                {crewRows.map(r => <div key={r.id}><dt>{r.name}{r.you && <MeBadge />}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
+                {crewRows.map(r => <div key={r.id}><dt class={styles.who}><PersonAvatar id={r.id} fallback={r.name} />{r.name}{r.you && <MeBadge />}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
               </dl>
             )}
           </Card>

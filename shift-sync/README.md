@@ -9,7 +9,7 @@ problems and drift hazards: [ISSUES.md](ISSUES.md). The look follows Bar2.000's 
 
 Stack: Vite 8 + Preact 10 + `@preact/signals` + TypeScript, installable PWA
 (vite-plugin-pwa). No backend beyond Apps Script. ~6,600 lines of `.ts`/`.tsx`/`.css` in
-`src/`, 153 tests, no test framework dependency (`node --test` only).
+`src/`, 155 tests, no test framework dependency (`node --test` only).
 
 One more runtime dependency, loaded only when a person's photo is picked: `@mediapipe/tasks-vision`
 (Apache-2.0) takes the background out of the photo on the device (`features/people/cutout.ts`, with the
@@ -32,7 +32,7 @@ src/
   lib/                pure helpers: every derived number in the app is computed here, never stored
   features/           one folder per page
   parts/              domain parts more than one page uses; may read the store
-  ui/                 generic parts, props-driven; may navigate, never read or write data
+  ui/                 generic parts; may navigate, and may use the shared period and remembered view choices, never the store
   styles/             tokens.css, base.css, ui.css, layout.css, charts.css
 tests/                node:test, run with Node's own type stripping
 ```
@@ -42,7 +42,7 @@ tests/                node:test, run with Node's own type stripping
 ```
 npm install
 npm run dev        # sync:core then vite -> http://localhost:5173
-npm test           # 153 tests
+npm test           # 155 tests
 npm run typecheck  # sync:core then tsc --noEmit
 npm run build      # sync:core, typecheck, then vite build into dist/
 ```
@@ -197,7 +197,8 @@ mapped to their replacements in `router.ts`, so old links still land somewhere s
 
 **The shift form** is split three ways: `features/shift/form/model.ts` is the page list, the
 form object and validation — pure, and the only part with tests. `form/pages.tsx` draws the
-ten pages. `ShiftForm.tsx` holds the state and the derived figures. The rule is that
+ten pages. `ShiftForm.tsx` holds the state and the derived figures. The Crew page is
+`CrewPicker`: a name or a nickname filters the roster as you type. The rule is that
 `model.ts` never imports the store or touches the DOM.
 
 ## Rules that keep it growable
@@ -210,7 +211,7 @@ ten pages. `ShiftForm.tsx` holds the state and the derived figures. The rule is 
 - `WEEK_START` in `lib/dates.ts` is Monday. Change it there and nowhere else; `tests/weeks.test.ts`
   fails if any page disagrees.
 - No raw colour, font weight or size in a component: `styles/tokens.css` only. Colours and weights are checked by
-  `tests/tokens.test.ts`; about 35 font sizes are still literal (ISSUES.md #19).
+  `tests/tokens.test.ts`. The Log's figure sizes are `--fs-fig` and `--fs-tips`; other font sizes are still literal (ISSUES.md #19).
 - Where a part lives says what it may touch — enforced by `tests/layers.test.ts`.
 - One of each: table, calendar, drawer, form, empty state, toast.
 

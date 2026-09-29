@@ -33,6 +33,7 @@ export function periods(views: ShiftView[], from: string, to: string): { monthly
   const keyOf = (d: string) => (monthly ? monthKey(d) : weekStart(d));
   const step = (k: string) => (monthly ? monthKey(ymd(parts(k + '-01').y, parts(k + '-01').m + 1, 1)) : addDays(k, 7));
   const map = new Map<string, Bucket>();
+  // 2000 steps is about 38 years of weeks, or 166 years of months: past any real log. A bad from/to stops here instead of hanging the tab.
   for (let k = keyOf(from), guard = 0; k <= keyOf(to) && guard < 2000; k = step(k), guard++) map.set(k, blank(k));
   for (const v of views) {
     const b = map.get(keyOf(v.shift.date));
