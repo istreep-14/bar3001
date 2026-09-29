@@ -32,8 +32,8 @@ export function weekCompare(views: ShiftView[], today: string, offset = 0): Week
   const cur = inRange(views, start, cut), prev = inRange(views, addDays(start, -7), addDays(cut, -7));
   const now = summarize(cur), before = summarize(prev);
   const days = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(start, i), vs = views.filter(v => v.shift.date === date);
-    return { date, views: vs, hours: vs.reduce((t, v) => t + (v.hours ?? 0), 0), tips: vs.reduce((t, v) => t + (v.shift.tips ?? 0), 0) };
+    const date = addDays(start, i), vs = views.filter(v => v.shift.date === date), counted = vs.filter(v => !isPending(v));
+    return { date, views: vs, hours: counted.reduce((t, v) => t + (v.hours ?? 0), 0), tips: counted.reduce((t, v) => t + (v.shift.tips ?? 0), 0) };
   });
   return {
     start, partial, now, before, days,

@@ -1,6 +1,6 @@
 /* Code.gs — Sheet side. Requires core.gs (a copy of core.js) in the same project.
- * Five tabs: Shifts (parent), Income and Crew (child rows linked by shift_id), Staff (the employee roster),
- * Wages (your hourly wage by effective date). Crew is the hub between Shifts and Staff: one row per bartender per shift,
+ * Six tabs: Shifts (parent), Income and Crew (child rows linked by shift_id), Staff (the employee roster),
+ * Wages (your hourly wage by effective date), Roles (each role's colour, icon and rank). Crew is the hub between Shifts and Staff: one row per bartender per shift,
  * with their start, end and hours. */
 
 /* A function, not a var, so it doesn't depend on core.gs loading first. */
@@ -15,7 +15,9 @@ function tables() {
     { name: 'Crew', key: 'crew', cols: CREW_COLS, parse: sheetToCrew, toSheet: crewToSheet,
       stamp: 7, del: 8, fix: fixCrewCells, validate: validateCrew, held: 'held_crew', recalc: crewHoursCell },
     { name: 'Wages', key: 'wages', cols: WAGE_COLS, parse: sheetToWage, toSheet: wageToSheet,
-      stamp: 5, del: 6, fix: fixWageCells, validate: validateWage, held: 'held_wages' }
+      stamp: 5, del: 6, fix: fixWageCells, validate: validateWage, held: 'held_wages' },
+    { name: 'Roles', key: 'roles', cols: ROLE_COLS, parse: sheetToRole, toSheet: roleToSheet,
+      stamp: 6, del: 7, fix: function (v) {}, validate: validateRole, held: 'held_roles' }
   ];
 }
 
@@ -66,6 +68,10 @@ function setup() {
   inc.getRange('F:F').setNumberFormat('0');
   staff.getRange('A:F').setNumberFormat('@');   // ids like E0621 stay text
   staff.getRange('K:K').setNumberFormat('0');
+  staff.getRange('M:Q').setNumberFormat('@');   // aliases, photo, avatar colour and text, main role stay text
+  var roles = ss.getSheetByName('Roles');
+  roles.getRange('A:D').setNumberFormat('@');
+  roles.getRange('F:F').setNumberFormat('0');
   crew.getRange('A:F').setNumberFormat('@');    // ids and HH:MM times stay text
   crew.getRange('G:G').setNumberFormat('0');
   crew.getRange('I:I').setNumberFormat('0.00');
@@ -106,8 +112,8 @@ function onEdit(e) {
   }
 }
 
-/* POST { token, rows: [...shifts], income: [...], staff: [...], crew: [...], wages: [...] }
- *   -> { ok, rows, income, staff, crew, wages: <complete merged sets>, held, held_income, held_staff, held_crew, held_wages: [ids], errors }
+/* POST { token, rows: [...shifts], income: [...], staff: [...], crew: [...], wages: [...], roles: [...] }
+ *   -> { ok, rows, income, staff, crew, wages, roles: <complete merged sets>, held, held_income, held_staff, held_crew, held_wages, held_roles: [ids], errors }
  * A missing key is treated as an empty list, so an older app still works. */
 function doPost(e) {
   var lock = LockService.getScriptLock();

@@ -10,8 +10,13 @@ import type { Screen } from '../../router.ts';
 import { DeltaPill } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ShiftLog } from '../../parts/ShiftLog.tsx';
+import type { LogCol } from '../../parts/ShiftLog.tsx';
 import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
+import { MeBadge } from '../../ui/MeBadge.tsx';
 import styles from './DashboardScreen.module.css';
+
+/** The card is narrower than the Log: its list leaves out the two quiet money columns. */
+const NARROW: LogCol[] = ['wage', 'other'];
 
 /* Dashboard: this week at a glance, and a door to every other page. The numbers across the top are this week against
  * last week (the same Monday-to-Sunday weeks the Log groups by). Under them, the last two weeks as the Log's own grouped
@@ -87,7 +92,7 @@ export function DashboardScreen() {
           </dl>
 
           <Card title="Last two weeks" to="log" link="Open the log">
-            <ShiftLog views={recent} by="week" openId={open} inline={false} />
+            <ShiftLog views={recent} by="week" openId={open} inline={false} hidden={NARROW} />
           </Card>
         </div>
 
@@ -144,7 +149,7 @@ export function DashboardScreen() {
           <Card title={offset === 0 ? 'Crew this week' : 'Crew last week'} to="hub/week" link="Open crew week">
             {crewRows.length === 0 ? <p class="muted side-note">No one logged on that week's shifts.</p> : (
               <dl class={styles.list}>
-                {crewRows.map(r => <div key={r.id}><dt>{r.name}{r.you && <span class="muted"> you</span>}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
+                {crewRows.map(r => <div key={r.id}><dt>{r.name}{r.you && <MeBadge />}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
               </dl>
             )}
           </Card>

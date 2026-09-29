@@ -66,40 +66,58 @@ function solve(against: string[], h: number, s: number, from: number, dir: 1 | -
   return out;
 }
 
-export interface ThemeOpts { mode: Mode; accent: string; tint: string; contrast: Contrast }
-export const DEFAULT_LOOK = { accent: 'teal', tint: 'grey', contrast: 'standard' as Contrast };
+/** `bg` is an exact page colour ('#rrggbb') for this mode; blank means the tint's own grey. `avatarBg` fills every avatar that
+ *  has no colour of its own; blank keeps the colour picked from each person's id. */
+export interface ThemeOpts { mode: Mode; accent: string; tint: string; contrast: Contrast; bg?: string; avatarBg?: string }
+export const DEFAULT_LOOK = {
+  accent: 'teal', tint: 'grey', contrast: 'standard' as Contrast,
+  bgLight: '', bgDark: '', avatarBgLight: '', avatarBgDark: ''
+};
+export const isHex = (v: string | null | undefined): v is string => !!v && /^#[0-9a-f]{6}$/i.test(v);
 
 /** `accent` is a preset id or a #hex; a custom colour is used as-is in light and lightened for dark. */
 export function resolveAccent(id: string, mode: Mode): string {
   const p = ACCENTS.find(a => a.id === id);
   if (p) return p[mode];
-  if (!/^#[0-9a-f]{6}$/i.test(id)) return ACCENTS[0]![mode];
+  if (!isHex(id)) return ACCENTS[0]![mode];
   if (mode === 'light') return id;
   const { h, s, l } = hexToHsl(id);
   return hslToHex(h, s, Math.max(l, 68));
 }
 
+/** Black or white, whichever reads better on `hex`. */
+export const onColor = (hex: string) => (contrast(hex, '#ffffff') >= contrast(hex, '#111111') ? '#ffffff' : '#111111');
+
 /** Every colour the page's neutral scale and primary colour need. Text steps are solved against the surfaces they sit on. */
 export function buildTheme(o: ThemeOpts): Record<string, string> {
   const t = TINTS.find(x => x.id === o.tint) ?? TINTS[0]!, dark = o.mode === 'dark';
-  const { h, s } = t;
+  // An exact page colour takes the tint's place: its hue and saturation colour the ramp, and every step keeps its usual
+  // distance from the page's own lightness, so the page itself is exactly the colour picked.
+  const exact = isHex(o.bg) ? o.bg : null, picked = exact ? hexToHsl(exact) : null;
+  const { h, s } = picked ?? t, base = picked?.l ?? (dark ? 6.5 : 91);
+  const step = (light: number, dk: number) => clamp(base + (dark ? dk - 6.5 : light - 91), 0, 100);   // the stock lightness, moved with the page
   const k = { soft: 0, standard: 1, high: 2 }[o.contrast];
+  const ts = Math.min(s, 24);   // text never takes on more colour than a soft tint, whatever the page
   // The page is a light grey canvas. Panels sit a step or two above it, close enough that the grey still reads
   // as one field; only content you act on (the table, a field, an opened row) reaches the near-white top step.
-  const bg = hslToHex(h, s, dark ? 6.5 : 91), surface = hslToHex(h, s, dark ? 13.5 : 99.5), surface2 = hslToHex(h, s, dark ? 10 : 96);
-  const surface3 = hslToHex(h, s + 2, dark ? 18 : 86);
-  const lines = dark ? [21 + k * 2, 27 + k * 3, 38 + k * 5] : [89 - k * 2, 84 - k * 3, 74 - k * 5];
+  const bg = exact ?? hslToHex(h, s, base), surface = hslToHex(h, s, step(99.5, 13.5)), surface2 = hslToHex(h, s, step(96, 10));
+  const surface3 = hslToHex(h, s + 2, step(86, 18));
+  const lines = dark ? [step(0, 21 + k * 2), step(0, 27 + k * 3), step(0, 38 + k * 5)] : [step(89 - k * 2, 0), step(84 - k * 3, 0), step(74 - k * 5, 0)];
   const grounds = [bg, surface, surface2, surface3];
-  const ink = solve(grounds, h, Math.min(s + 6, 24), dark ? 94 : 12, dark ? 1 : -1, [12, 14, 16][k]!);
-  const ink2 = solve(grounds, h, s, dark ? 78 : 30, dark ? 1 : -1, [5.4, 6.6, 8.2][k]!);
-  const ink3 = solve(grounds, h, s, dark ? 66 : 42, dark ? 1 : -1, [4.6, 5.2, 6.2][k]!);
-  const ink4 = solve(grounds, h, s, dark ? 48 : 62, dark ? 1 : -1, 2.4);
+  const ink = solve(grounds, h, Math.min(ts + 6, 24), dark ? 94 : 12, dark ? 1 : -1, [12, 14, 16][k]!);
+  const ink2 = solve(grounds, h, ts, dark ? 78 : 30, dark ? 1 : -1, [5.4, 6.6, 8.2][k]!);
+  const ink3 = solve(grounds, h, ts, dark ? 66 : 42, dark ? 1 : -1, [4.6, 5.2, 6.2][k]!);
+  const ink4 = solve(grounds, h, ts, dark ? 48 : 62, dark ? 1 : -1, 2.4);
   // primary: as chosen, but never too faint to read as text on the panel
   let accent = resolveAccent(o.accent, o.mode);
   if (contrast(accent, surface) < 4.5) { const a = hexToHsl(accent); accent = solve([surface, bg], a.h, a.s, a.l, dark ? 1 : -1, 4.5); }
   const a = hexToHsl(accent);
   const onAccent = contrast('#ffffff', accent) >= 4.5 ? '#ffffff' : '#0a1210';
+  // the site-wide avatar fill, only when set (ui.css falls back to each person's own); letters black or white on the fill
+  const avatar: Record<string, string> = {};
+  if (isHex(o.avatarBg)) { avatar['--avatar-bg'] = o.avatarBg; avatar['--avatar-ink'] = onColor(o.avatarBg); }
   return {
+    ...avatar,
     '--bg': bg, '--surface': surface, '--surface-2': surface2, '--surface-3': surface3,
     '--line': hslToHex(h, s, lines[1]!), '--line-soft': hslToHex(h, s, lines[0]!), '--line-strong': hslToHex(h, s, lines[2]!),
     '--ink': ink, '--ink-2': ink2, '--ink-3': ink3, '--ink-4': ink4,

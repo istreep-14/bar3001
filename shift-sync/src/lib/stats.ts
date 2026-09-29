@@ -1,6 +1,7 @@
 import { crewHours, hoursWorked, sumIncome, tipsPerHour, totalIncome, wageFor, wageRateFor } from '../core/core.generated.js';
 import type { Crew, Income, Local, Shift, Wage } from '../core/core.generated.js';
 import { addDays, weekStart } from './dates.ts';
+import { isPending } from './groups.ts';
 
 /** A shift joined with its live income lines and every derived number. Never stored. */
 export interface ShiftView {
@@ -56,19 +57,22 @@ export interface Summary {
   perShift: number | null;
 }
 
+/** Only shifts with their money in count toward totals — a shift still scheduled or waiting on tips would skew
+ *  hours and rates before its numbers are actually known. */
 export function summarize(views: ShiftView[]): Summary {
+  const done = views.filter(v => !isPending(v));
   let hours = 0, crewH = 0, tips = 0, extra = 0, wage = 0, tphHours = 0, tphTips = 0, phHours = 0, phTotal = 0;
-  for (const v of views) {
+  for (const v of done) {
     hours += v.hours ?? 0; crewH += v.crewHours; tips += v.shift.tips ?? 0; extra += v.extra; wage += v.wage ?? 0;
     if (v.tph != null && v.hours) { tphHours += v.hours; tphTips += v.shift.tips ?? 0; }
     if (v.hours) { phHours += v.hours; phTotal += v.total; }
   }
   const total = tips + extra + wage;
   return {
-    shifts: views.length, hours, crewHours: crewH, tips, extra, wage, total,
+    shifts: done.length, hours, crewHours: crewH, tips, extra, wage, total,
     tph: tphHours ? tphTips / tphHours : null,
     perHour: phHours ? phTotal / phHours : null,
-    perShift: views.length ? total / views.length : null
+    perShift: done.length ? total / done.length : null
   };
 }
 

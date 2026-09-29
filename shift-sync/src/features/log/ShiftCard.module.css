@@ -8,6 +8,7 @@
 .body { display: grid; gap: 2px; min-width: 0; }
 .head { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lead); }
 .weekday { font-weight: var(--fw-semi); }
+.year { margin-left: -0.25rem; font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-3); }
 .meta { font-size: var(--fs-meta); color: var(--ink-2); }
 .foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-1) var(--s-3); margin-top: 2px; min-width: 0; font-size: var(--fs-meta); }
 .note { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 100%; }

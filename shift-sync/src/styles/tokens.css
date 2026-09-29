@@ -14,6 +14,7 @@
 
 :root {
   --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* type: 4 weights (400 body, 500 figures, 600 labels, 700 hero) */
   --fs-micro: 0.6875rem; --fs-meta: 0.75rem; --fs-body: 0.875rem; --fs-lead: 0.875rem;
@@ -49,12 +50,29 @@
   --day: #a15c07; --day-ink: #a15c07; --day-soft: #fdf0d8;
   --night: #4f46e5; --night-soft: #e9e8fd;
   --party: #b4235f; --party-soft: #fde6ef;
+  /* you: the crown after your name, and the faint fill on your own row */
+  --me: #b7791f; --me-wash: color-mix(in srgb, var(--me) 9%, var(--surface));
+  /* a manager: the shield after their name, and the faint fill on their row */
+  --mgr: #2563eb; --mgr-wash: color-mix(in srgb, var(--mgr) 7%, var(--surface));
+  /* behind a photo that has see-through parts: the person's own colour at one lightness and a soft chroma for everyone,
+     so people differ by hue alone. Light in both themes (a touch less in dark, so it doesn't glare): a face on a light
+     backdrop reads, and against the dark page the circle stands out on its own */
+  --photo-bg-l: 0.87; --photo-bg-c: 0.07;
+  --photo-rim: none;   /* the group picture's photos need no rim on a light page */
 
   /* income sources, one token each */
   --cat-tips: var(--accent);
   --cat-chump: #c2410c; --cat-cash: #15803d; --cat-venmo: #0e7490; --cat-consideration: #7c3aed; --cat-overtime: #be185d;
   --cat-wage: #2563eb;
   --cat-other: var(--ink-3);
+
+  /* One color per calendar month for the Log's date badge, picked for what each month is associated with rather
+     than an even wheel — Feb pink for Valentine's, Mar green for St. Patrick's, Nov rust for the harvest, etc.
+     Each is dark/saturated enough to read white text on its own, in both themes, so none need a dark override. */
+  --month-1: #3e6fb5; --month-2: #c13f6b; --month-3: #2e8b4f; --month-4: #8b6fc7;
+  --month-5: #7fa828; --month-6: #cba52a; --month-7: #b23a2e; --month-8: #d4941f;
+  --month-9: #2e6b7a; --month-10: #c1541e; --month-11: #8b5a3c; --month-12: #7a2a3d;
+  --month-band-ink: #fff;
 
   --danger: var(--bad); --danger-soft: #fdeeee; --danger-line: #f1cccc;
   --warning-soft: #fdf0d8;
@@ -92,6 +110,9 @@
     --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
     --night: #7570e6; --night-soft: #23214d;
     --party: #f58bb3; --party-soft: #3a1727;
+    --me: #f2c14e; --mgr: #60a5fa;
+    --photo-bg-l: 0.82; --photo-bg-c: 0.08;
+    --photo-rim: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 -1px 0 #fff);   /* a solid 1px white edge traced round each figure (no blur; none downward, where it stands on the row), so a black cartoon outline still reads on a dark page */
     --cat-chump: #fb923c; --cat-cash: #4ade80; --cat-venmo: #67e8f9; --cat-consideration: #c4b5fd; --cat-overtime: #f472b6; --cat-wage: #60a5fa;
     --danger-soft: rgb(248 113 113 / 0.1); --danger-line: rgb(248 113 113 / 0.3);
     --warning-soft: rgb(251 191 36 / 0.16);
@@ -111,6 +132,9 @@
   --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
   --night: #7570e6; --night-soft: #23214d;
   --party: #f58bb3; --party-soft: #3a1727;
+  --me: #f2c14e; --mgr: #60a5fa;
+  --photo-bg-l: 0.82; --photo-bg-c: 0.08;
+  --photo-rim: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 -1px 0 #fff);   /* a solid 1px white edge traced round each figure (no blur; none downward, where it stands on the row), so a black cartoon outline still reads on a dark page */
   --cat-chump: #fb923c; --cat-cash: #4ade80; --cat-venmo: #67e8f9; --cat-consideration: #c4b5fd; --cat-overtime: #f472b6; --cat-wage: #60a5fa;
   --danger-soft: rgb(248 113 113 / 0.1); --danger-line: rgb(248 113 113 / 0.3);
   --warning-soft: rgb(251 191 36 / 0.16);

@@ -108,6 +108,141 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl tbody tr[data-row]:hover { background: var(--surface-2); }
 .tbl tbody tr[aria-selected='true'] { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
+/* grouped rows (Table `group`): no rule inside a block; between blocks, a separator row (a hairline with a little air) */
+.tbl[data-grouped] tbody td { border-bottom: 0; }
+.tbl tbody tr.tbl-sep td { height: var(--s-3); padding: 0; background: linear-gradient(var(--line-soft), var(--line-soft)) center / 100% 1px no-repeat; }
+
+/* the Log's look (Table `log`), so People, Other income and Crew read as the same kind of list as the Log: single-line
+   rows at the Log's size, inset from the panel's edges under a head band that still runs edge to edge, a hairline
+   between rows, a rounded hover, and the accent bar on the selected row (or every row of a selected block). */
+.tbl-log { padding: 0 var(--s-4) var(--s-5); }
+.tbl-log .tbl { width: 100%; font-size: var(--fs-lead); }
+.tbl-log .tbl :is(th, td) { padding: 0 var(--s-2); }
+.tbl-log .tbl :is(th, td):first-child { padding-left: var(--s-3); }
+.tbl-log .tbl thead th { height: 2.25rem; }
+.tbl-log .tbl thead th:first-child::before, .tbl-log .tbl thead th:last-child::after { content: ''; position: absolute; top: 0; bottom: -1px; width: var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); }
+.tbl-log .tbl thead th:first-child::before { right: 100%; }
+.tbl-log .tbl thead th:last-child::after { left: 100%; }
+.tbl-log .tbl td { position: relative; height: 2rem; border-bottom: 0; white-space: nowrap; }
+.tbl-log .tbl tbody tr[data-tall] td { height: 2.625rem; }   /* rows whose cells run two lines (People) */
+.tbl-log .tbl td.notes { max-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tbl-log .tbl:not([data-grouped]) tbody tr + tr td::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--line-soft); }
+.tbl-log .tbl tbody tr.tbl-sep td { height: var(--s-3); }
+.tbl-log .tbl tbody td:first-child { border-top-left-radius: var(--r-md); border-bottom-left-radius: var(--r-md); }
+.tbl-log .tbl tbody td:last-child { border-top-right-radius: var(--r-md); border-bottom-right-radius: var(--r-md); }
+.tbl-log .tbl[data-grouped] tbody tr:not([data-first]) td { border-top-left-radius: 0; border-top-right-radius: 0; }
+.tbl-log .tbl[data-grouped] tbody tr:not([data-last]) td { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.tbl-log .tbl tbody tr[data-row]:hover, .tbl-log .tbl tbody tr[aria-selected='true'] { background: none; }
+/* a row's tone (Table `tone`): yours has a faint gold fill, a manager's a faint blue one (yours wins if you're both); an inactive
+   person's reads greyed out, the way an offline member does. The fill deepens on hover and when selected instead of being
+   replaced, so the row still says whose it is. */
+.tbl tbody tr[data-tone='me'] td { background: var(--me-wash); }
+.tbl tbody tr[data-tone='manager'] td { background: var(--mgr-wash); }
+.tbl-log .tbl tbody tr[data-tone='me'][data-row]:hover td { background: color-mix(in srgb, var(--me) 15%, var(--surface)); }
+.tbl-log .tbl tbody tr[data-tone='me'][aria-selected='true'] td { background: color-mix(in srgb, var(--me) 20%, var(--surface)); }
+.tbl-log .tbl tbody tr[data-tone='manager'][data-row]:hover td { background: color-mix(in srgb, var(--mgr) 12%, var(--surface)); }
+.tbl-log .tbl tbody tr[data-tone='manager'][aria-selected='true'] td { background: color-mix(in srgb, var(--mgr) 16%, var(--surface)); }
+.tbl tbody tr[data-tone='muted'] td, .tbl tbody tr[data-tone='muted'] :is(.who-name, .role-name) { color: var(--ink-3); }
+.tbl tbody tr[data-tone='muted'] :is(.avatar, .role) { opacity: 0.6; }
+.tbl-log .tbl tbody tr[data-row]:hover td { background: var(--surface-2); }
+.tbl-log .tbl tbody tr[aria-selected='true'] td { background: var(--accent-wash); }
+.tbl-log .tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+/* set widths (columns with a `weight`): shares of the width, a draggable edge between heads, and cells that cut off with an
+   ellipsis instead of pushing their neighbours. A phone scrolls the table sideways rather than crushing it. */
+.tbl-fixed .tbl { table-layout: fixed; min-width: 52rem; }
+@media (max-width: 40rem) { .tbl-fixed .tbl { min-width: 0; } }   /* a phone shows fewer columns (the page picks them), so they fit the width */
+.tbl-fixed .tbl td { overflow: hidden; text-overflow: ellipsis; }
+.tbl-fixed .tbl .th-sort { max-width: 100%; overflow: hidden; }
+.col-resize { position: absolute; top: 0; right: 0; z-index: 2; width: 8px; height: 100%; cursor: col-resize; touch-action: none; }
+.col-resize::after { content: ''; position: absolute; top: 28%; bottom: 28%; right: 0; width: 1px; background: var(--line-strong); opacity: 0; transition: opacity var(--dur); }
+.tbl thead th:hover .col-resize::after, .col-resize:active::after { opacity: 1; }
+/* the data grid (Table `grid`): a plain sheet for looking things up across many columns. Rows run the full width on
+   hairlines; heads are small uppercase with a little tracking (the sorted one dark, its arrow in the accent); the first
+   column (what names the row) stays put while the rest scroll sideways under it, with a hairline for its edge; a rule marks
+   where a column group starts (`groupStart`); figures are right-aligned with their heads, and the sort arrow sits on the
+   heading's inner side so the words line up with the numbers under them; a totals row is pinned to the bottom. */
+.tbl-grid { --grid-band: 1.75rem; --grid-head: 2.375rem; --grid-row: 2.25rem; }
+.tbl-grid .tbl { width: 100%; font-size: var(--fs-body); }
+.tbl-grid.tbl-fixed .tbl { min-width: 70rem; }
+@media (max-width: 40rem) { .tbl-grid.tbl-fixed .tbl { min-width: 0; } }
+.tbl-grid .tbl :is(th, td) { padding: 0 var(--s-3); box-sizing: border-box; }
+.tbl-grid .tbl :is(th, td):first-child { position: sticky; left: 0; z-index: 1; padding-left: 1.15rem; box-shadow: inset -1px 0 0 var(--line-soft); }
+.tbl-grid .tbl thead th { height: var(--grid-head); font-size: 0.65625rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+.tbl-grid .tbl thead th[aria-sort='ascending'], .tbl-grid .tbl thead th[aria-sort='descending'] { color: var(--ink); }
+.tbl-grid .tbl thead th:is([aria-sort='ascending'], [aria-sort='descending']) .th-sort .icon { opacity: 1; color: var(--accent); }
+.tbl-grid .tbl thead th:first-child { z-index: 3; }
+.tbl-grid .tbl thead tr.gh th { height: var(--grid-band); background: var(--surface); border-bottom: 1px solid var(--line-soft); font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--ink-3); letter-spacing: 0.02em; }
+.tbl-grid .tbl thead[data-grouped] tr:not(.gh) th { top: var(--grid-band); }
+.tbl-grid .tbl :is(th, td).gs { border-left: 1px solid var(--line-soft); }
+.tbl-grid .tbl .th-sort { vertical-align: middle; }
+.tbl-grid .tbl .r .th-sort { flex-direction: row-reverse; }
+.tbl-grid .tbl td { height: var(--grid-row); background: var(--surface); white-space: nowrap; }
+.tbl-grid .tbl tbody tr[data-row]:hover td { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }   /* toward the ink: darker in light, lighter in dark */
+.tbl-grid .tbl tbody tr[aria-selected='true'] td { background: var(--accent-wash); }
+.tbl-grid .tbl tbody tr[aria-selected='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent), inset -1px 0 0 var(--line-soft); }
+.tbl-grid .tbl tbody tr:last-child td { border-bottom: 1px solid var(--line-soft); }
+/* keyboard focus on a row: the row's own edges, not an outline the sticky column would cut */
+.tbl-grid .tbl tbody tr:focus-visible { outline: none; }
+.tbl-grid .tbl tbody tr:focus-visible td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
+.tbl-grid .tbl tbody tr:focus-visible td:first-child { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent), inset 2px 0 0 var(--accent); }
+.tbl-grid .tbl tfoot td { position: sticky; bottom: 0; z-index: 1; height: var(--grid-head); background: var(--th-bg); border-top: 1px solid var(--th-line); color: var(--ink); font-weight: var(--fw-semi); }
+.tbl-grid .tbl tfoot td:first-child { z-index: 3; }
+.tbl-grid .tbl tfoot td { overflow: visible; }   /* a total's label may run into the empty cell beside it */
+/* figures: Poppins with even-width digits, so they line up down a column; `.fig-key` a weight up in full ink */
+.fig { font-variant-numeric: tabular-nums; }
+.fig-key { color: var(--ink); font-weight: var(--fw-semi); }
+.fig-unit { margin-left: 1px; color: var(--ink-3); font-size: 0.8em; }
+/* a cell's quieter second line (a date's weekday), and a figure that isn't there */
+.tbl-grid .cell-sub { display: block; margin-top: 1px; font-size: var(--fs-micro); line-height: 1.2; color: var(--ink-3); }
+.tbl-grid .nil { color: var(--ink-4); }
+
+/* cells the log-look lists share: a quieter figure, a trailing chevron, a person */
+.tbl td.soft { color: var(--ink-2); }
+.tbl td.chev { width: 2rem; color: var(--ink-3); text-align: center; }
+.tbl td.chev .icon { width: 1rem; height: 1rem; vertical-align: middle; }
+.tbl td.chev.when { width: 100%; padding-right: var(--s-3); text-align: right; }   /* the list's slack goes here, so the columns sit together */
+.tbl-log .tbl tbody tr[aria-selected='true'] td.chev { color: var(--ink); }
+.who { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; white-space: nowrap; vertical-align: middle; }
+/* a person in two lines: the short name (with its marks and ID) on top, the full name small under it */
+.who-lines { display: grid; gap: 1px; min-width: 0; padding-top: 2px; line-height: 1.2; }   /* nudged down: the top line sits nearer the row's middle */
+.who-top { display: flex; align-items: center; gap: 0.35em; min-width: 0; }
+.who-lines:has(> :only-child) { padding-top: 0; }   /* no full name: the short name is simply centred */
+.who-top .who-name { min-width: 0; }
+.who-sub { overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-micro); font-style: italic; color: var(--ink-3); }
+/* an ID: # and the number, monospaced, in a grey tag */
+.idtag { display: inline-flex; align-items: center; flex: none; min-height: 1rem; padding: 0 0.3rem; border-radius: var(--r-sm); background: var(--surface-3); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--fs-micro); line-height: 1; letter-spacing: 0.02em; }
+/* you: a gold crown after your name */
+.me-badge { display: inline-flex; flex: none; margin-left: 0.2em; color: var(--me); vertical-align: -0.1em; }
+.who > .me-badge { margin-left: 0; }   /* the row's own gap already spaces it */
+.me-badge .icon { width: 0.9em; height: 0.9em; fill: currentColor; stroke-width: 1.5; }
+.me-badge[data-kind='manager'] { color: var(--mgr); }
+.me-badge[data-kind='manager'] .icon { fill: color-mix(in srgb, var(--mgr) 25%, transparent); stroke-width: 2; }
+/* status as a pill: a dot then the word, tinted green (active) or red (inactive) */
+.status-pill { display: inline-flex; align-items: center; gap: 0.375rem; min-height: 1.375rem; padding: 0 var(--s-2); border-radius: var(--r-pill); background: color-mix(in srgb, var(--good) 12%, var(--surface)); color: color-mix(in srgb, var(--good) 65%, var(--ink)); font-size: var(--fs-meta); font-weight: var(--fw-semi); }
+.status-pill i { width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--good); }
+.status-pill[data-status='inactive'] { background: color-mix(in srgb, var(--bad) 11%, var(--surface)); color: color-mix(in srgb, var(--bad) 65%, var(--ink)); }
+.status-pill[data-status='inactive'] i { background: var(--bad); }
+/* a role: its colour lives only in the small square around its icon; the name is ordinary table text */
+.role { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; min-width: 0; color: var(--ink); font-weight: var(--fw-normal); white-space: nowrap; }
+.role-name { overflow: hidden; text-overflow: ellipsis; }
+.role:not([data-plain]) .role-name { color: color-mix(in srgb, var(--rc) 55%, var(--ink)); font-weight: var(--fw-med); }   /* the name in the role's colour, leaning to the ink so it reads */
+.role-mark { display: inline-grid; place-items: center; flex: none; width: 1.375rem; height: 1.375rem; border-radius: var(--r-sm); background: color-mix(in srgb, var(--rc) 16%, var(--surface)); color: var(--rc); }
+.role-mark .icon { width: 0.875rem; height: 0.875rem; }
+.role-mark i { width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--rc); }
+.role[data-plain] .role-mark { background: var(--surface-3); color: var(--ink-3); }
+.role[data-plain] .role-mark i { background: var(--ink-3); }
+.role[data-quiet] { gap: 0.25rem; color: var(--ink-2); }
+.role[data-quiet] .role-mark { width: auto; height: auto; background: none; }
+.role[data-quiet] .role-mark .icon { width: 0.8125rem; height: 0.8125rem; }
+.roles-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-2); }
+.tbl td .roles-line { flex-wrap: nowrap; max-width: 100%; overflow: hidden; }
+/* a cell in two lines (a role over the other roles) */
+.cell-lines { display: grid; justify-items: start; gap: 1px; min-width: 0; max-width: 100%; }
+.roles-sub { display: flex; gap: var(--s-2); max-width: 100%; overflow: hidden; font-size: var(--fs-micro); }
+.roles-sub .role-mark .icon { width: 0.6875rem; height: 0.6875rem; }
+.who-name { overflow: hidden; text-overflow: ellipsis; font-weight: var(--fw-semi); color: var(--ink); }
+.who-meta { font-size: var(--fs-meta); color: var(--ink-3); }
+
 /* a cell: the fact, then one quieter line. nowrap so a time or a rate never breaks mid-token. */
 /* The title is the fact a row is about; the meta line is a quieter caption under it, not another line of
    body text, so it drops a size and a shade and sits a hair lower — the title should read first and biggest. */
@@ -119,11 +254,30 @@ select.input { appearance: none; padding-right: var(--s-6);
 /* a leading swatch (day/night icon) beside the fact it belongs to, sized once so nothing in the row stretches */
 .shiftcell { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
 .shiftcell .tbadge { flex: none; }
-/* ── avatars: a small overlapping stack of initials, the same shape wherever crew show up ── */
-.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 2px solid var(--surface); background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: 0.625rem; font-weight: var(--fw-semi); }
+/* ── avatars: a small overlapping stack of initials, the same shape wherever crew show up. No border: the fill runs to the edge ── */
+.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: 0.625rem; font-weight: var(--fw-semi); }
 .avatars { display: inline-flex; align-items: center; }
-.avatars .avatar + .avatar { margin-left: -0.5rem; }
+.avatars .avatar + .avatar { margin-left: calc(-1 * var(--av-overlap, 0.5rem)); }   /* a stack sets --av-overlap to its own tuck */
+/* in a stack each circle is cut back where the next one tucks over it, a sliver of whatever is behind, so faces of one fill still read apart */
+.avatars > .avatar:has(+ .avatar) {
+  --cut: radial-gradient(50% 50% at calc(150% - var(--av-overlap, 0.5rem)) 50%, #0000 calc(100% + 2px), #000 calc(100% + 2.5px));   /* the next circle, 2px wider (a calc radius itself doesn't render) */
+  -webkit-mask: var(--cut); mask: var(--cut);
+}
 .avatar-more { background: var(--surface-3); color: var(--ink-2); }
+/* sizes: sm (default) in a row's crew stack, md beside a name in a table, lg at the head of a person's drawer */
+.avatar[data-size='md'] { width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; }
+.avatar[data-size='lg'] { width: 3.5rem; height: 3.5rem; font-size: 1.125rem; }
+/* the status dot rides the circle's lower right edge, ringed in the surface so it reads as sitting on top */
+.avatar-wrap { position: relative; display: inline-flex; flex: none; }
+.avatar-dot { position: absolute; right: -1px; bottom: -1px; width: 26%; height: 26%; min-width: 0.375rem; min-height: 0.375rem; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 1.5px var(--surface); }
+.avatar-dot[data-status='inactive'] { background: var(--bad); }
+/* the site-wide avatar fill (Settings → Appearance, lib/theme.ts) stands in for the colour picked from the id; a person's own pick still wins */
+.avatar[data-auto] { background: var(--avatar-bg, color-mix(in srgb, var(--ac) 18%, var(--surface))); color: var(--avatar-ink, var(--ac)); }
+.avatar[data-custom] { color: var(--ac-ink); background: var(--ac); }   /* a hex someone picked is the fill, exactly; letters black or white (Avatar.tsx) */
+.avatar[data-photo] { overflow: hidden; background: color-mix(in srgb, var(--ac) 30%, var(--surface)); background: oklch(from var(--ac) var(--photo-bg-l) var(--photo-bg-c) h); }   /* the person's hue, one lightness for all (tokens --photo-bg-*); shows through a see-through photo */
+.avatar[data-photo][data-auto] { background: var(--avatar-bg, oklch(from var(--ac) var(--photo-bg-l) var(--photo-bg-c) h)); }
+.avatar[data-photo][data-custom] { background: var(--ac); }   /* ...unless they picked an exact colour */
+.avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }   /* block: no baseline gap to push the row's contents up */
 /* toggle chips (independent on/off, unlike .seg) */
 .tog { min-height: var(--ctl-h); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: transparent; color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-med); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
 .tog:hover { background: color-mix(in srgb, var(--surface) 65%, transparent); color: var(--ink); }
@@ -176,3 +330,40 @@ select.input { appearance: none; padding-right: var(--s-6);
 .linkbtn { padding: 0; border: 0; background: none; color: var(--accent); font-size: var(--fs-meta); font-weight: var(--fw-med); text-decoration: underline; text-underline-offset: 3px; }
 .icon-btn { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--surface); color: var(--ink-2); }
 .icon-btn:hover { border-color: var(--accent); background: var(--surface-3); color: var(--ink); }
+
+/* ── inline meters (ui/Meters.tsx): a figure's context drawn small enough to sit in its row ── */
+/* rank bar: a track that fills 0-100% (--at) in --fill, with a thin tick (--mark) standing for the average to measure against */
+.rankbar { position: relative; display: block; width: 100%; height: 4px; border-radius: 3px; background: var(--surface-3); }
+.rankbar i { position: absolute; inset: 0 auto 0 0; width: max(3px, calc(var(--at) * 100%)); border-radius: inherit; background: var(--fill, var(--ink-3)); }
+.rankbar b { position: absolute; top: -2px; bottom: -2px; left: calc(var(--mark) * 100%); width: 2px; margin-left: -1px; border-radius: 1px; background: var(--ink); box-shadow: 0 0 0 1px var(--surface); }
+/* stood on end (`up`): fills from the bottom, and the tick runs across it */
+.rankbar[data-up] { flex: none; width: 5px; height: 1.5rem; }
+.rankbar[data-up] i { inset: auto 0 0 0; width: auto; height: max(3px, calc(var(--at) * 100%)); }
+.rankbar[data-up] b { inset: auto -2px calc(var(--mark) * 100%) -2px; width: auto; height: 2px; margin: 0 0 -1px; }
+/* stack bar: a figure's parts, side by side, each in its own colour */
+.stackbar { display: flex; gap: 1px; width: 100%; height: 4px; overflow: hidden; border-radius: 2px; }
+.stackbar i { min-width: 2px; }
+/* a figure with a micro bar hung under it: the bar is exactly the figure's width and takes no height */
+.figure { position: relative; display: inline-block; }
+.figure-under { position: absolute; left: 0; right: 0; top: calc(100% + 3px); }
+/* clock ring: a value with the shift's stretch drawn round it as an arc on an unseen 12-hour clock, in its day/night colour */
+.dial { position: relative; display: inline-grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; }
+.dial svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.dial-arc { fill: none; stroke: var(--fill, var(--ink-3)); stroke-width: 1.1; stroke-linecap: round; opacity: 0.5; }   /* thin and faint: the figure inside leads */
+.dial-value { position: relative; font-size: 0.875rem; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* ── hover card (ui/HoverCard.tsx): detail too rich for a tooltip, opened beside its trigger ── */
+.hovercard-at { display: inline-flex; border-radius: var(--r-sm); }
+.hovercard { position: fixed; z-index: var(--z-toast); display: grid; gap: 2px; width: 16rem; padding: var(--s-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow); color: var(--ink); font-size: var(--fs-body); font-weight: var(--fw-normal); text-align: left; white-space: normal; cursor: default; }
+
+/* ── tooltip: any element with class tip and a data-tip shows it in a small dark bubble above, on hover. Words only
+   (the same words go in sr-only text for anyone who can't hover); \A in the text breaks a line. ── */
+.tip { position: relative; }
+.tip::after {
+  content: attr(data-tip); position: absolute; z-index: 5; bottom: calc(100% + 6px); right: 0; width: max-content; max-width: 16rem;
+  padding: 5px 8px; border-radius: var(--r-sm); background: var(--ink); color: var(--surface); box-shadow: var(--shadow-sm);
+  font-size: var(--fs-meta); font-style: normal; font-weight: var(--fw-med); line-height: 1.35; text-align: left; white-space: pre-line;
+  opacity: 0; transform: translateY(2px); pointer-events: none; transition: opacity 120ms ease, transform 120ms ease;
+}
+.tip:hover::after { opacity: 1; transform: none; transition-delay: 250ms; }
+@media (prefers-reduced-motion: reduce) { .tip::after { transition: none; transform: none; } }

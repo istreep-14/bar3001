@@ -6,7 +6,7 @@ import { today, weekday } from '../../lib/dates.ts';
 import { clockPlain, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
 import { partsOf } from '../../lib/groups.ts';
 import { summarize } from '../../lib/stats.ts';
-import { closeDrawer, guard, sheetDate } from '../../router.ts';
+import { closeDrawer, formPage, guard, sheetDate } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
 import { toast } from '../../ui/toast.tsx';
 import { GROUPS, LABEL, ORDER, check, flaggedPages, minutes, newLine, newMember, num, pageOfError } from './form/model.ts';
@@ -46,7 +46,7 @@ export function ShiftForm({ id }: { id: string }) {
   const panes = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<Form | null>(() => (ready.value ? initial(id) : null));
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [page, setPage] = useState<PageId>('home');
+  const [page, setPage] = useState<PageId>(() => (ORDER as string[]).includes(formPage.value ?? '') ? formPage.value as PageId : 'home');
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);     // Close turned into "Discard changes?" for a moment
   const baseline = useRef(JSON.stringify(form));

@@ -1,0 +1,20 @@
+.wrap { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.count { display: inline-grid; place-items: center; min-width: 1.125rem; height: 1.125rem; padding: 0 4px; border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent); font-size: var(--fs-micro); font-weight: var(--fw-bold); }
+.pick { padding-right: 2px; }
+.pick button { display: inline-grid; place-items: center; width: 1.125rem; height: 1.125rem; padding: 0; border: 0; border-radius: var(--r-sm); background: none; color: inherit; cursor: pointer; }
+.pick button:hover { background: var(--surface-2); color: var(--ink); }
+.pick :global(.icon) { width: 0.75rem; height: 0.75rem; }
+.panel { position: absolute; top: calc(100% + var(--s-2)); left: 0; z-index: 5; display: grid; gap: var(--s-4); width: min(28rem, calc(100vw - 2rem)); max-height: 60vh; overflow: auto; padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
+.facet { display: grid; gap: var(--s-2); }
+.options { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.options :global(.tog) { min-height: 2rem; }
+.n { margin-left: 2px; color: var(--ink-3); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; }
+/* the Columns menu: the same panel, opening leftward from a button at the right of a head, a list of checkboxes */
+.right { left: auto; right: 0; width: 13rem; gap: var(--s-3); }
+.checks { display: grid; gap: 2px; }
+.check { display: flex; align-items: center; gap: var(--s-2); min-height: 2rem; padding: 0 var(--s-2); border-radius: var(--r-sm); font-size: var(--fs-body); cursor: pointer; }
+.check:hover { background: var(--surface-2); }
+.check input { width: 1rem; height: 1rem; accent-color: var(--accent); }
+.corner { width: 1.75rem; min-height: 1.75rem; height: 1.75rem; color: var(--th-ink); }
+.corner :global(.icon) { width: 0.95rem; height: 0.95rem; }
+.corner[data-on] { color: var(--accent); }   /* some columns are hidden */

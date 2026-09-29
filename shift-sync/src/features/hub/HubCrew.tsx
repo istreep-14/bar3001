@@ -1,56 +1,59 @@
 import { signal } from '@preact/signals';
-import { useState } from 'preact/hooks';
-import { hoursWorked, toHHMM, toMin } from '../../core/core.generated.js';
+import { hoursWorked } from '../../core/core.generated.js';
 import type { Crew } from '../../core/core.generated.js';
 import { scopedViews } from '../../data/scope.ts';
-import { liveStaff, liveViews, personById, ready, removeCrewLine, saveCrewLine } from '../../data/store.ts';
-import { dateCell, dec1, weekdayShort } from '../../lib/format.ts';
+import { liveStaff, liveViews, personById, ready } from '../../data/store.ts';
+import { DASH, clockShort, dec1, hours } from '../../lib/format.ts';
 import type { ShiftView } from '../../lib/stats.ts';
-import { TypeBadge } from '../../ui/Badges.tsx';
+import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
+import { openSheet, sheet } from '../../router.ts';
+import { DayCell } from '../../ui/DayCell.tsx';
+import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
-import { TimeField } from '../../ui/TimeField.tsx';
+import { MeBadge } from '../../ui/MeBadge.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
-import { Stack } from '../../ui/Stack.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
+import { SideStats } from '../../ui/SideStats.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
-import { toast } from '../../ui/toast.tsx';
-import { EmptyState } from '../../ui/EmptyState.tsx';
-import { SideStats } from '../../ui/SideStats.tsx';
+import { AddToShift } from './AddToShift.tsx';
 import styles from './Hub.module.css';
 
-/* Crew log: every bartender's hours on every shift in the period, one row each. Times edit in place (a change saves when you leave the
- * cell); the hours are worked out from them. Add a line for any shift with the bar on top. */
-interface Row { v: ShiftView; c: Crew; name: string }
+/* Crew, every shift: each bartender's time on each shift in the period, one line each, read like the Log. A shift's crew
+ * sits together as one block that names the day once (you first, then by start). A line opens its shift in the drawer,
+ * whose pencil lands on the form's Crew page; "Add to a shift" does the same for a shift with no crew yet. */
+interface Row { v: ShiftView; c: Crew; name: string; me: boolean }
 const who = signal('');
 
-const run = async (fn: () => Promise<unknown>) => { try { await fn(); } catch (e) { toast(e instanceof Error ? e.message : 'Could not save'); } };
-const shiftLabel = (v: ShiftView) => `${weekdayShort(v.shift.date)} ${dateCell(v.shift.date)}${v.shift.shift_type ? ' · ' + v.shift.shift_type : ''}`;
+const span = (c: Crew) => c.start != null && c.end != null ? `${clockShort(c.start)} → ${clockShort(c.end)}`
+  : c.start != null ? `${clockShort(c.start)} →` : c.end != null ? `→ ${clockShort(c.end)}` : DASH;
 
 export function HubCrew() {
   const all = liveViews.value, views = scopedViews(all);
-  const rows: Row[] = views.flatMap(v => v.crew.map(c => ({ v, c, name: personById(c.staff_id)?.name ?? c.name ?? 'Unknown' })))
+  const rows: Row[] = views.flatMap(v => v.crew
+    .map(c => { const p = personById(c.staff_id); return { v, c, name: p?.name ?? c.name ?? 'Unknown', me: !!p?.is_user }; })
+    .sort((a, b) => Number(b.me) - Number(a.me) || (a.c.start ?? 9999) - (b.c.start ?? 9999) || a.name.localeCompare(b.name)))
     .filter(r => !who.value || r.c.staff_id === who.value);
-  const hoursSum = rows.reduce((a, r) => a + (hoursWorked(r.c.start, r.c.end) ?? 0), 0);
-  const time = (r: Row, key: 'start' | 'end') => (
-    <TimeField compact label={`${r.name} ${key} on ${r.v.shift.date}`} value={toHHMM(r.c[key])} pm={key === 'start'}
-      onChange={v => { const m = v ? toMin(v) : null; void run(() => saveCrewLine({ id: r.c.id, shift_id: r.c.shift_id, staff_id: r.c.staff_id, start: key === 'start' ? m : r.c.start, end: key === 'end' ? m : r.c.end })); }} />
-  );
+  const h = (r: Row) => hoursWorked(r.c.start, r.c.end);
+  const hoursSum = rows.reduce((a, r) => a + (h(r) ?? 0), 0);
+  const shifts = new Set(rows.map(r => r.v.shift.id)).size;
+
   const columns: Column<Row>[] = [
-    { key: 'date', head: 'Shift', sort: r => r.v.shift.date, cell: r => (
-      <Stack title={<>{weekdayShort(r.v.shift.date)} {dateCell(r.v.shift.date)}</>} extra={r.v.shift.shift_type ? <span class="stack-row"><TypeBadge type={r.v.shift.shift_type} /></span> : undefined} />
+    { key: 'date', head: 'Shift', once: true, sort: r => r.v.shift.date + (r.v.shift.start ?? 0).toString().padStart(4, '0'),
+      cell: r => <DayCell date={r.v.shift.date} type={r.v.shift.shift_type} party={r.v.shift.party} /> },
+    { key: 'name', head: 'Bartender', sort: r => r.name, cell: r => (
+      <span class="who"><PersonAvatar id={r.c.staff_id} fallback={r.c.name} size="md" /><span class="who-name">{r.name}</span>{r.me && <MeBadge />}</span>
     ) },
-    { key: 'name', head: 'Bartender', sort: r => r.name, cell: r => <>{r.name}{personById(r.c.staff_id)?.is_user && <span class="stack-meta"> · you</span>}</> },
-    { key: 'start', head: 'Start', className: 'fit', cell: r => time(r, 'start') },
-    { key: 'end', head: 'End', className: 'fit', cell: r => time(r, 'end') },
-    { key: 'hours', head: 'Hours', className: 'fit', sort: r => hoursWorked(r.c.start, r.c.end), cell: r => dec1(hoursWorked(r.c.start, r.c.end)) },
-    { key: 'del', head: '', className: 'act', cell: r => (
-      <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${r.name} from ${r.v.shift.date}`}
-        onClick={() => void run(async () => { const gone = await removeCrewLine(r.c.id); if (gone) toast(`${r.name} removed`, { label: 'Undo', run: () => void saveCrewLine({ shift_id: gone.shift_id, staff_id: gone.staff_id, start: gone.start, end: gone.end }) }); })}><Icon name="trash" /></button>) }
+    { key: 'time', head: 'Time', className: 'soft num', sort: r => r.c.start, cell: r => span(r.c) },
+    { key: 'hours', head: 'Hours', className: 'r fit strong num', sort: h, cell: r => hours(h(r)) },
+    { key: 'go', head: '', className: 'chev when', once: true, cell: () => <Icon name="chevron" /> }
   ];
+
   const table = ready.value && all.length === 0 ? <EmptyState title="No shifts yet">Log a shift first, then set who worked it.</EmptyState>
-    : rows.length === 0 ? <EmptyState title="No crew hours in this period">Widen the period, or add a line above.</EmptyState>
-    : <Table fill paginate label="Crew hours" rows={rows} columns={columns} rowKey={r => r.c.id} defaultSort={{ key: 'date', dir: 'desc' }} />;
+    : rows.length === 0 ? <EmptyState title="No crew hours in this period">Widen the period, or set who worked a shift with Add to a shift.</EmptyState>
+    : <Table log fill paginate label="Crew hours" rows={rows} columns={columns} rowKey={r => r.c.id}
+        group={r => r.v.shift.id} onRow={r => openSheet(r.v.shift.id)} selected={r => r.v.shift.id === sheet.value}
+        defaultSort={{ key: 'date', dir: 'desc' }} />;
 
   return (
     <section class="panel fill" aria-labelledby="hc-title">
@@ -61,45 +64,13 @@ export function HubCrew() {
             {liveStaff.value.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
+        <AddToShift views={views} page="crew" label="Set the crew of a shift" />
         <ScopeControl />
       </PanelHead>
       <div class="split">
-        <div class={`panel-body flush ${styles.body}`}>
-          <AddCrew views={views} />
-          {table}
-        </div>
-        <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Hours', value: dec1(hoursSum), hint: 'Each bartender’s hours, added up' }]} />
+        <div class={`panel-body flush ${styles.body}`}>{table}</div>
+        <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Shifts', value: shifts || DASH }, { label: 'Hours', value: dec1(hoursSum), hint: 'Each bartender’s hours, added up' }]} />
       </div>
     </section>
-  );
-}
-
-function AddCrew({ views }: { views: ShiftView[] }) {
-  const recent = views.slice(0, 200);
-  const [shiftId, setShiftId] = useState('');
-  const [staff, setStaff] = useState('');
-  const [start, setStart] = useState<string | null>(null);
-  const [end, setEnd] = useState<string | null>(null);
-  const v = recent.find(x => x.shift.id === shiftId);
-  const s = start ?? (v ? toHHMM(v.shift.start) : ''), e = end ?? (v ? toHHMM(v.shift.end) : '');
-  const ok = !!v && !!staff;
-  return (
-    <form class={styles.bar} onSubmit={ev => { ev.preventDefault(); if (!ok) return; void run(async () => { await saveCrewLine({ shift_id: shiftId, staff_id: staff, start: toMin(s), end: toMin(e) }); setStaff(''); setStart(null); setEnd(null); }); }}>
-      <label class="field"><span class="label-text">Shift</span>
-        <select class="input" value={shiftId} onChange={ev => { setShiftId(ev.currentTarget.value); setStart(null); setEnd(null); }}>
-          <option value="">Choose a shift…</option>
-          {recent.map(x => <option key={x.shift.id} value={x.shift.id}>{shiftLabel(x)}</option>)}
-        </select>
-      </label>
-      <label class="field"><span class="label-text">Bartender</span>
-        <select class="input" value={staff} onChange={ev => setStaff(ev.currentTarget.value)}>
-          <option value="">Choose…</option>
-          {liveStaff.value.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-      </label>
-      <TimeField label="Start" value={s} onChange={setStart} />
-      <TimeField label="End" value={e} pm={false} onChange={setEnd} />
-      <button class="btn btn-primary" type="submit" disabled={!ok}><Icon name="plus" /> Add</button>
-    </form>
   );
 }

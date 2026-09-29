@@ -5,16 +5,28 @@ import { liveViews, personById, ready, removeStaff, saveStaff, undoRemoveStaff }
 import { DASH, clockPlain } from '../../lib/format.ts';
 import { groupShifts, rowDay } from '../../lib/groups.ts';
 import { closeDrawer, guard, openSheet } from '../../router.ts';
+import { handle, initials, rolesOf } from '../../lib/people.ts';
+import { Avatar } from '../../ui/Avatar.tsx';
+import { ColorPicker } from '../../ui/ColorPicker.tsx';
+import { ManagerBadge, MeBadge } from '../../ui/MeBadge.tsx';
+import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
+import { RoleTag } from '../../parts/RoleTag.tsx';
 import { DrawerFrame } from '../../ui/DrawerFrame.tsx';
 import type { FrameApi } from '../../ui/DrawerFrame.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { toast } from '../../ui/toast.tsx';
-import { StatusMark } from './StatusMark.tsx';
+import { photoFromFile } from './photo.ts';
 import styles from '../../ui/drawer.module.css';
 
-interface Form { name: string; first: string; last: string; roles: string[]; id_number: string; manager: boolean; is_user: boolean; status: 'active' | 'inactive'; notes: string }
-const blank = (): Form => ({ name: '', first: '', last: '', roles: [], id_number: '', manager: false, is_user: false, status: 'active', notes: '' });
-const fromPerson = (p: Staff): Form => ({ name: p.name, first: p.first ?? '', last: p.last ?? '', roles: p.roles, id_number: p.id_number ?? '', manager: p.manager, is_user: p.is_user, status: p.status, notes: p.notes ?? '' });
+interface Form {
+  name: string; first: string; last: string; role: string; roles: string[]; id_number: string; manager: boolean; is_user: boolean; status: 'active' | 'inactive'; notes: string;
+  aliases: string[]; photo: string | null; avatar_color: string | null; avatar_text: string;
+}
+const blank = (): Form => ({ name: '', first: '', last: '', role: '', roles: [], id_number: '', manager: false, is_user: false, status: 'active', notes: '', aliases: [], photo: null, avatar_color: null, avatar_text: '' });
+const fromPerson = (p: Staff): Form => ({
+  name: p.name, first: p.first ?? '', last: p.last ?? '', role: rolesOf(p).main ?? '', roles: rolesOf(p).others, id_number: p.id_number ?? '', manager: p.manager, is_user: p.is_user, status: p.status, notes: p.notes ?? '',
+  aliases: p.aliases, photo: p.photo, avatar_color: p.avatar_color, avatar_text: p.avatar_text ?? ''
+});
 const orNull = (s: string) => s.trim() || null;
 
 /* The person drawer: same contract as the shift drawer. Existing people open in view mode, the pencil edits,
@@ -28,6 +40,7 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [newRole, setNewRole] = useState('');
+  const [newAlias, setNewAlias] = useState('');
   const baseline = useRef(JSON.stringify(form));
   const dirty = form !== null && JSON.stringify(form) !== baseline.current;
 
@@ -47,10 +60,23 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
     setForm(f); setError(''); setEditing(false);
   };
   const toggleRole = (r: string) => set({ roles: form.roles.includes(r) ? form.roles.filter(x => x !== r) : [...form.roles, r] });
+  /** Picking a main role takes it out of the others (a role is one or the other). */
+  const setMain = (r: string) => set({ role: r, roles: form.roles.filter(x => x.toLowerCase() !== r.toLowerCase()) });
+  /** A typed role becomes the main one when there is none yet, else one of the others. */
   const addRole = () => {
-    const r = newRole.trim();
-    if (r && !form.roles.some(x => x.toLowerCase() === r.toLowerCase())) set({ roles: [...form.roles, r] });
+    const r = newRole.replace(/\s+/g, ' ').replace(/,/g, '').trim();
+    const have = [form.role, ...form.roles].some(x => x.toLowerCase() === r.toLowerCase());
+    if (r && !have) { if (!form.role) setMain(r); else set({ roles: [...form.roles, r] }); }
     setNewRole('');
+  };
+
+  /** Adds what's typed as aliases (a comma separates several), skipping repeats and the name itself. */
+  const addAlias = () => {
+    const have = new Set([form.name, ...form.aliases].map(a => a.trim().toLowerCase()));
+    const next = [...form.aliases];
+    for (const a of newAlias.split(',').map(x => x.replace(/\s+/g, ' ').trim())) if (a && !have.has(a.toLowerCase())) { next.push(a); have.add(a.toLowerCase()); }
+    set({ aliases: next });
+    setNewAlias('');
   };
 
   async function submit(e: Event) {
@@ -58,7 +84,13 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
     setSaving(true); setError('');
     try {
       const f = form!;
-      await saveStaff({ id: isNew ? undefined : id, name: f.name, first: orNull(f.first), last: orNull(f.last), roles: f.roles, id_number: orNull(f.id_number), manager: f.manager, is_user: f.is_user, status: f.status, notes: orNull(f.notes) });
+      // An alias still in the box counts: typing one and pressing Save shouldn't lose it.
+      const aliases = newAlias.trim() ? [...f.aliases, ...newAlias.split(',')] : f.aliases;
+      await saveStaff({
+        id: isNew ? undefined : id, name: f.name, first: orNull(f.first), last: orNull(f.last), role: orNull(f.role), roles: f.roles, id_number: orNull(f.id_number), manager: f.manager,
+        is_user: f.is_user, status: f.status, notes: orNull(f.notes), aliases, photo: f.photo, avatar_color: f.avatar_color, avatar_text: orNull(f.avatar_text)
+      });
+      setNewAlias('');
       toast(isNew ? 'Person added' : 'Person saved');
       if (isNew) finish();
       else { const saved = personById(id); const nf = saved ? fromPerson(saved) : f; baseline.current = JSON.stringify(nf); guard.dirty = false; setForm(nf); setEditing(false); setSaving(false); }
@@ -80,9 +112,12 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
 
   const header = viewing && p ? (
     <header class={styles.head}>
-      <div class={styles.title}>
-        <h2 id="person-title" class="h-title">{p.name}</h2>
-        <StatusMark status={p.status} />
+      <div class={styles.personHead}>
+        <PersonAvatar id={p.id} size="lg" status />
+        <div class={styles.title}>
+          <h2 id="person-title" class="h-title">{[p.first, p.last].filter(Boolean).join(' ') || p.name}{p.is_user && <MeBadge />}{p.manager && <ManagerBadge />}</h2>
+          <span class={styles.handle}>{handle(p.name)} · {p.status === 'active' ? 'Active' : 'Inactive'}</span>
+        </div>
       </div>
       <div class={styles.actions}>
         <button type="button" class="btn btn-quiet btn-icon" onClick={() => setEditing(true)} aria-label="Edit person"><Icon name="edit" /></button>
@@ -106,7 +141,9 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
         <dl class={styles.kv}>
           <div><dt>First name</dt><dd>{p.first ?? DASH}</dd></div>
           <div><dt>Last name</dt><dd>{p.last ?? DASH}</dd></div>
-          <div><dt>Roles</dt><dd>{p.roles.length ? p.roles.join(', ') : DASH}</dd></div>
+          <div><dt>Also known as</dt><dd>{p.aliases.length ? p.aliases.join(', ') : DASH}</dd></div>
+          <div><dt>Main role</dt><dd>{rolesOf(p).main ? <RoleTag name={rolesOf(p).main!} /> : DASH}</dd></div>
+          <div><dt>Other roles</dt><dd class="roles-line">{rolesOf(p).others.length ? rolesOf(p).others.map(r => <RoleTag key={r} name={r} quiet />) : DASH}</dd></div>
           <div><dt>ID number</dt><dd class="num">{p.id_number ?? DASH}</dd></div>
           <div><dt>Manager</dt><dd>{yes(p.manager)}</dd></div>
           <div><dt>This is me</dt><dd>{yes(p.is_user)}</dd></div>
@@ -118,11 +155,14 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
     </div>
   ) : null;
 
-  const roleOptions = knownRoles(form.roles);
+  const roleOptions = knownRoles([form.role, ...form.roles].filter(Boolean));
+  const otherOptions = roleOptions.filter(r => r.toLowerCase() !== form.role.toLowerCase());
   const edit = (
     <form class={styles.formBody} onSubmit={submit} noValidate>
       <div class={styles.body}>
         {error && <p class="error" role="alert">{error}</p>}
+        <AvatarFields id={isNew ? 'new' : id} form={form} set={set} />
+
         <section class={styles.section}>
           <label class="field"><span class="label-text">Name</span>
             <input class="input" type="text" value={form.name} autocomplete="off" aria-invalid={!!error && !form.name.trim() && !form.first.trim()} onInput={e => set({ name: e.currentTarget.value })} />
@@ -134,17 +174,44 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
             <label class="field"><span class="label-text">Last name</span>
               <input class="input" type="text" value={form.last} autocomplete="off" onInput={e => set({ last: e.currentTarget.value })} /></label>
           </div>
+          <div class="field" role="group" aria-label="Also known as"><span class="label-text">Also known as</span>
+            {form.aliases.length > 0 && (
+              <div class={styles.chips}>
+                {form.aliases.map(a => (
+                  <span key={a} class={`chip ${styles.alias}`}>{a}
+                    <button type="button" aria-label={`Remove ${a}`} onClick={() => set({ aliases: form.aliases.filter(x => x !== a) })}><Icon name="x" /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div class={styles.inline}>
+              <input class="input" type="text" value={newAlias} placeholder="A nickname, a short name, a misspelling" aria-label="Add an alias" autocomplete="off"
+                onInput={e => setNewAlias(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAlias(); } }} />
+              <button type="button" class="btn" onClick={addAlias} disabled={!newAlias.trim()}><Icon name="plus" /> Add</button>
+            </div>
+            <span class="hint">Other names they go by. Typing any of them finds this person.</span>
+          </div>
           <label class="field"><span class="label-text">ID number</span>
             <input class="input" type="text" value={form.id_number} autocomplete="off" onInput={e => set({ id_number: e.currentTarget.value })} /></label>
         </section>
 
         <section class={styles.section}>
-          <div class="field" role="group" aria-label="Roles"><span class="label-text">Roles</span>
+          <label class="field"><span class="label-text">Main role</span>
+            <span class={styles.inline}>
+              <select class="input" value={form.role} onChange={e => setMain(e.currentTarget.value)}>
+                <option value="">None</option>
+                {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+              {form.role && <RoleTag name={form.role} />}
+            </span>
+            <span class="hint">The one shown by their name. Colours, icons and the order roles rank in are in <a href="#/settings/roles">Settings</a>.</span>
+          </label>
+          <div class="field" role="group" aria-label="Other roles"><span class="label-text">Other roles</span>
             <div class={styles.chips}>
-              {roleOptions.map(r => <button key={r} type="button" class="tog" aria-pressed={form.roles.includes(r)} onClick={() => toggleRole(r)}>{r}</button>)}
+              {otherOptions.map(r => <button key={r} type="button" class="tog" aria-pressed={form.roles.includes(r)} onClick={() => toggleRole(r)}>{r}</button>)}
             </div>
             <div class={styles.inline}>
-              <input class="input" type="text" value={newRole} placeholder="Another role" aria-label="Add another role" autocomplete="off"
+              <input class="input" type="text" value={newRole} placeholder="A role not listed" aria-label="Add a role not listed" autocomplete="off"
                 onInput={e => setNewRole(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addRole(); } }} />
               <button type="button" class="btn" onClick={addRole} disabled={!newRole.trim()}><Icon name="plus" /> Add</button>
             </div>
@@ -181,6 +248,64 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
   );
 }
 
+/** The avatar: a photo, or letters on a colour. A photo covers the letters but they're kept, so removing the photo brings
+ *  them back. A picked photo has its background taken out on the device, so their colour shows behind them; "Keep the
+ *  background" puts the picked photo back as it was, and a photo that still has one can have it taken out. If the cut-out
+ *  can't run (the first one needs a connection, to load it), the photo is kept as it is and says why. The preview is the
+ *  avatar exactly as the tables will show it. */
+function AvatarFields({ id, form, set }: { id: string; form: Form; set: (patch: Partial<Form>) => void }) {
+  const file = useRef<HTMLInputElement>(null);
+  const [problem, setProblem] = useState('');
+  const [busy, setBusy] = useState('');           // what's being done to the photo, while it is
+  const [cut, setCut] = useState(false);            // the photo shown is a cut-out made here
+  const original = useRef<Blob | null>(null);       // what it was cut from, to put back
+  const name = form.name.trim() || form.first.trim() || '?';
+  const use = async (blob: Blob, cutout: boolean) => {
+    setProblem(''); setBusy(cutout ? 'Taking the background out…' : 'Putting the photo back…');
+    try {
+      try {
+        set({ photo: await photoFromFile(blob, { cutout }) }); setCut(cutout);
+      } catch (err) {
+        if (!cutout) throw err;
+        set({ photo: await photoFromFile(blob) }); setCut(false);
+        setProblem(`Couldn't take the background out${navigator.onLine ? '' : ' (the first time needs a connection)'}, so the photo is as it was.`);
+      }
+    } catch (err) {
+      setProblem(err instanceof Error ? err.message : 'Could not use that photo.');
+    } finally { setBusy(''); }
+  };
+  const pick = (f: File | undefined) => { if (f) { original.current = f; void use(f, true); } };
+  const removeBackground = async () => {
+    const blob = original.current ?? (form.photo ? await (await fetch(form.photo)).blob() : null);
+    if (blob) { original.current = blob; void use(blob, true); }
+  };
+  return (
+    <section class={styles.section} aria-label="Avatar">
+      <div class={styles.avatarEdit}>
+        <Avatar id={id} name={name} look={{ photo: form.photo, avatar_color: form.avatar_color, avatar_text: form.avatar_text }} size="lg" />
+        <div class={styles.avatarActions}>
+          <input ref={file} type="file" accept="image/*" hidden onChange={e => { void pick(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
+          <button type="button" class="btn" disabled={!!busy} onClick={() => file.current?.click()}><Icon name="plus" /> {form.photo ? 'Change photo' : 'Add photo'}</button>
+          {form.photo && !busy && (cut && original.current
+            ? <button type="button" class="btn btn-quiet" onClick={() => void use(original.current!, false)}>Keep the background</button>
+            : !cut && form.photo.startsWith('data:image/jpeg') && <button type="button" class="btn btn-quiet" onClick={() => void removeBackground()}>Remove background</button>)}
+          {form.photo && <button type="button" class="btn btn-quiet" disabled={!!busy} onClick={() => { set({ photo: null }); setCut(false); original.current = null; }}><Icon name="trash" /> Remove photo</button>}
+          {busy && <span class={styles.hintInline} role="status">{busy}</span>}
+        </div>
+      </div>
+      {problem && <p class="error" role="alert">{problem}</p>}
+      <div class="field"><span class="label-text">Colour{form.photo && <span class={styles.hintInline}> (also behind a see-through photo)</span>}</span>
+        <ColorPicker label="Avatar colour" none="Auto" value={form.avatar_color} onChange={v => set({ avatar_color: v })} />
+      </div>
+      <label class="field"><span class="label-text">Letters</span>
+        <input class={`input ${styles.letters}`} type="text" maxLength={3} value={form.avatar_text} placeholder={initials(name)} autocomplete="off"
+          onInput={e => set({ avatar_text: e.currentTarget.value })} />
+        <span class="hint">Up to 3. Blank uses their initials.</span>
+      </label>
+    </section>
+  );
+}
+
 /** The shifts this person was on, newest first, the month said once. Times only: no counts, hours or money, so the
  *  roster still can't be read as a leaderboard. You are on every shift you log, so your own card points to the Log. */
 const TOGETHER_SHOWN = 10;
@@ -197,7 +322,7 @@ function WorkedTogether({ id, me }: { id: string; me: boolean }) {
             const c = v.crew.find(x => x.staff_id === id)!;
             return (
               <button type="button" key={v.shift.id} class={styles.togetherRow} onClick={() => openSheet(v.shift.id)}>
-                <span class={styles.togetherDay}>{rowDay(v.shift.date, 'month')}</span>
+                <span class={styles.togetherDay}>{rowDay(v.shift.date)}</span>
                 <span class="num">{clockPlain(c.start)} – {clockPlain(c.end)}</span>
               </button>
             );

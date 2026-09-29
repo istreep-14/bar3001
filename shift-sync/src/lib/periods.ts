@@ -1,4 +1,5 @@
 import { addDays, monthKey, parts, weekday, ymd, weekStart } from './dates.ts';
+import { isPending } from './groups.ts';
 import { startOf } from './scope.ts';
 import type { Scope } from './scope.ts';
 import { summarize } from './stats.ts';
@@ -36,7 +37,7 @@ export function periods(views: ShiftView[], from: string, to: string): { monthly
   for (let k = keyOf(from), guard = 0; k <= keyOf(to) && guard < 2000; k = step(k), guard++) map.set(k, blank(k));
   for (const v of views) {
     const b = map.get(keyOf(v.shift.date));
-    if (!b) continue;
+    if (!b || isPending(v)) continue;
     b.n += 1; b.hours += v.hours ?? 0; b.tips += v.shift.tips ?? 0; b.wage += v.wage ?? 0; b.extra += v.extra; b.total += v.total;
   }
   return { monthly, buckets: [...map.values()] };

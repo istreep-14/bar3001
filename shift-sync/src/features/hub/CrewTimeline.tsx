@@ -4,6 +4,7 @@ import { clockPlain, dec1, weekdayShort } from '../../lib/format.ts';
 import { place, rulerFor, tickLabel } from '../../lib/ruler.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import styles from './CrewTimeline.module.css';
+import { MeBadge } from '../../ui/MeBadge.tsx';
 
 /* Crew week as a timeline: the days down the side, one shared ruler across (noon to the small hours), and a bar per
  * bartender on each day's shift, so who overlapped with whom reads at a glance. Your bar is in the accent. Hours only,
@@ -46,7 +47,7 @@ export function CrewTimeline({ days, shiftsPerDay, dayHours, onEdit }: {
                       {p && (
                         <button type="button" class={styles.bar} data-you={person?.is_user ? '' : undefined} style={{ left: `${p.left}%`, width: `${p.width}%` }}
                           aria-label={`${label}, ${clockPlain(c.start)} to ${clockPlain(c.end)}. Edit`} title={`${label}: ${clockPlain(c.start)} – ${clockPlain(c.end)}`}
-                          onClick={() => onEdit(v, c.staff_id, name)}>{label}</button>
+                          onClick={() => onEdit(v, c.staff_id, name)}>{name}{person?.is_user && <MeBadge />}</button>
                       )}
                     </span>
                   );

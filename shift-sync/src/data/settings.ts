@@ -3,7 +3,8 @@ import { DEFAULT_LOOK, buildTheme } from '../lib/theme.ts';
 import type { Contrast, Mode } from '../lib/theme.ts';
 
 export type Theme = 'system' | 'light' | 'dark';
-export interface Settings { api: string; token: string; theme: Theme; accent: string; tint: string; contrast: Contrast }
+export interface Settings { api: string; token: string; theme: Theme; accent: string; tint: string; contrast: Contrast;
+  bgLight: string; bgDark: string; avatarBgLight: string; avatarBgDark: string }
 
 /* Per-device convenience only; the shift data itself lives in IndexedDB.
  * The key is unchanged from the single-file app so existing connections carry over. */
@@ -35,7 +36,8 @@ export const flipTheme = () => saveSettings({ theme: mode() === 'dark' ? 'light'
 const applied: string[] = [];
 effect(() => {
   const s = settings.value, m: Mode = s.theme === 'system' ? (systemDark.value ? 'dark' : 'light') : s.theme;
-  const root = document.documentElement, vars = buildTheme({ mode: m, accent: s.accent, tint: s.tint, contrast: s.contrast });
+  const root = document.documentElement, vars = buildTheme({ mode: m, accent: s.accent, tint: s.tint, contrast: s.contrast, bg: m === 'dark' ? s.bgDark : s.bgLight,
+    avatarBg: m === 'dark' ? s.avatarBgDark : s.avatarBgLight });
   root.setAttribute('data-theme', m);
   for (const k of applied) if (!(k in vars)) root.style.removeProperty(k);
   for (const [k, v] of Object.entries(vars)) { root.style.setProperty(k, v); if (!applied.includes(k)) applied.push(k); }

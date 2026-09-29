@@ -144,6 +144,44 @@ test('staff: validate, sheet round-trip, roles split, blank status is active', (
   assert.throws(() => c.validateStaff({ ...p, name: '  ' }), /Missing name/);
   assert.throws(() => c.validateStaff({ ...p, status: 'fired' }), /Bad status/);
   assert.throws(() => c.validateStaff({ ...p, roles: 'Bartender' }), /Bad roles/);
+  assert.deepEqual(v.aliases, []);
+  assert.equal(v.photo, null);
+});
+
+test('staff aliases: trimmed, one per spelling, never the name, no commas; avatar fields checked', () => {
+  const p = { id: 'p1', name: 'Abby', roles: [], status: 'active', updated_at: 5, deleted: false };
+  const v = c.validateStaff({ ...p, aliases: [' Abs ', 'abs', 'ABBY', '', 'A, C', 'Abigail'], avatar_color: '#1a2B3c', avatar_text: ' ab ' });
+  assert.deepEqual(v.aliases, ['Abs', 'A C', 'Abigail']);
+  assert.equal(v.avatar_text, 'ab');
+  assert.deepEqual(c.sheetToStaff(c.staffToSheet(v)), v);
+  const photo = 'data:image/jpeg;base64,' + 'A'.repeat(100);
+  assert.equal(c.validateStaff({ ...p, photo, avatar_color: 'venmo' }).photo, photo);
+  assert.throws(() => c.validateStaff({ ...p, photo: 'https://x/y.png' }), /Bad photo/);
+  assert.throws(() => c.validateStaff({ ...p, photo: 'data:image/png;base64,' + 'A'.repeat(50000) }), /too large/);
+  assert.throws(() => c.validateStaff({ ...p, avatar_color: 'rgb(0,0,0)' }), /Bad avatar_color/);
+  assert.throws(() => c.validateStaff({ ...p, avatar_text: 'ABCD' }), /3 characters/);
+  assert.throws(() => c.validateStaff({ ...p, aliases: 'Abs' }), /Bad aliases/);
+});
+
+test('staff main role: kept apart from the other roles, and a row from before it has none', () => {
+  const p = { id: 'p1', name: 'Abby', roles: ['Server', 'bartender', 'Host', 'server'], status: 'active', updated_at: 5, deleted: false };
+  const v = c.validateStaff({ ...p, role: ' Bartender ' });
+  assert.equal(v.role, 'Bartender');
+  assert.deepEqual(v.roles, ['Server', 'Host']);
+  assert.deepEqual(c.sheetToStaff(c.staffToSheet(v)), v);
+  assert.equal(c.validateStaff(p).role, null);
+});
+
+test('roles: validate, sheet round-trip, rank defaults to 0', () => {
+  const r = { id: 'r1', name: '  Head   Bartender ', color: 'teal', icon: 'crown', sort: 2, updated_at: 5, deleted: false };
+  const v = c.validateRole(r);
+  assert.equal(v.name, 'Head Bartender');
+  assert.deepEqual(c.sheetToRole(c.roleToSheet(v)), v);
+  assert.equal(c.validateRole({ ...r, sort: '' }).sort, 0);
+  assert.equal(c.validateRole({ ...r, color: '', icon: '' }).color, null);
+  assert.throws(() => c.validateRole({ ...r, name: 'A, B' }), /comma/);
+  assert.throws(() => c.validateRole({ ...r, icon: '<svg>' }), /Bad icon/);
+  assert.throws(() => c.validateRole({ ...r, color: 'rgb(1,2,3)' }), /Bad color/);
 });
 
 test('crew: validate, sheet round-trip (times as HH:MM), hours summed across midnight, blanks count as a person only', () => {

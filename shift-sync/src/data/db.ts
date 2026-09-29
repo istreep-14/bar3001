@@ -1,11 +1,11 @@
-import type { Crew, Income, Local, Shift, Staff, Wage } from '../core/core.generated.js';
+import type { Crew, Income, Local, Role, Shift, Staff, Wage } from '../core/core.generated.js';
 
 /* Tiny typed IndexedDB wrapper. The DB name and the `rows` store are unchanged from v1,
  * so shifts already on a device survive the upgrade. */
 const NAME = 'shifts';
-const VERSION = 5;
+const VERSION = 6;
 
-interface Tables { rows: Local<Shift>; income: Local<Income>; staff: Local<Staff>; crew: Local<Crew>; wages: Local<Wage> }
+interface Tables { rows: Local<Shift>; income: Local<Income>; staff: Local<Staff>; crew: Local<Crew>; wages: Local<Wage>; roles: Local<Role> }
 export type TableName = keyof Tables;
 
 const dbp: Promise<IDBDatabase> = new Promise((res, rej) => {
@@ -17,6 +17,7 @@ const dbp: Promise<IDBDatabase> = new Promise((res, rej) => {
     if (!db.objectStoreNames.contains('staff')) db.createObjectStore('staff', { keyPath: 'id' });
     if (!db.objectStoreNames.contains('crew')) db.createObjectStore('crew', { keyPath: 'id' });
     if (!db.objectStoreNames.contains('wages')) db.createObjectStore('wages', { keyPath: 'id' });
+    if (!db.objectStoreNames.contains('roles')) db.createObjectStore('roles', { keyPath: 'id' });
   };
   r.onsuccess = () => res(r.result);
   r.onerror = () => rej(r.error);
@@ -43,11 +44,12 @@ export const putMany = <K extends TableName>(name: K, records: Tables[K][]) =>
   run<void>([name], 'readwrite', s => { records.forEach(r => s[name].put(r)); });
 
 /** Replace all tables atomically (used after a sync hands back the full merged set). */
-export const replaceAll = (rows: Local<Shift>[], income: Local<Income>[], staff: Local<Staff>[], crew: Local<Crew>[], wages: Local<Wage>[]) =>
-  run<void>(['rows', 'income', 'staff', 'crew', 'wages'], 'readwrite', s => {
+export const replaceAll = (rows: Local<Shift>[], income: Local<Income>[], staff: Local<Staff>[], crew: Local<Crew>[], wages: Local<Wage>[], roles: Local<Role>[]) =>
+  run<void>(['rows', 'income', 'staff', 'crew', 'wages', 'roles'], 'readwrite', s => {
     s.rows.clear(); rows.forEach(r => s.rows.put(r));
     s.income.clear(); income.forEach(r => s.income.put(r));
     s.staff.clear(); staff.forEach(r => s.staff.put(r));
     s.crew.clear(); crew.forEach(r => s.crew.put(r));
     s.wages.clear(); wages.forEach(r => s.wages.put(r));
+    s.roles.clear(); roles.forEach(r => s.roles.put(r));
   });

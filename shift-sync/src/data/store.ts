@@ -1,6 +1,6 @@
 import { computed, signal } from '@preact/signals';
-import { stripLocal, validateCrew, validateIncome, validateRow, validateStaff, validateWage } from '../core/core.generated.js';
-import type { Category, Crew, Income, Local, Shift, Staff, Wage } from '../core/core.generated.js';
+import { stripLocal, validateCrew, validateIncome, validateRole, validateRow, validateStaff, validateWage } from '../core/core.generated.js';
+import type { Category, Crew, Income, Local, Role, Shift, Staff, Wage } from '../core/core.generated.js';
 import { uid } from '../lib/id.ts';
 import { planImport } from '../lib/bundle.ts';
 import type { Bundle, Plan } from '../lib/bundle.ts';
@@ -15,6 +15,7 @@ export const incomeRows = signal<Record<string, Local<Income>>>({});
 export const wageRows = signal<Record<string, Local<Wage>>>({});
 export const crewRows = signal<Record<string, Local<Crew>>>({});
 export const staffRows = signal<Record<string, Local<Staff>>>({});
+export const roleRows = signal<Record<string, Local<Role>>>({});
 export const ready = signal(false);
 
 let onChange: () => void = () => {};
@@ -43,23 +44,33 @@ export const liveViews = computed<ShiftView[]>(() => {
     .sort(byRecent);
 });
 
+/** A person stored before aliases and avatars existed (on this device, or from a Sheet script not yet updated) has none. */
+const withAvatar = (p: Local<Staff>): Local<Staff> => Array.isArray(p.aliases) ? p
+  : { ...p, aliases: [], photo: p.photo ?? null, avatar_color: p.avatar_color ?? null, avatar_text: p.avatar_text ?? null, role: p.role ?? null };
 /** The roster, by name. */
 export const liveStaff = computed<Local<Staff>[]>(() =>
-  Object.values(staffRows.value).filter(p => !p.deleted).sort((a, b) => a.name.localeCompare(b.name)));
+  Object.values(staffRows.value).filter(p => !p.deleted).map(withAvatar).sort((a, b) => a.name.localeCompare(b.name)));
 /* Lookups by id are kept as maps next to the lists, so a row or a card can ask for its person or shift without scanning. */
 const staffIndex = computed(() => new Map(liveStaff.value.map(p => [p.id, p])));
 export const personById = (id: string): Local<Staff> | undefined => staffIndex.value.get(id);
+/** The roles people can have, in rank order (then by name): each one's colour and icon. */
+export const liveRoles = computed<Local<Role>[]>(() =>
+  Object.values(roleRows.value).filter(r => !r.deleted).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)));
+const roleIndex = computed(() => new Map(liveRoles.value.map(r => [r.name.toLowerCase(), r])));
+/** A role by name (any case), or undefined when it is only free text on someone. */
+export const roleByName = (name: string): Local<Role> | undefined => roleIndex.value.get(name.toLowerCase());
 /** The roster's "this is me", if someone is marked. */
 export const me = computed<Local<Staff> | undefined>(() => liveStaff.value.find(p => p.is_user));
 
 export const pendingCount = computed(() =>
-  [shifts.value, incomeRows.value, staffRows.value, crewRows.value, wageRows.value].reduce((n, m) => n + Object.values(m).filter(r => r._dirty).length, 0));
+  [shifts.value, incomeRows.value, staffRows.value, crewRows.value, wageRows.value, roleRows.value].reduce((n, m) => n + Object.values(m).filter(r => r._dirty).length, 0));
 
 const viewIndex = computed(() => new Map(liveViews.value.map(v => [v.shift.id, v])));
 export const viewById = (id: string): ShiftView | undefined => viewIndex.value.get(id);
 
 export async function boot() {
-  const [s, i, p, c, w] = await Promise.all([loadAll('rows'), loadAll('income'), loadAll('staff'), loadAll('crew'), loadAll('wages')]);
+  const [s, i, p, c, w, r] = await Promise.all([loadAll('rows'), loadAll('income'), loadAll('staff'), loadAll('crew'), loadAll('wages'), loadAll('roles')]);
+  roleRows.value = Object.fromEntries(r.map(x => [x.id, x]));
   wageRows.value = Object.fromEntries(w.map(r => [r.id, r]));
   crewRows.value = Object.fromEntries(c.map(r => [r.id, r]));
   shifts.value = Object.fromEntries(s.map(r => [r.id, r]));
@@ -144,7 +155,11 @@ export async function undoRemove({ shift, income, crew }: Removed) {
 }
 
 /* ── Staff (the employee roster: identity only) ─────────────────────────────── */
-export interface StaffDraft { id?: string; name: string; first: string | null; last: string | null; roles: string[]; id_number: string | null; manager: boolean; is_user: boolean; status: 'active' | 'inactive'; notes: string | null }
+export interface StaffDraft {
+  id?: string; name: string; first: string | null; last: string | null; roles: string[]; id_number: string | null; manager: boolean; is_user: boolean;
+  status: 'active' | 'inactive'; notes: string | null; aliases: string[]; photo: string | null; avatar_color: string | null; avatar_text: string | null;
+  role: string | null;
+}
 
 /** Create or update a person. The name is the roster's unique handle (case-insensitive). Only one person can be "me". */
 export async function saveStaff(draft: StaffDraft): Promise<string> {
@@ -177,6 +192,66 @@ export async function undoRemoveStaff(p: Staff) {
   const back: Local<Staff> = { ...p, deleted: false, updated_at: Date.now(), _dirty: true };
   staffRows.value = { ...staffRows.value, [p.id]: back };
   await putMany('staff', [back]);
+  onChange();
+}
+
+/* ── Roles (each role's colour, icon and rank) ─────────────────────────────── */
+export interface RoleDraft { id?: string; name: string; color: string | null; icon: string | null; sort?: number }
+
+/** Create or update a role. Names are unique (any case). Renaming one renames it on everyone who has it, in the same write,
+ *  since a person's role is stored by name (so the Sheet reads). A new role ranks last. */
+export async function saveRole(draft: RoleDraft): Promise<string> {
+  const now = Date.now();
+  const id = draft.id ?? uid();
+  const name = draft.name.replace(/\s+/g, ' ').trim();
+  if (!name) throw new Error('Name the role.');
+  if (liveRoles.value.some(r => r.id !== id && r.name.toLowerCase() === name.toLowerCase())) throw new Error(`There is already a role called "${name}".`);
+  const prev = roleRows.value[id];
+  const sort = draft.sort ?? prev?.sort ?? Math.max(-1, ...liveRoles.value.map(r => r.sort)) + 1;
+  const rec: Local<Role> = { ...validateRole({ id, name, color: draft.color, icon: draft.icon, sort, updated_at: now, deleted: false }), _dirty: true };
+  const people: Local<Staff>[] = [];
+  const was = prev && !prev.deleted ? prev.name.toLowerCase() : null;
+  if (was && was !== name.toLowerCase()) {
+    const swap = (x: string) => (x.toLowerCase() === was ? name : x);
+    for (const p of Object.values(staffRows.value)) {
+      if (p.deleted || (p.role?.toLowerCase() !== was && !p.roles.some(x => x.toLowerCase() === was))) continue;
+      people.push({ ...validateStaff({ ...p, role: p.role ? swap(p.role) : null, roles: p.roles.map(swap), updated_at: now }), _dirty: true });
+    }
+  }
+  roleRows.value = { ...roleRows.value, [id]: rec };
+  if (people.length) staffRows.value = { ...staffRows.value, ...Object.fromEntries(people.map(p => [p.id, p])) };
+  await Promise.all([putMany('roles', [rec]), putMany('staff', people)]);
+  onChange();
+  return id;
+}
+
+/** Moves a role one place up (-1) or down (+1) in rank, renumbering the list so ranks stay 0, 1, 2… */
+export async function moveRole(id: string, by: -1 | 1): Promise<void> {
+  const list = [...liveRoles.value], i = list.findIndex(r => r.id === id), j = i + by;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j]!, list[i]!];
+  const now = Date.now();
+  const touched = list.flatMap((r, k): Local<Role>[] => (r.sort === k ? [] : [{ ...r, sort: k, updated_at: now, _dirty: true }]));
+  roleRows.value = { ...roleRows.value, ...Object.fromEntries(touched.map(r => [r.id, r])) };
+  await putMany('roles', touched);
+  onChange();
+}
+
+/** Soft delete. People keep the role's name as plain text (no colour, no icon) until it is set up again. */
+export async function removeRole(id: string): Promise<Role | null> {
+  const r = roleRows.value[id];
+  if (!r || r.deleted) return null;
+  const gone: Local<Role> = { ...r, deleted: true, updated_at: Date.now(), _dirty: true };
+  roleRows.value = { ...roleRows.value, [id]: gone };
+  await putMany('roles', [gone]);
+  onChange();
+  return stripLocal(r);
+}
+
+export async function undoRemoveRole(r: Role) {
+  const back: Local<Role> = { ...r, deleted: false, updated_at: Date.now(), _dirty: true };
+  roleRows.value = { ...roleRows.value, [r.id]: back };
+  await putMany('roles', [back]);
   onChange();
 }
 

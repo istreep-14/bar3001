@@ -24,9 +24,28 @@ const PATHS = {
   star: 'M12 3l2.4 5.6 6.1.5-4.6 4 1.4 6-5.3-3.2-5.3 3.2 1.4-6-4.6-4 6.1-.5z',
   calendar: 'M4 5h16v15H4zM4 10h16M9 3v4M15 3v4',
   up: 'M12 19V5M5 12l7-7 7 7',
-  down: 'M12 5v14M19 12l-7 7-7-7'
+  down: 'M12 5v14M19 12l-7 7-7-7',
+  /* you, and a manager */
+  crown: 'M3 7l4.5 4.5L12 4l4.5 7.5L21 7l-2 10H5L3 7zM5 21h14',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  /* the icons a role can wear */
+  cocktail: 'M8 22h8M12 11v11M3 3h18l-9 9z',
+  beer: 'M17 11h1a3 3 0 010 6h-1M5 8h12v12a2 2 0 01-2 2H7a2 2 0 01-2-2zM9 12v6M13 12v6M6 8a3 3 0 012-5 4 4 0 017 0 3 3 0 012 5',
+  bell: 'M3 18h18M5 18a7 7 0 0114 0M12 8V6M10 6h4',
+  box: 'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',
+  door: 'M13 4h3a2 2 0 012 2v14M2 20h20M13 20V3.5a1 1 0 00-1.2-1L6 4v16M10 12v.01',
+  key: 'M12 11a4 4 0 100-8 4 4 0 000 8zM12 11v10M12 16h3M12 19h2',
+  music: 'M9 18V5l12-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM21 16a3 3 0 11-6 0 3 3 0 016 0z',
+  chef: 'M6 13.9A4 4 0 017 6a5 5 0 0110 0 4 4 0 011 7.9V20H6zM6 17h12',
+  bolt: 'M13 2L3 14h9l-1 8 10-12h-9z',
+  heart: 'M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z',
+  flame: 'M8.5 14.5A2.5 2.5 0 0011 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.2.4-2.3 1-3.3.5 1.8 1.6 2.8 2.5 2.8z',
+  sparkle: 'M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z'
 } as const;
 export type IconName = keyof typeof PATHS;
+/** The icons a role can pick in Settings. */
+export const ROLE_ICONS: IconName[] = ['cocktail', 'beer', 'bell', 'box', 'door', 'key', 'music', 'chef', 'bolt', 'heart', 'flame', 'sparkle', 'star', 'shield', 'crown', 'users'];
+export const isIconName = (s: string | null | undefined): s is IconName => !!s && s in PATHS;
 
 export function Icon({ name, label }: { name: IconName; label?: string }) {
   return (

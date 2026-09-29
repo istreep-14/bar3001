@@ -25,14 +25,15 @@ function fakeSheet(name, header, rows) {
   return { grid, sheet };
 }
 
-function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [], wageRows = []) {
+function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [], wageRows = [], roleRows = []) {
   const S = fakeSheet('Shifts', ['id', 'date', 'start', 'end', 'tips', 'notes', 'updated_at', 'deleted', 'other', 'shift_type', 'party'], initialRows);
   const I = fakeSheet('Income', ['id', 'shift_id', 'category', 'amount', 'note', 'updated_at', 'deleted'], incomeRows);
-  const St = fakeSheet('Staff', ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted'], staffRows);
+  const St = fakeSheet('Staff', ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted', 'aliases', 'photo', 'avatar_color', 'avatar_text', 'role'], staffRows);
   const C = fakeSheet('Crew', ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'hours'], crewRows);
   const W = fakeSheet('Wages', ['id', 'date', 'rate', 'note', 'updated_at', 'deleted'], wageRows);
+  const R = fakeSheet('Roles', ['id', 'name', 'color', 'icon', 'sort', 'updated_at', 'deleted'], roleRows);
   const { grid, sheet } = S;
-  const sheets = { Shifts: sheet, Income: I.sheet, Staff: St.sheet, Crew: C.sheet, Wages: W.sheet };
+  const sheets = { Shifts: sheet, Income: I.sheet, Staff: St.sheet, Crew: C.sheet, Wages: W.sheet, Roles: R.sheet };
   let uuid = 0;
   const ctx = {
     SpreadsheetApp: { getActive: () => ({ getSheetByName: (n) => sheets[n], getSpreadsheetTimeZone: () => 'UTC' }) },
@@ -46,7 +47,7 @@ function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [
   vm.runInContext(fs.readFileSync(import.meta.dirname + '/../apps-script/core.gs', 'utf8'), ctx);
   vm.runInContext(fs.readFileSync(import.meta.dirname + '/../apps-script/Code.gs', 'utf8'), ctx);
   const post = (body) => ctx.doPost({ postData: { contents: JSON.stringify(body) } });
-  return { grid, post, ctx, sheet, income: I.grid, incomeSheet: I.sheet, staff: St.grid, crew: C.grid, wages: W.grid, crewSheet: C.sheet };
+  return { grid, post, ctx, sheet, income: I.grid, incomeSheet: I.sheet, staff: St.grid, crew: C.grid, wages: W.grid, roles: R.grid, crewSheet: C.sheet };
 }
 
 const row = (o = {}) => ({ id: 'a', date: '2026-09-25', start: 1080, end: 120, tips: 240,
@@ -137,14 +138,23 @@ test('onEdit on the Income tab stamps id and updated_at', () => {
 });
 
 const person = (o = {}) => ({ id: 'p1', name: 'Abby', first: 'Abby', last: 'Clemens', roles: ['Bartender', 'Server'], id_number: 'E1292',
-  manager: false, is_user: false, status: 'active', notes: null, updated_at: 1000, deleted: false, ...o });
+  manager: false, is_user: false, status: 'active', notes: null, updated_at: 1000, deleted: false,
+  aliases: [], photo: null, avatar_color: null, avatar_text: null, role: null, ...o });
 
 test('staff rows append to the Staff tab (roles in one cell) and come back with the full set', () => {
   const h = harness();
   const res = h.post({ token: 'T', rows: [], income: [], staff: [person()] });
-  assert.deepEqual(h.staff[1], ['p1', 'Abby', 'Abby', 'Clemens', 'Bartender, Server', 'E1292', false, false, 'active', '', 1000, false]);
+  assert.deepEqual(h.staff[1], ['p1', 'Abby', 'Abby', 'Clemens', 'Bartender, Server', 'E1292', false, false, 'active', '', 1000, false, '', '', '', '', '']);
   assert.deepEqual(res.staff, [person()]);
   assert.deepEqual(res.held_staff, []);
+});
+
+test('staff aliases and avatar ride in their own cells; a Staff tab from before those columns still reads', () => {
+  const h = harness([], [], [['p2', 'Bo', '', '', '', '', '', '', '', '', 500, false]]);
+  const res = h.post({ token: 'T', staff: [person({ aliases: ['Abs', 'AC'], avatar_color: '#aa3300', avatar_text: 'AB' })] });
+  assert.deepEqual(h.staff.find(r => r[0] === 'p1').slice(12), ['Abs, AC', '', '#aa3300', 'AB', '']);
+  assert.deepEqual(res.staff.find(p => p.id === 'p2').aliases, []);
+  assert.equal(res.staff.find(p => p.id === 'p2').photo, null);
 });
 
 test('staff last-write-wins and soft delete propagate; a hand-typed roles cell is split', () => {
@@ -208,4 +218,14 @@ test('a hand edit of a Crew start or end refreshes its hours cell', () => {
   const h = harness([], [], [], [['c1', 'a', 'p1', 'Abby', '18:00', '22:30', 500, false, 99]]);
   h.ctx.onEdit({ range: { getSheet: () => h.crewSheet, getRow: () => 2, getNumRows: () => 1 } });
   assert.equal(h.crew[1][8], 4.5);
+});
+
+test('roles sync through their own tab; a hand-typed role with a bad colour is held', () => {
+  const h = harness([], [], [], [], [], [['r2', 'Barback', 'purple!', '', 2, 500, false]]);
+  const role = { id: 'r1', name: 'Bartender', color: '#0d7a70', icon: 'cocktail', sort: 0, updated_at: 1000, deleted: false };
+  const res = h.post({ token: 'T', roles: [role] });
+  assert.deepEqual(h.roles.find(r => r[0] === 'r1'), ['r1', 'Bartender', '#0d7a70', 'cocktail', 0, 1000, false]);
+  assert.deepEqual(res.roles, [role]);
+  assert.deepEqual(res.held_roles, ['r2']);
+  assert.match(res.errors.find(e => e.table === 'Roles').error, /Bad color/);
 });

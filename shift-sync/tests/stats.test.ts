@@ -26,11 +26,13 @@ test('view derives hours, tips/hr and total incl. income lines and legacy other'
   assert.equal(v.total, 295);
 });
 
-test('summary tips/hr only counts shifts that have hours and tips', () => {
-  const a = toView(shift(), []);                                   // 240 over 8h
-  const b = toView(shift({ id: 'b', start: null, end: null, tips: 100 }), []);   // no hours
-  const s = summarize([a, b]);
-  assert.equal(s.tips, 340);
+test('summary only counts fully logged shifts: money without hours and hours without money both drop out', () => {
+  const a = toView(shift(), []);                                                    // 240 over 8h, done
+  const b = toView(shift({ id: 'b', start: null, end: null, tips: 100 }), []);       // tips logged, no time — not done
+  const c = toView(shift({ id: 'c', tips: null }), []);                              // worked, tips not in yet — not done
+  const s = summarize([a, b, c]);
+  assert.equal(s.shifts, 1);
+  assert.equal(s.tips, 240);
   assert.equal(s.tph, 30);
   assert.equal(s.hours, 8);
   assert.equal(summarize([]).tph, null);

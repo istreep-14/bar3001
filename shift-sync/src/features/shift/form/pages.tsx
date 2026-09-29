@@ -8,6 +8,7 @@ import type { ShiftView, Summary } from '../../../lib/stats.ts';
 import { go } from '../../../router.ts';
 import { Facts, Ribbon } from '../../../ui/charts.tsx';
 import { Icon } from '../../../ui/Icon.tsx';
+import { MeBadge } from '../../../ui/MeBadge.tsx';
 import { MixBar, MixKey } from '../../../ui/MixBar.tsx';
 import { MonthCalendar } from '../../../ui/MonthCalendar.tsx';
 import { TimeField } from '../../../ui/TimeField.tsx';
@@ -230,7 +231,7 @@ export function CrewPage({ c }: { c: Ctx }) {
       <h3 class="label">Who worked</h3>
       {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people">People</a> page.</p> : (
         <div class={styles.pills}>
-          {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user ? ' (you)' : ''}</button>)}
+          {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user && <MeBadge />}</button>)}
         </div>
       )}
       {roster.length > 0 && !meOnRoster() && <p class={styles.hint}>Mark one person as "This is me" on the People page to add yourself in one tap.</p>}
@@ -239,7 +240,7 @@ export function CrewPage({ c }: { c: Ctx }) {
         <div class={styles.rows}>
           {form.crew.map(m => (
             <div class={styles.person} key={m.key} role="group" aria-label={m.name}>
-              <div class={styles.pname}><span>{m.name}</span>{personById(m.staff_id)?.is_user && <small>you</small>}{memberHours(m) != null && <small class="num">{dec1(memberHours(m))}h</small>}</div>
+              <div class={styles.pname}><span>{m.name}</span>{personById(m.staff_id)?.is_user && <MeBadge />}{memberHours(m) != null && <small class="num">{dec1(memberHours(m))}h</small>}</div>
               <TimeField label="Start" value={m.start} invalid={!!errors['crew' + m.key]} onChange={v => setMember(m.key, { start: v, follow: false })} />
               <TimeField label="End" value={m.end} invalid={!!errors['crew' + m.key]} pm={false} onChange={v => setMember(m.key, { end: v, follow: false })} />
               <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${m.name}`} onClick={() => setForm(f => f && { ...f, crew: f.crew.filter(x => x.key !== m.key) })}><Icon name="trash" /></button>

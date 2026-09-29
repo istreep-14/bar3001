@@ -1,61 +1,51 @@
-# shift-sync
+# bar3001
 
-Local-first shift log. The phone app stores shifts in IndexedDB and works offline;
-a Google Sheet is the synced copy you can also edit by hand. Conflicts resolve
-last-write-wins per row on `updated_at`.
+One repo, one app: **[`shift-sync/`](shift-sync/)** — a local-first shift log. The phone app
+stores shifts in IndexedDB and works offline; a Google Sheet is the synced copy you can also
+edit by hand. Conflicts resolve last-write-wins per row on `updated_at`.
+
+Everything lives in `shift-sync/`. This file is only the map. Start there:
+
+- **[`shift-sync/README.md`](shift-sync/README.md)** — what the app is, how the folders fit
+  together, how data flows, how to run and deploy it, and the rules that hold it together.
+- **[`shift-sync/DESIGN.md`](shift-sync/DESIGN.md)** — the UI contract: structure, tokens,
+  components, and what every screen is allowed to look like.
+- **[`shift-sync/ISSUES.md`](shift-sync/ISSUES.md)** — known problems and drift hazards,
+  ranked, with where each one lives.
+
+## First five minutes
 
 ```
-app/            PWA: index.html, core.js, sw.js, manifest.json, icon.svg  -> host this folder
-apps-script/    Code.gs  -> paste into the Sheet's Apps Script project
-tests/          node tests (core logic + Code.gs against a fake Sheet)
+cd shift-sync
+npm install
+npm run dev      # http://localhost:5173
 ```
 
-`app/core.js` is the single source of the sync rules. It runs in the browser, in
-Node tests, and in Apps Script. Copy it into Apps Script as `core.gs` whenever it changes.
+Then, in order of what you'll want next:
 
-## Setup
+```
+npm test         # 122 tests: core sync rules, Apps Script against a fake Sheet, every lib/ helper
+npm run typecheck
+npm run build    # typecheck + production build into shift-sync/dist/
+```
 
-1. **Sheet.** New Google Sheet, then Extensions > Apps Script.
-2. Create two script files: `Code.gs` (from `apps-script/Code.gs`) and `core.gs`
-   (contents of `app/core.js`, unchanged).
-3. Run `setup` once from the editor and approve permissions. It creates the
-   `Shifts` tab and prints your token under View > Logs. It never deletes data.
-4. **Deploy** > New deployment > Web app. Execute as: *Me*. Who has access: *Anyone*.
-   Copy the `/exec` URL. (The token is what protects it.)
-5. **Host `app/`** on any HTTPS host (e.g. GitHub Pages: push the repo, Settings > Pages,
-   serve from `/app` or copy it to `/docs`). For local testing:
-   `cd app && python3 -m http.server` then open `http://localhost:8000`.
-6. Open the app, paste the URL and token, then add it to your home screen.
+CI (`.github/workflows/ci.yml`) runs typecheck, test and build on every push to `main` and
+every pull request, with `shift-sync/` as the working directory. There is no root
+`package.json` — everything runs from inside `shift-sync/`.
 
-Existing Sheet? Re-paste `Code.gs`/`core.gs`, run `setup` again (it adds the `other`/`shift_type` headers and the `Income` tab), then deploy a new version.
+## Repo shape
 
-After editing `Code.gs`/`core.gs`: Deploy > Manage deployments > edit > **New version**,
-or the URL keeps serving old code.
+```
+shift-sync/     the entire app (see its README for the folder-by-folder map)
+.github/        CI workflow
+```
 
-## Editing in the Sheet
+The repo used to also hold a single-file vanilla-JS version of the app at the root
+(`index.html`, `core.js`, `sw.js`, `Code.gs`). That version is gone. It was already
+unusable — it referenced a `manifest.json` and `icon.svg` that did not exist — and its copy
+of the sync rules had fallen 160 diff-lines behind `shift-sync/core/core.js`.
 
-- Type dates as `YYYY-MM-DD` and times as `HH:MM` (24h). Past midnight is fine: `18:00`-`02:00` = 8h.
-- New rows typed by hand get an `id` and `updated_at` automatically.
-- **Income tab** = child rows of Shifts, zero to many per shift, linked by `shift_id` (copy the shift's `id`).
-  `category` is one of Chump, Cash, Venmo, Consideration, Overtime (dropdown; typing `cash` also works).
-  Delete by `deleted` = TRUE or deleting the row. Deleting a shift in the app also deletes its income.
-- The old single `other` column on Shifts is kept and still counted, but the app no longer edits it.
-- Tips/hr and totals are derived in the app, not stored.
-- Leave `id` and `updated_at` alone.
-- Delete by setting `deleted` to TRUE, or delete the row. Both propagate.
-- A row with a typo is skipped and shown as an error in the app until fixed;
-  it isn't lost or duplicated.
-
-## Tests
-
-`npm test` (Node 18+, no dependencies).
-
-## Known limits
-
-- Last-write-wins uses device clocks for app edits and Google's clock for Sheet
-  edits. Normal clock drift (seconds) only matters if the same row is edited on
-  both sides within seconds.
-- Each sync sends only unsynced rows but receives the full set: fine to
-  several thousand rows.
-- Pasting over a range fires the edit stamp; edits made by other scripts or the
-  Sheets API don't (they won't win conflicts unless they set `updated_at`).
+Removing it did not touch anyone's data: shift data lives in the browser's IndexedDB
+(`shifts` database, store `rows`, both unchanged since v1), not in this repo. The
+connection settings and the sync token are in `localStorage` under `conf`. Both carry over
+to the current app untouched.

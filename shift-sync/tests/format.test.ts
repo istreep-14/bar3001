@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DASH, clock, clockPlain, clockShort, dateCell, dec1, int, isPastYear, longDate, weekLabel } from '../src/lib/format.ts';
+import { DASH, clock, clockPlain, clockShort, clockTight, dateCell, dec1, hours, hoursBare, int, isPastYear, longDate, weekLabel } from '../src/lib/format.ts';
 
 test('clock is exact and fixed-width so times align', () => {
   assert.equal(clock(17 * 60), '05:00 PM');
@@ -23,7 +23,7 @@ test('table figures round to whole numbers; absent is a dash', () => {
 test('date cells are fixed width', () => {
   assert.equal(dateCell('2026-09-05'), 'Sep 5');
   assert.equal(dateCell('2026-09-25'), 'Sep 25');
-  assert.equal(weekLabel('2026-09-25'), 'Sep 21 – 27, 2026');
+  assert.equal(weekLabel('2026-09-25'), 'September 21 – 27, 2026');
 });
 
 test('hours show one decimal so 8.0 and 9.5 line up', () => {
@@ -57,4 +57,28 @@ test('reading times are 12-hour with AM/PM and no leading zero', () => {
   assert.equal(clockPlain(0), '12:00 AM');
   assert.equal(clockPlain(12 * 60 + 15), '12:15 PM');
   assert.equal(clockPlain(null), '');
+});
+
+test('clockTight: minutes only when there are any, a/p, never 24-hour', () => {
+  assert.equal(clockTight(18 * 60), '6p');
+  assert.equal(clockTight(17 * 60 + 30), '5:30p');
+  assert.equal(clockTight(0), '12a');
+  assert.equal(clockTight(12 * 60 + 5), '12:05p');
+  assert.equal(clockTight(null), '');
+});
+
+test('hours: one decimal at most, with or without the unit', () => {
+  assert.equal(hours(8), '8h');
+  assert.equal(hoursBare(8), '8');
+  assert.equal(hoursBare(6.5), '6.5');
+  assert.equal(hoursBare(7.25), '7.3');
+  assert.equal(hoursBare(null), DASH);
+});
+
+test('clockParts: the hour padded to two characters, so colons line up', async () => {
+  const { clockParts } = await import('../src/lib/format.ts');
+  assert.deepEqual(clockParts(18 * 60), { hm: '\u20076:00', ap: 'PM' });
+  assert.deepEqual(clockParts(11 * 60 + 30), { hm: '11:30', ap: 'AM' });
+  assert.deepEqual(clockParts(0), { hm: '12:00', ap: 'AM' });
+  assert.deepEqual(clockParts(2 * 60 + 5), { hm: '\u20072:05', ap: 'AM' });
 });

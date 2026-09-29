@@ -12,14 +12,20 @@ import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftCard } from './ShiftCard.tsx';
-import { ShiftLog } from '../../parts/ShiftLog.tsx';
+import { LOG_COLUMNS, ShiftLog } from '../../parts/ShiftLog.tsx';
+import type { LogCol } from '../../parts/ShiftLog.tsx';
 import { EmptyPeriod, FirstShiftEmpty } from '../../ui/EmptyState.tsx';
 import { SideStats, periodItems } from '../../ui/SideStats.tsx';
 import styles from './LogScreen.module.css';
 
-/* The Log: every shift in the period, grouped by month or week (or flat). Desktop is the grouped list with rows that
- * open in place; a phone gets the same groups as cards. Grouping is remembered per device. */
+/* The Log: every shift in the period, grouped by month or week (or flat). Desktop is the dense table, rows opening
+ * in place — a card reads great on a phone but shows too few shifts at once on a wide screen. A phone gets the same
+ * groups as cards (the card UI stays here for whenever it's wanted again, just not for the desktop table); flat
+ * still bands phone cards by week, since a card wants a heading to sit under. Grouping is remembered per device. */
 const [groupBy, setGroupBy] = persisted<GroupBy>('log-group', oneOf(GROUP_BYS.map(g => g.id)), 'month');
+/** The columns switched off in the Columns menu, remembered per device. */
+const LOG_KEYS = LOG_COLUMNS.map(c => c.key);
+const [hiddenCols, setHiddenCols] = persisted<LogCol[]>('log-hidden', (v): v is LogCol[] => Array.isArray(v) && v.every(k => LOG_KEYS.includes(k)), []);
 
 export function LogScreen() {
   const all = liveViews.value;
@@ -62,7 +68,7 @@ export function LogScreen() {
         <div class="split">
           <div class={`panel-body flush ${styles.body} ${styles.scroll}`}>
             {alerts}
-            {empty ?? <ShiftLog views={views} by={by} openId={selected} />}
+            {empty ?? <ShiftLog views={views} by={by} openId={selected} hidden={hiddenCols.value} onHidden={setHiddenCols} />}
           </div>
           <SideStats items={periodItems(s)} note="Rate is tips over hours. Total also includes wage and other income." />
         </div>

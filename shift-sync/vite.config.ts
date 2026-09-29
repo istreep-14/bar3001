@@ -12,7 +12,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'script', // plain script tag; the virtual:pwa-register import doesn't resolve under Vite 8 yet
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
-      workbox: { navigateFallback: 'index.html', globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
+      workbox: {
+        navigateFallback: 'index.html',
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // the photo cut-out's runtime and model: too big to install with the app, so kept the first time they're used
+        runtimeCaching: [{ urlPattern: /\.(?:wasm|tflite)$/, handler: 'CacheFirst', options: { cacheName: 'cutout', expiration: { maxEntries: 4 } } }]
+      },
       manifest: {
         name: 'Shifts',
         short_name: 'Shifts',

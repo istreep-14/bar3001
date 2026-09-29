@@ -1,43 +1,71 @@
-/* The grouped Log. One grid for the head, the bands and the rows, so every column lines up down the page.
-   Grouped: a first 1.75rem column indents the rows under their band, with a guide line down it. Flat: no indent. */
-.log { --indent: 0; background: var(--surface); padding: 0 var(--s-4) var(--s-5); min-width: 0; }
-.log[data-grouped] { --indent: 1.75rem; }
-.grid { display: grid; grid-template-columns: var(--indent) 7.5rem minmax(14rem, 1.5fr) 4.5rem 5.5rem 5.5rem 6rem minmax(6rem, 1fr) 2rem; align-items: center; }
-.grid > span { padding: 0 var(--s-3); min-width: 0; }
-.grid > span:first-child { padding: 0; }
+/* The grouped Log. One grid for the head, the bands and the rows, so every column lines up down the page. */
+.log { background: var(--surface); padding: 0 var(--s-4) var(--s-5); min-width: 0; }
+.grid { display: grid; grid-template-columns: var(--log-cols); align-items: center; }   /* set on .log, from the columns shown */
+.grid :global(.c) { text-align: center; }
+.grid > span { padding: 0 var(--s-2); min-width: 0; }
+.grid > span:first-child { padding-left: var(--s-3); }
 .grid :global(.r) { text-align: right; }
 
-.head { position: sticky; top: 0; z-index: 1; min-height: 2.5rem; margin: 0 calc(-1 * var(--s-4)) var(--s-1); padding: 0 var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--th-ink); }
+/* Same header band as the shared table (`.tbl thead th` in ui.css): sentence case, semibold — no small caps
+   anywhere in a table head, so the Log's own grid still reads as the same kind of thing as every other table. */
+.head { position: sticky; top: 0; z-index: 1; min-height: 2.25rem; margin: 0 calc(-1 * var(--s-4)) var(--s-1); padding: 0 var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--th-ink); }
 
-.group + .group { margin-top: var(--s-5); }
-/* The band: its own grey block, bigger type, a count chip, and the one figure it carries (the total) in the Total column. */
-.band { min-height: 3.25rem; margin: var(--s-1) 0 var(--s-2); border-radius: var(--r-md); background: var(--surface-2); }
-.bandLabel { grid-column: 1 / 7; display: flex; align-items: center; gap: var(--s-3); padding-left: var(--s-4) !important; }
-.bandName { font-size: var(--fs-hero); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
-.bandTotal { font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); }
+.corner { display: flex; justify-content: center; padding: 0 !important; }
+.group + .group { margin-top: var(--s-4); }
+/* The group heading: no block, just its name, a count chip and the group's tips and total in their columns, on a hairline —
+   a quiet break between groups, the way the lists on Other income and Crew break between shifts. */
+.band { min-height: 2.25rem; margin: var(--s-2) 0 0; border-bottom: 1px solid var(--line); }
+.bandLabel { display: flex; align-items: center; gap: var(--s-3); }
+.bandName { font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
+.bandTips { font-size: 1.0625rem; font-weight: var(--fw-bold); color: var(--ink); }
+.bandTotal { font-size: 0.9375rem; font-weight: var(--fw-semi); color: var(--ink-2); }
 
-.log[data-grouped] .rows { background: linear-gradient(var(--line-strong), var(--line-strong)) calc(var(--indent) / 2) 0 / 1.5px 100% no-repeat; }
-.log:not([data-grouped]) .item + .item, .log:not([data-grouped]) .item + .pending, .log:not([data-grouped]) .pending + .item { border-top: 1px solid var(--line-soft); }
+.item + .item { border-top: 1px solid var(--line-soft); }
 
-.row { width: 100%; min-height: 2.875rem; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-lead); text-align: left; border-radius: var(--r-md); cursor: pointer; }
+.row { width: 100%; min-height: 3.25rem; padding-block: 1px !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: 0.9375rem; text-align: left; border-radius: var(--r-md); cursor: pointer; }
 .row:hover { background: var(--surface-2); }
 .item[data-selected] .row { background: var(--accent-wash); box-shadow: inset 3px 0 0 var(--accent); }
-.day { font-weight: var(--fw-semi); white-space: nowrap; }
-.time { display: flex; align-items: center; gap: var(--s-2); color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.strong { font-weight: var(--fw-semi); }
-.muted { color: var(--ink-2); }
+/* The figures, by how much they say about the shift: tips strongest; total, rate and hours a step down; the flat extras quiet. */
+.tips { font-size: 1.0625rem; font-weight: var(--fw-bold); color: var(--ink); }
+.total { font-weight: var(--fw-semi); color: var(--ink-2); }
+.total:global(.figure) { display: inline-flex; align-items: center; height: var(--fig-h); }
+.total:global(.figure) :global(.figure-under) { top: calc(50% + 0.75em); }   /* under the figure, inside the block's height */
+.quiet { color: var(--ink-3); font-weight: var(--fw-med); }
+/* Rate, Hours and Total stand the same height (--fig-h, the clock ring's), so the row's figures line up as blocks.
+   Rate: the figure in a full-height pill, styled like Total but tinted with --tone (the red-to-green scale colour, set
+   inline); then its slim rank bar stood on end, the same height. */
+.log { --fig-h: 2.25rem; }
+.rate { position: relative; display: flex; align-items: stretch; justify-content: flex-end; gap: 5px; height: var(--fig-h); }
+.ratePill { display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 13%, var(--surface)); color: var(--tone); font-weight: var(--fw-semi); }
+.rate :global(.rankbar[data-up]) { width: 3px; height: auto; }
+/* Hours: the figure in its clock ring, styled like Total */
+.hours { display: flex; align-items: center; justify-content: flex-end; height: var(--fig-h); color: var(--ink-2); font-weight: var(--fw-semi); }
+.hours :global(.dial) { width: var(--fig-h); height: var(--fig-h); }
+/* the crew's group picture: its cell stretches to the row and takes back the row's 1px padding, so the figures stand on
+   the row's bottom edge (CrewPhotos hangs them off this cell) */
+.grid > span.crew { --crew-h: 3.25rem; position: relative; align-self: stretch; display: flex; align-items: center; margin-block: -1px; padding-block: 0; }
+.crew::after { left: var(--s-2); right: auto; }   /* the names bubble opens rightward from the faces */
+.item[data-status='scheduled'] :global(.dial) { opacity: 0.55; }
+/* the narrow icon columns: day or night, and party */
+.icon { display: flex; justify-content: center; }
+.type { display: inline-flex; color: var(--ink-4); }
+.type[data-kind='day'] { color: var(--day-ink); }
+.type[data-kind='night'] { color: var(--night); }
+.type :global(.icon) { width: 1rem; height: 1rem; }
 .chev { display: flex; justify-content: center; color: var(--ink-3); }
 .chev :global(.icon) { width: 1rem; height: 1rem; transform: rotate(90deg); transition: transform var(--dur) var(--ease); }
 
-.pending { cursor: default; }
-.pending:hover { background: transparent; }
-.fillCell { grid-column: 4 / 8; display: flex; justify-content: flex-end; }
+/* A shift still short of its numbers (not yet worked, or worked but not yet paid) reads muted — text colour
+   only, so nothing changes size or position and the columns stay in line row to row. */
+.item[data-status='worked'] .row { color: var(--ink-2); }
+.item[data-status='scheduled'] .row { color: var(--ink-3); font-style: italic; }
+/* the shift's times under the date: small, light, italic, quieter than anything else in the row */
+.times { font-size: var(--fs-meta); font-style: italic; font-weight: var(--fw-normal); color: var(--ink-3); letter-spacing: 0.01em; }
 
 /* Opened: the row and its card are one white block with the accent ring, lifted off the list. */
-.item[data-open] { margin: var(--s-2) 0 var(--s-3) var(--indent); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }
-.item[data-open] .row { grid-template-columns: 0 7.5rem minmax(14rem, 1.5fr) 4.5rem 5.5rem 5.5rem 6rem minmax(6rem, 1fr) 2rem; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.item[data-open] { margin: var(--s-2) 0 var(--s-3); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }
+.item[data-open] .row { border-radius: var(--r-lg) var(--r-lg) 0 0; }
 .item[data-open] .row:hover { background: transparent; }
-.item[data-open] .day { font-size: var(--fs-title); font-weight: var(--fw-bold); }
 .item[data-open] .chev :global(.icon) { transform: rotate(-90deg); color: var(--ink); }
 .card { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-5) var(--s-5); }
 .actions { display: flex; gap: var(--s-2); }

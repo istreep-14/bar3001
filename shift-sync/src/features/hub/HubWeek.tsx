@@ -11,6 +11,7 @@ import { TypeIcon } from '../../ui/Badges.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { CrewTimeline } from './CrewTimeline.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { MeBadge } from '../../ui/MeBadge.tsx';
 import { TimeField } from '../../ui/TimeField.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { toast } from '../../ui/toast.tsx';
@@ -72,7 +73,7 @@ export function HubWeek() {
             <tbody>
               {g.rows.map(r => (
                 <tr key={r.staff_id}>
-                  <th class="l strong" scope="row">{r.name}{personById(r.staff_id)?.is_user && <span class={styles.you}>you</span>}</th>
+                  <th class="l strong" scope="row">{r.name}{personById(r.staff_id)?.is_user && <span class={styles.you}><MeBadge /></span>}</th>
                   {r.cells.map(c => <td key={c.date}><CellButtons cell={c} staff_id={r.staff_id} name={r.name} /></td>)}
                   <td class="strong">{r.hours ? dec1(r.hours) : '—'}</td>
                 </tr>

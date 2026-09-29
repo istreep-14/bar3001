@@ -54,14 +54,32 @@ export interface Staff {
   notes: string | null;
   updated_at: number;
   deleted: boolean;
+  aliases: string[];            // other names they go by; a typed name matches these too
+  photo: string | null;         // a small data:image URL, shown in their avatar
+  avatar_color: string | null;  // '#rrggbb' or a palette name; null picks one from the id
+  avatar_text: string | null;   // 1-3 characters in place of the initials
+  role: string | null;          // the main role; `roles` holds the others. Null on older rows: read roles[0] as main
+}
+export interface Role {
+  id: string;
+  name: string;                 // unique; what Staff.role and Staff.roles hold
+  color: string | null;         // '#rrggbb' or a palette name
+  icon: string | null;          // an icon name the app draws
+  sort: number;                 // rank: lower first
+  updated_at: number;
+  deleted: boolean;
 }
 export type Local<T> = T & { _dirty?: boolean };
 
 export const COLS: string[];
 export const INCOME_COLS: string[];
 export const STAFF_COLS: string[];
+/** The longest a person's photo (a data URL) may be: it lives in one Sheet cell. */
+export const PHOTO_MAX: number;
 export const CREW_COLS: string[];
 export const WAGE_COLS: string[];
+export const ROLE_COLS: string[];
+export function validateRole(r: unknown): Role;
 export function validateWage(r: unknown): Wage;
 export function wageRateFor(rates: Pick<Wage, 'date' | 'rate'>[] | undefined, date: string): number | null;
 export function wageFor(rates: Pick<Wage, 'date' | 'rate'>[] | undefined, date: string, hours: number | null): number | null;

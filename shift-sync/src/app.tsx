@@ -14,6 +14,7 @@ import { SettingsScreen } from './features/settings/SettingsScreen.tsx';
 import { ShiftDrawer } from './features/shift/ShiftDrawer.tsx';
 import { ShiftForm } from './features/shift/ShiftForm.tsx';
 import { SummaryScreen } from './features/summary/SummaryScreen.tsx';
+import { ShiftTable } from './features/table/ShiftTable.tsx';
 import { drawerAsk, form, go, justNavigated, openForm, person, screen, sheet } from './router.ts';
 import type { Screen } from './router.ts';
 import { Icon } from './ui/Icon.tsx';
@@ -34,13 +35,13 @@ const GROUPS: Group[] = [
   { id: 'shift', label: 'Shifts', icon: 'log', pages: [
     { id: 'dashboard', label: 'Dashboard', icon: 'chart' },
     { id: 'overview', label: 'Insights', icon: 'trend', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
-    { id: 'log', label: 'Log', icon: 'table' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' },
+    { id: 'log', label: 'Log', icon: 'table' }, { id: 'table', label: 'Table', icon: 'table' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' },
     { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
   { id: 'crew', label: 'Crew', icon: 'users', pages: [
     { id: 'hub/week', label: 'Crew', icon: 'calendar', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
     { id: 'people', label: 'People', icon: 'users' }] },
   { id: 'settings', label: 'Settings', icon: 'settings', pages: [
-    { id: 'settings/wages', label: 'Settings', icon: 'settings', also: ['settings/look', 'settings/sync', 'settings/data'] }] }
+    { id: 'settings/wages', label: 'Settings', icon: 'settings', also: ['settings/roles', 'settings/look', 'settings/sync', 'settings/data'] }] }
 ];
 const owns = (p: Page, s: Screen) => p.id === s || !!p.tabs?.some(t => t.id === s) || !!p.also?.includes(s);
 
@@ -119,6 +120,7 @@ export function App() {
           {current === 'overview' && <OverviewScreen />}
           {current === 'calendar' && <CalendarScreen />}
           {current === 'log' && <LogScreen />}
+          {current === 'table' && <ShiftTable />}
           {current === 'summary' && <SummaryScreen />}
           {current === 'hub/week' && <HubWeek />}
           {current === 'hub/crew' && <HubCrew />}

@@ -11,19 +11,33 @@ export const GROUP_BYS: { id: GroupBy; label: string }[] = [
   { id: 'month', label: 'By month' }, { id: 'week', label: 'By week' }, { id: 'none', label: 'Flat' }
 ];
 
-/** A shift still waiting on its money: no tips and no other income yet (logged ahead of time, or tips not in). */
-export const isPending = (v: ShiftView): boolean => v.shift.tips == null && v.income.length === 0 && !v.shift.other;
+export type ShiftStatus = 'scheduled' | 'worked' | 'done';
+
+/** Where a shift stands. 'scheduled': no end time yet, so it hasn't happened (or is still going) — a start time alone
+ *  just means the arrival is known. 'worked': clocked out, but no tips, income or other money logged yet. 'done':
+ *  the money is in. Only 'done' shifts count toward totals, so a shift can't skew a number before it's known. */
+export function shiftStatus(v: ShiftView): ShiftStatus {
+  if (v.shift.end == null) return 'scheduled';
+  if (v.shift.tips == null && v.income.length === 0 && !v.shift.other) return 'worked';
+  return 'done';
+}
+
+/** A shift not yet counted toward totals: scheduled or worked but still waiting on its money. */
+export const isPending = (v: ShiftView): boolean => shiftStatus(v) !== 'done';
 
 export interface ShiftGroup {
   key: string;
-  /** 'September 2026' or 'Sep 20 – 26, 2026'; empty for the single Flat group. */
+  /** 'September 2026' or 'September 20 – 26, 2026'; empty for the single Flat group. */
   label: string;
   views: ShiftView[];
-  /** Shifts with their money in, and ones still waiting on it. */
+  /** Shifts with their money in, ones clocked but still waiting on it, and ones yet to happen. */
   done: number;
-  pending: number;
+  worked: number;
+  scheduled: number;
   /** Everything earned across the done shifts: tips, other income and estimated wage. */
   total: number;
+  /** Tips alone across the done shifts: the figure the Log leads with. */
+  tips: number;
 }
 
 const monthLabel = (key: string): string =>
@@ -37,22 +51,36 @@ export function groupShifts(views: ShiftView[], by: GroupBy): ShiftGroup[] {
     const key = keyOf(v);
     let g = out.find(x => x.key === key);
     if (!g) {
-      g = { key, label: by === 'month' ? monthLabel(key) : by === 'week' ? weekLabel(key) : '', views: [], done: 0, pending: 0, total: 0 };
+      g = { key, label: by === 'month' ? monthLabel(key) : by === 'week' ? weekLabel(key) : '', views: [], done: 0, worked: 0, scheduled: 0, total: 0, tips: 0 };
       out.push(g);
     }
     g.views.push(v);
-    if (isPending(v)) g.pending++;
-    else { g.done++; g.total += v.total; }
+    const status = shiftStatus(v);
+    if (status === 'done') { g.done++; g.total += v.total; g.tips += v.shift.tips ?? 0; }
+    else if (status === 'worked') g.worked++;
+    else g.scheduled++;
   }
   return out;
 }
 
-/** 'Fri 25' inside a group (the band already says the month); 'Fri Sep 25' when flat. */
-export const rowDay = (d: string, by: GroupBy): string => {
+/** 'Fri 25', the day inside its group — the band already says the month. */
+export const rowDay = (d: string): string => {
   const at = new Date(d + 'T12:00:00');
   const wd = at.toLocaleDateString(undefined, { weekday: 'short' });
-  return by === 'none' ? `${wd} ${at.toLocaleDateString(undefined, { month: 'short' })} ${+d.slice(8, 10)}` : `${wd} ${+d.slice(8, 10)}`;
+  return `${wd} ${+d.slice(8, 10)}`;
 };
+
+/** The Log row's calendar-icon date badge: month (short) above, day number below — the same shape as the phone
+ *  card's date chip, so the two read as one idea. `monthIndex` (0-11) tints the month text, one hue per
+ *  calendar month, so months stay tellable apart at a glance even scrolled away from their band. `weekday` is
+ *  the row's own line in the Time column, the way a phone card leads with it. */
+export function dayBadge(d: string): { month: string; day: string; weekday: string; monthIndex: number } {
+  const at = new Date(d + 'T12:00:00');
+  return {
+    month: at.toLocaleDateString(undefined, { month: 'short' }), day: String(+d.slice(8, 10)),
+    weekday: at.toLocaleDateString(undefined, { weekday: 'short' }), monthIndex: at.getMonth()
+  };
+}
 
 /** One piece of a shift's total. `token` is the CSS custom property its colour comes from. */
 export interface IncomePart { key: string; label: string; amount: number; token: string; estimated?: boolean }
