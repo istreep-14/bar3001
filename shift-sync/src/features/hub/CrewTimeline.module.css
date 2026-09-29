@@ -18,3 +18,5 @@
 .nobody { cursor: default; background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); color: var(--ink-2); font-weight: var(--fw-normal); }
 .off { font-size: var(--fs-meta); color: var(--ink-3); }
 .hrs { font-weight: var(--fw-semi); }
+
+.bar :global(.me-badge) { margin-left: 0.25em; color: inherit; }   /* on the filled bar the crown takes the bar's own ink */

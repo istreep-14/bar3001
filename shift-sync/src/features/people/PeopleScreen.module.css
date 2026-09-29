@@ -2,14 +2,22 @@
 .search { width: min(22rem, 100%); }
 .count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .long { display: none; }
-.body { min-height: 0; }
+.body { display: flex; flex-direction: column; min-height: 0; }   /* the toolbar keeps its height; the list takes the rest */
 @media (min-width: 56rem) { .long { display: inline; } }
 
 .list { border-top: 1px solid var(--line); }
-.item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-3) 1.15rem; text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); }
+.item { width: 100%; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 1.15rem; text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); }
 .item:hover { background: var(--surface-2); }
-.item[aria-current='true'] { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
-.main { display: grid; gap: 2px; min-width: 0; }
-.name { font-size: var(--fs-lead); font-weight: var(--fw-semi); display: inline-flex; align-items: center; gap: var(--s-2); }
-.mgr { font-size: var(--fs-micro); font-weight: var(--fw-med); color: var(--accent); }
-.sub { font-size: var(--fs-meta); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item > :global(.who) { flex: 1; min-width: 0; }
+.item[data-tone='me'] { background: var(--me-wash); }
+.item[data-tone='manager'] { background: var(--mgr-wash); }
+.item[data-tone='me']:hover { background: color-mix(in srgb, var(--me) 15%, var(--surface)); }
+.item[data-tone='manager']:hover { background: color-mix(in srgb, var(--mgr) 12%, var(--surface)); }
+.item[data-tone='muted'] :global(:is(.who-name, .who-sub, .role-name)) { color: var(--ink-3); }
+.item[data-tone='muted'] :global(:is(.avatar, .role)) { opacity: 0.6; }
+.item[aria-current='true'] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.item[data-tone='me'][aria-current='true'] { background: color-mix(in srgb, var(--me) 20%, var(--surface)); }
+.item[data-tone='manager'][aria-current='true'] { background: color-mix(in srgb, var(--mgr) 16%, var(--surface)); }
+.flag { display: inline-flex; align-items: center; gap: var(--s-1); color: var(--ink-2); font-size: var(--fs-meta); }
+.no { color: var(--ink-3); font-size: var(--fs-meta); }
+.flag :global(.me-badge) { margin-left: 0; }

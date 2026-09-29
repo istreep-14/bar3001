@@ -47,12 +47,13 @@ test('with nothing last week the deltas are empty, not infinite', () => {
   assert.equal(w.delta.tph, null);
 });
 
-test('best shifts rank by tips per hour within the window', () => {
+test('best shifts rank by tips per hour within the window, 2 hours or more', () => {
   const views = [
     v({ id: 'old', date: '2026-01-02', tips: 900 }),
     v({ id: 'mid', date: '2026-09-10', tips: 300 }),
     v({ id: 'top', date: '2026-09-11', tips: 400 }),
-    v({ id: 'none', date: '2026-09-12', tips: null, end: null })
+    v({ id: 'none', date: '2026-09-12', tips: null, end: null }),
+    v({ id: 'short', date: '2026-09-13', start: 1080, end: 1110, tips: 100 })   // $200/hr, but only half an hour
   ];
   assert.deepEqual(bestShifts(views, '2026-09-26').map(x => x.shift.id), ['top', 'mid']);
 });

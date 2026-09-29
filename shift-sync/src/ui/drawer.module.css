@@ -39,6 +39,15 @@
 @keyframes fade { from { opacity: 0; } }
 
 /* people form extras */
+.personHead { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.handle { font-size: var(--fs-meta); color: var(--ink-3); }
+.avatarEdit { display: flex; align-items: center; gap: var(--s-4); }
+.avatarActions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.letters { width: 6rem; text-transform: none; }
+.alias { padding-right: 2px; }
+.alias button { display: inline-grid; place-items: center; width: 1.125rem; height: 1.125rem; padding: 0; border: 0; border-radius: var(--r-sm); background: none; color: inherit; cursor: pointer; }
+.alias button:hover { background: var(--surface-2); color: var(--ink); }
+.alias .icon { width: 0.75rem; height: 0.75rem; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .inline { display: flex; gap: var(--s-2); }
 .inline .input { flex: 1; }

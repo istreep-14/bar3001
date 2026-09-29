@@ -13,7 +13,7 @@ function fakeSheet(name, header, rows) {
       grid[r - 1 + i] = grid[r - 1 + i] || Array(header.length).fill('');
       grid[r - 1 + i][c - 1 + j] = x;
     })),
-    getRow: () => r, getNumRows: () => nr, getSheet: () => sheet
+    getRow: () => r, getColumn: () => c, getNumRows: () => nr, getSheet: () => sheet
   });
   const sheet = {
     getName: () => name,
@@ -25,19 +25,20 @@ function fakeSheet(name, header, rows) {
   return { grid, sheet };
 }
 
-function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [], wageRows = []) {
+function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [], wageRows = [], roleRows = []) {
   const S = fakeSheet('Shifts', ['id', 'date', 'start', 'end', 'tips', 'notes', 'updated_at', 'deleted', 'other', 'shift_type', 'party'], initialRows);
   const I = fakeSheet('Income', ['id', 'shift_id', 'category', 'amount', 'note', 'updated_at', 'deleted'], incomeRows);
-  const St = fakeSheet('Staff', ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted'], staffRows);
+  const St = fakeSheet('Staff', ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted', 'aliases', 'photo', 'avatar_color', 'avatar_text', 'role'], staffRows);
   const C = fakeSheet('Crew', ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'hours'], crewRows);
   const W = fakeSheet('Wages', ['id', 'date', 'rate', 'note', 'updated_at', 'deleted'], wageRows);
+  const R = fakeSheet('Roles', ['id', 'name', 'color', 'icon', 'sort', 'updated_at', 'deleted'], roleRows);
   const { grid, sheet } = S;
-  const sheets = { Shifts: sheet, Income: I.sheet, Staff: St.sheet, Crew: C.sheet, Wages: W.sheet };
+  const sheets = { Shifts: sheet, Income: I.sheet, Staff: St.sheet, Crew: C.sheet, Wages: W.sheet, Roles: R.sheet };
   let uuid = 0;
   const ctx = {
     SpreadsheetApp: { getActive: () => ({ getSheetByName: (n) => sheets[n], getSpreadsheetTimeZone: () => 'UTC' }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: () => 'T' }) },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (s) => ({ setMimeType: () => JSON.parse(s) }) },
     Utilities: { getUuid: () => 'gen' + (++uuid), formatDate: (d, tz, pattern) => (pattern === 'HH:mm' ? d.toISOString().slice(11, 16) : d.toISOString().slice(0, 10)) },
     Date, JSON, Object, Number, String, Math, Array
@@ -46,7 +47,7 @@ function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [
   vm.runInContext(fs.readFileSync(import.meta.dirname + '/../apps-script/core.gs', 'utf8'), ctx);
   vm.runInContext(fs.readFileSync(import.meta.dirname + '/../apps-script/Code.gs', 'utf8'), ctx);
   const post = (body) => ctx.doPost({ postData: { contents: JSON.stringify(body) } });
-  return { grid, post, ctx, sheet, income: I.grid, incomeSheet: I.sheet, staff: St.grid, crew: C.grid, wages: W.grid, crewSheet: C.sheet };
+  return { grid, post, ctx, sheet, income: I.grid, incomeSheet: I.sheet, staff: St.grid, crew: C.grid, wages: W.grid, roles: R.grid, crewSheet: C.sheet };
 }
 
 const row = (o = {}) => ({ id: 'a', date: '2026-09-25', start: 1080, end: 120, tips: 240,
@@ -54,6 +55,13 @@ const row = (o = {}) => ({ id: 'a', date: '2026-09-25', start: 1080, end: 120, t
 
 test('rejects wrong token', () => {
   assert.equal(harness().post({ token: 'x', rows: [] }).error, 'auth');
+});
+
+test('a sync that can\'t get the lock answers with an error as data', () => {
+  const h = harness();
+  h.ctx.LockService = { getScriptLock: () => ({ tryLock: () => false, releaseLock() {} }) };
+  assert.match(h.post({ token: 'T', rows: [row()] }).error, /busy/);
+  assert.equal(h.grid.length, 1);
 });
 
 test('appends new rows in Sheet format and returns full set', () => {
@@ -98,6 +106,27 @@ test('onEdit stamps id and updated_at on manual rows, skips blank rows', () => {
   assert.equal(h.grid[2][6], '');
 });
 
+test('a pasted copy of a row gets an id of its own; a row edited cell by cell keeps its id', () => {
+  const orig = ['a', '2026-09-26', '17:00', '01:00', 80, '', 500, false];
+  const h = harness([orig, [...orig], ['a', '2026-09-27', '17:00', '01:00', 90, '', 500, false]]);
+  h.ctx.onEdit({ range: h.sheet.getRange(3, 1, 1, 8) });     // row 3 pasted over whole: a copy of row 2
+  assert.equal(h.grid[1][0], 'a');
+  assert.equal(h.grid[2][0], 'gen1');
+  h.ctx.onEdit({ range: h.sheet.getRange(4, 5, 1, 1) });     // row 4 edited in one cell: its id is left alone
+  assert.equal(h.grid[3][0], 'a');
+});
+
+test('two Sheet rows with one id are both held and reported, and the app can\'t overwrite either', () => {
+  const h = harness([['a', '2026-09-25', '18:00', '02:00', 100, '', 500, false], ['a', '2026-09-26', '18:00', '02:00', 200, '', 600, false]]);
+  const res = h.post({ token: 'T', rows: [row({ updated_at: 9999 })] });
+  assert.deepEqual(res.held, ['a']);
+  assert.equal(res.rows.length, 0);
+  assert.match(res.errors[0].error, /Same id as row 2/);
+  assert.equal(h.grid[1][4], 100);
+  assert.equal(h.grid[2][4], 200);
+  assert.equal(h.grid.length, 3);
+});
+
 const inc = (o = {}) => ({ id: 'i1', shift_id: 'a', category: 'Cash', amount: 40, note: null, updated_at: 1000, deleted: false, ...o });
 
 test('income rows append to the Income tab and come back with the full set', () => {
@@ -137,14 +166,23 @@ test('onEdit on the Income tab stamps id and updated_at', () => {
 });
 
 const person = (o = {}) => ({ id: 'p1', name: 'Abby', first: 'Abby', last: 'Clemens', roles: ['Bartender', 'Server'], id_number: 'E1292',
-  manager: false, is_user: false, status: 'active', notes: null, updated_at: 1000, deleted: false, ...o });
+  manager: false, is_user: false, status: 'active', notes: null, updated_at: 1000, deleted: false,
+  aliases: [], photo: null, avatar_color: null, avatar_text: null, role: null, ...o });
 
 test('staff rows append to the Staff tab (roles in one cell) and come back with the full set', () => {
   const h = harness();
   const res = h.post({ token: 'T', rows: [], income: [], staff: [person()] });
-  assert.deepEqual(h.staff[1], ['p1', 'Abby', 'Abby', 'Clemens', 'Bartender, Server', 'E1292', false, false, 'active', '', 1000, false]);
+  assert.deepEqual(h.staff[1], ['p1', 'Abby', 'Abby', 'Clemens', 'Bartender, Server', 'E1292', false, false, 'active', '', 1000, false, '', '', '', '', '']);
   assert.deepEqual(res.staff, [person()]);
   assert.deepEqual(res.held_staff, []);
+});
+
+test('staff aliases and avatar ride in their own cells; a Staff tab from before those columns still reads', () => {
+  const h = harness([], [], [['p2', 'Bo', '', '', '', '', '', '', '', '', 500, false]]);
+  const res = h.post({ token: 'T', staff: [person({ aliases: ['Abs', 'AC'], avatar_color: '#aa3300', avatar_text: 'AB' })] });
+  assert.deepEqual(h.staff.find(r => r[0] === 'p1').slice(12), ['Abs, AC', '', '#aa3300', 'AB', '']);
+  assert.deepEqual(res.staff.find(p => p.id === 'p2').aliases, []);
+  assert.equal(res.staff.find(p => p.id === 'p2').photo, null);
 });
 
 test('staff last-write-wins and soft delete propagate; a hand-typed roles cell is split', () => {
@@ -206,6 +244,16 @@ test('wages: rows append to the Wages tab, a Date cell reads back as YYYY-MM-DD,
 
 test('a hand edit of a Crew start or end refreshes its hours cell', () => {
   const h = harness([], [], [], [['c1', 'a', 'p1', 'Abby', '18:00', '22:30', 500, false, 99]]);
-  h.ctx.onEdit({ range: { getSheet: () => h.crewSheet, getRow: () => 2, getNumRows: () => 1 } });
+  h.ctx.onEdit({ range: h.crewSheet.getRange(2, 6, 1, 1) });   // the end time
   assert.equal(h.crew[1][8], 4.5);
+});
+
+test('roles sync through their own tab; a hand-typed role with a bad colour is held', () => {
+  const h = harness([], [], [], [], [], [['r2', 'Barback', 'purple!', '', 2, 500, false]]);
+  const role = { id: 'r1', name: 'Bartender', color: '#0d7a70', icon: 'cocktail', sort: 0, updated_at: 1000, deleted: false };
+  const res = h.post({ token: 'T', roles: [role] });
+  assert.deepEqual(h.roles.find(r => r[0] === 'r1'), ['r1', 'Bartender', '#0d7a70', 'cocktail', 0, 1000, false]);
+  assert.deepEqual(res.roles, [role]);
+  assert.deepEqual(res.held_roles, ['r2']);
+  assert.match(res.errors.find(e => e.table === 'Roles').error, /Bad color/);
 });

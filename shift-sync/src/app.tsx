@@ -14,13 +14,15 @@ import { SettingsScreen } from './features/settings/SettingsScreen.tsx';
 import { ShiftDrawer } from './features/shift/ShiftDrawer.tsx';
 import { ShiftForm } from './features/shift/ShiftForm.tsx';
 import { SummaryScreen } from './features/summary/SummaryScreen.tsx';
-import { drawerAsk, form, go, justNavigated, openForm, person, screen, sheet } from './router.ts';
+import { ShiftTable } from './features/table/ShiftTable.tsx';
+import { drawerAsk, form, go, justNavigated, openForm, person, screen, sheet, sheetDate } from './router.ts';
 import type { Screen } from './router.ts';
 import { Icon } from './ui/Icon.tsx';
 import type { IconName } from './ui/Icon.tsx';
 import { SyncPill } from './parts/SyncPill.tsx';
 import { Toaster } from './ui/toast.tsx';
 import { isDesktop } from './ui/viewport.ts';
+import styles from './app.module.css';
 
 /* Shell = grey canvas, one rail of text links grouped by section, then main.
  * The rail does not paint a bar; the content panel's left edge is what marks it. The drawer floats over the page's right edge while a
@@ -28,19 +30,19 @@ import { isDesktop } from './ui/viewport.ts';
 interface Tab { id: Screen; label: string }
 /** A page in the rail. `tabs` = one page with two views, each its own route (so still a link), switched from a tab row;
  *  `also` = other routes that belong to this page (the rail marks it current on them). */
-interface Page { id: Screen; label: string; icon: IconName; tabs?: Tab[]; also?: Screen[] }
+interface Page { id: Screen; label: string; tabs?: Tab[]; also?: Screen[] }
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }
 const GROUPS: Group[] = [
   { id: 'shift', label: 'Shifts', icon: 'log', pages: [
-    { id: 'dashboard', label: 'Dashboard', icon: 'chart' },
-    { id: 'overview', label: 'Insights', icon: 'trend', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
-    { id: 'log', label: 'Log', icon: 'table' }, { id: 'calendar', label: 'Calendar', icon: 'calendar' },
-    { id: 'hub/income', label: 'Other income', icon: 'dollar' }] },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'overview', label: 'Insights', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
+    { id: 'log', label: 'Log' }, { id: 'table', label: 'Table' }, { id: 'calendar', label: 'Calendar' },
+    { id: 'hub/income', label: 'Other income' }] },
   { id: 'crew', label: 'Crew', icon: 'users', pages: [
-    { id: 'hub/week', label: 'Crew', icon: 'calendar', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
-    { id: 'people', label: 'People', icon: 'users' }] },
+    { id: 'hub/week', label: 'Crew', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
+    { id: 'people', label: 'People' }] },
   { id: 'settings', label: 'Settings', icon: 'settings', pages: [
-    { id: 'settings/wages', label: 'Settings', icon: 'settings', also: ['settings/look', 'settings/sync', 'settings/data'] }] }
+    { id: 'settings/wages', label: 'Settings', also: ['settings/roles', 'settings/look', 'settings/sync', 'settings/data'] }] }
 ];
 const owns = (p: Page, s: Screen) => p.id === s || !!p.tabs?.some(t => t.id === s) || !!p.also?.includes(s);
 
@@ -119,6 +121,7 @@ export function App() {
           {current === 'overview' && <OverviewScreen />}
           {current === 'calendar' && <CalendarScreen />}
           {current === 'log' && <LogScreen />}
+          {current === 'table' && <ShiftTable />}
           {current === 'summary' && <SummaryScreen />}
           {current === 'hub/week' && <HubWeek />}
           {current === 'hub/crew' && <HubCrew />}
@@ -142,6 +145,4 @@ export function App() {
 }
 
 /* `new` with a different pre-filled date is a different form: remount when the date changes. */
-import { sheetDate } from './router.ts';
-import styles from './app.module.css';
 const sheetDateKey = () => sheetDate.value ?? '';

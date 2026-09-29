@@ -54,14 +54,34 @@ export interface Staff {
   notes: string | null;
   updated_at: number;
   deleted: boolean;
+  aliases: string[];            // other names they go by; a typed name matches these too
+  photo: string | null;         // a small data:image URL, shown in their avatar
+  avatar_color: string | null;  // '#rrggbb' or a palette name; null picks one from the id
+  avatar_text: string | null;   // 1-3 characters in place of the initials
+  role: string | null;          // the main role; `roles` holds the others. Null on older rows: read roles[0] as main
+}
+export interface Role {
+  id: string;
+  name: string;                 // unique; what Staff.role and Staff.roles hold
+  color: string | null;         // '#rrggbb' or a palette name
+  icon: string | null;          // an icon name the app draws
+  sort: number;                 // rank: lower first
+  updated_at: number;
+  deleted: boolean;
 }
 export type Local<T> = T & { _dirty?: boolean };
 
 export const COLS: string[];
 export const INCOME_COLS: string[];
 export const STAFF_COLS: string[];
+/** The longest a person's photo (a data URL) may be: it lives in one Sheet cell. */
+export const PHOTO_MAX: number;
 export const CREW_COLS: string[];
 export const WAGE_COLS: string[];
+export const ROLE_COLS: string[];
+/** The palette names a colour can take besides a '#rrggbb' hex (the app's swatches, tested to match). */
+export const COLOR_NAMES: string[];
+export function validateRole(r: unknown): Role;
 export function validateWage(r: unknown): Wage;
 export function wageRateFor(rates: Pick<Wage, 'date' | 'rate'>[] | undefined, date: string): number | null;
 export function wageFor(rates: Pick<Wage, 'date' | 'rate'>[] | undefined, date: string, hours: number | null): number | null;
@@ -78,6 +98,24 @@ export function totalIncome(r: Pick<Shift, 'tips' | 'other'>, income?: Pick<Inco
 export function defaultShiftType(startMin: number | null | undefined): ShiftType | null;
 export function validateRow(r: unknown): Shift;
 export function validateIncome(r: unknown): Income;
+
+/** A Sheet row is an array of cells in the tab's column order (`COLS`, `INCOME_COLS`...). `sheetTo*` parse and validate
+ *  one, throwing on a typo; `*ToSheet` write one. */
+export type SheetRow = unknown[];
+export function rowToSheet(r: Shift): SheetRow;
+export function sheetToRow(a: SheetRow): Shift;
+export function incomeToSheet(r: Income): SheetRow;
+export function sheetToIncome(a: SheetRow): Income;
+export function crewToSheet(r: Crew): SheetRow;
+export function sheetToCrew(a: SheetRow): Crew;
+export function wageToSheet(r: Wage): SheetRow;
+export function sheetToWage(a: SheetRow): Wage;
+export function staffToSheet(r: Staff): SheetRow;
+export function sheetToStaff(a: SheetRow): Staff;
+export function roleToSheet(r: Role): SheetRow;
+export function sheetToRole(a: SheetRow): Role;
+/** Server side: merges incoming rows into an {id: row} map, last write wins; returns the ids that changed. */
+export function mergeInto<T extends { id: string; updated_at: number }>(map: Record<string, T>, incoming: T[]): string[];
 export function pickNewer<T extends { updated_at: number }>(current: T | undefined, incoming: T | undefined): T;
 export function reconcileClient<T extends { id: string; updated_at: number }>(
   local: Record<string, Local<T>>, serverRows: T[], heldIds?: string[]): Record<string, Local<T>>;

@@ -11,7 +11,7 @@
 .dhead b { font-weight: var(--fw-semi); color: var(--ink); }
 .dshift { display: flex; justify-content: center; gap: 2px; min-height: 1.5rem; margin-top: 2px; }
 .today { color: var(--accent); }
-.you { margin-left: var(--s-2); font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-2); }
+.you { display: inline-flex; margin-left: var(--s-2); vertical-align: -1px; }
 .none { padding: var(--s-5); color: var(--ink-2); text-align: center; }
 .cell { display: grid; gap: 3px; }
 .cell button, .off { display: flex; align-items: center; justify-content: center; gap: var(--s-2); width: 100%; min-height: 2.5rem; border-radius: var(--r-sm); font: inherit; font-size: var(--fs-meta); }
@@ -36,12 +36,7 @@
 .dform footer { display: flex; align-items: center; gap: var(--s-2); }
 .spacer { flex: 1; }
 
-/* the flat editable tables (crew log, other income) */
-.bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
-.bar .field { min-width: 0; }
-.cellin { width: 100%; max-width: 14rem; min-width: 6.5rem; min-height: 2rem; padding: 0 var(--s-2); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: inherit; font: inherit; text-align: left; }
-.cellin:hover { border-color: var(--line-strong); }
-.cellin:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 2px var(--accent-soft); }
-.cellin.left { text-align: left; }
-.body { min-height: 0; }
+/* the crew and income lists */
+.source { display: inline-flex; align-items: center; gap: var(--s-2); white-space: nowrap; }
+.body { display: flex; flex-direction: column; min-height: 0; }   /* the toolbar keeps its height; the list takes the rest */
 .filter { display: inline-flex; } .filter .input { width: auto; min-width: 9rem; }

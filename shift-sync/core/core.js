@@ -15,8 +15,15 @@
  *     updated_at:ms, deleted:bool }
  * Staff row (the employee roster; identity only, no activity):
  *   { id, name (the unique handle), first, last, roles:[string], id_number, manager:bool, is_user:bool,
- *     status:'active'|'inactive', notes, updated_at:ms, deleted:bool }
- *   In the Sheet, roles is one cell, comma-separated.
+ *     status:'active'|'inactive', notes, updated_at:ms, deleted:bool,
+ *     aliases:[string] (other names they go by, matched when a name is typed), photo:string|null (a small
+ *     data:image URL), avatar_color:string|null ('#rrggbb' or a palette name), avatar_text:string|null (1 to 3 characters),
+ *     role:string|null (their main role; `roles` then holds only the others) }
+ *   In the Sheet, roles and aliases are one cell each, comma-separated. The columns from aliases on come after `deleted`,
+ *   so a Staff tab from before them still reads. A row from before `role` has it null, and its first role reads as the main one.
+ * Role row (the roles people can have, each with a colour and an icon, in rank order like a server's role list):
+ *   { id, name (unique, what a Staff row's role/roles hold), color:string|null ('#rrggbb' or a palette name),
+ *     icon:string|null (an icon name the app draws), sort:number (lower ranks first), updated_at:ms, deleted:bool }
  * Crew row (child of a shift, linked by shift_id; one per bartender who worked it, including you):
  *   { id, shift_id, staff_id, name:string|null (snapshot of the roster name, so the Sheet reads),
  *     start:min|null, end:min|null, updated_at:ms, deleted:bool }
@@ -31,7 +38,16 @@ var COLS = ['id', 'date', 'start', 'end', 'tips', 'notes', 'updated_at', 'delete
 var INCOME_COLS = ['id', 'shift_id', 'category', 'amount', 'note', 'updated_at', 'deleted'];
 var CATEGORIES = ['Chump', 'Cash', 'Venmo', 'Consideration', 'Overtime'];
 
-var STAFF_COLS = ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted'];
+var STAFF_COLS = ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted',
+  'aliases', 'photo', 'avatar_color', 'avatar_text', 'role'];
+var ROLE_COLS = ['id', 'name', 'color', 'icon', 'sort', 'updated_at', 'deleted'];
+/* A colour a person's avatar or a role can take: a hex, or the name of one of the app's palette colours. A name the app
+ * doesn't have would draw no colour at all, so it is refused like any other typo (the app's swatches are tested against
+ * this list). */
+var COLOR_NAMES = ['teal', 'orange', 'green', 'cyan', 'violet', 'pink', 'blue', 'rose', 'indigo', 'gold'];
+function okColor(v) { return /^#[0-9a-fA-F]{6}$/.test(v) || COLOR_NAMES.indexOf(v) >= 0; }
+/* A photo is stored in its Sheet cell, and a cell holds 50,000 characters. */
+var PHOTO_MAX = 45000;
 
 /* `hours` is the last column: a readable, derived figure for whoever reads the Sheet. Written by the script, ignored on read. */
 var CREW_COLS = ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'hours'];
@@ -100,9 +116,10 @@ function validateRow(r) {
     var v = r[k];
     if (v !== null && (!Number.isInteger(v) || v < 0 || v >= 1440)) throw new Error('Bad ' + k + ' ' + v);
   });
-  if (r.tips !== null && typeof r.tips !== 'number') throw new Error('Bad tips ' + r.tips);
+  /* Money is a finite number everywhere. Tips can't go below zero; an income line can (a tip-out, a refund). */
+  if (r.tips !== null && (typeof r.tips !== 'number' || !isFinite(r.tips) || r.tips < 0)) throw new Error('Bad tips ' + r.tips + ' (a number, 0 or more)');
   var other = r.other === undefined ? null : r.other;   // rows from before this column existed
-  if (other !== null && typeof other !== 'number') throw new Error('Bad other ' + other);
+  if (other !== null && (typeof other !== 'number' || !isFinite(other))) throw new Error('Bad other ' + other);
   var type = r.shift_type === undefined ? null : r.shift_type;
   if (type !== null && type !== 'day' && type !== 'night') throw new Error('Bad shift_type ' + type + ' (day or night)');
   if (!Number.isFinite(r.updated_at)) throw new Error('Bad updated_at ' + r.updated_at);
@@ -210,21 +227,72 @@ function validateStaff(r) {
   if (blank(r.name)) throw new Error('Missing name');
   var roles = r.roles === undefined || r.roles === null ? [] : r.roles;
   if (!Array.isArray(roles)) throw new Error('Bad roles');
+  var aliases = r.aliases === undefined || r.aliases === null ? [] : r.aliases;
+  if (!Array.isArray(aliases)) throw new Error('Bad aliases');
   var status = blank(r.status) ? 'active' : r.status;
   if (status !== 'active' && status !== 'inactive') throw new Error('Bad status "' + status + '" (active or inactive)');
   if (!Number.isFinite(r.updated_at)) throw new Error('Bad updated_at ' + r.updated_at);
   var text = function (v) { return blank(v) ? null : String(v).trim(); };
+  var photo = text(r.photo);
+  if (photo !== null && !/^data:image\/(jpeg|png|webp);base64,/.test(photo)) throw new Error('Bad photo (a data:image URL)');
+  if (photo !== null && photo.length > PHOTO_MAX) throw new Error('Photo is too large');
+  var color = text(r.avatar_color);
+  if (color !== null && !okColor(color)) throw new Error('Bad avatar_color "' + color + '" (#rrggbb or one of ' + COLOR_NAMES.join(', ') + ')');
+  var initials = text(r.avatar_text);
+  if (initials !== null && initials.length > 3) throw new Error('Avatar text is 3 characters at most');
+  /* One entry per spelling, case-insensitive, never the name itself. A comma would split the Sheet cell, so it can't be in one. */
+  var name = String(r.name).trim(), seen = {};
+  seen[name.toLowerCase()] = true;
+  var akas = [];
+  aliases.forEach(function (x) {
+    var a = String(x).replace(/,/g, ' ').replace(/\s+/g, ' ').trim(), k = a.toLowerCase();
+    if (a === '' || seen[k]) return;
+    seen[k] = true;
+    akas.push(a);
+  });
+  /* The main role is never also one of the others. */
+  var role = text(r.role), main = role === null ? '' : role.toLowerCase(), others = {};
   return {
-    id: String(r.id), name: String(r.name).trim(), first: text(r.first), last: text(r.last),
-    roles: roles.map(function (x) { return String(x).trim(); }).filter(function (x) { return x !== ''; }),
+    id: String(r.id), name: name, first: text(r.first), last: text(r.last),
+    roles: roles.map(function (x) { return String(x).trim(); }).filter(function (x) {
+      var k = x.toLowerCase();
+      if (x === '' || k === main || others[k]) return false;
+      others[k] = true;
+      return true;
+    }),
     id_number: text(r.id_number), manager: !!r.manager, is_user: !!r.is_user, status: status,
-    notes: blank(r.notes) ? null : String(r.notes), updated_at: r.updated_at, deleted: !!r.deleted
+    notes: blank(r.notes) ? null : String(r.notes), updated_at: r.updated_at, deleted: !!r.deleted,
+    aliases: akas, photo: photo, avatar_color: color, avatar_text: initials, role: role
   };
+}
+
+function validateRole(r) {
+  if (!r || blank(r.id)) throw new Error('Missing id');
+  if (blank(r.name)) throw new Error('Missing name');
+  if (String(r.name).indexOf(',') >= 0) throw new Error('A role name can\'t hold a comma');
+  var color = blank(r.color) ? null : String(r.color).trim();
+  if (color !== null && !okColor(color)) throw new Error('Bad color "' + color + '" (#rrggbb or one of ' + COLOR_NAMES.join(', ') + ')');
+  var icon = blank(r.icon) ? null : String(r.icon).trim();
+  if (icon !== null && !/^[a-z][a-zA-Z0-9-]{0,31}$/.test(icon)) throw new Error('Bad icon "' + icon + '"');
+  var sort = blank(r.sort) ? 0 : Number(r.sort);
+  if (!Number.isFinite(sort)) throw new Error('Bad sort ' + r.sort);
+  if (!Number.isFinite(r.updated_at)) throw new Error('Bad updated_at ' + r.updated_at);
+  return { id: String(r.id), name: String(r.name).replace(/\s+/g, ' ').trim(), color: color, icon: icon, sort: sort, updated_at: r.updated_at, deleted: !!r.deleted };
+}
+
+function roleToSheet(r) { return [r.id, r.name, r.color || '', r.icon || '', r.sort, r.updated_at, !!r.deleted]; }
+
+function sheetToRole(a) {
+  return validateRole({
+    id: blank(a[0]) ? '' : String(a[0]).trim(), name: blank(a[1]) ? '' : String(a[1]),
+    color: a[2], icon: a[3], sort: a[4], updated_at: toNum(a[5], 'updated_at'), deleted: toBool(a[6])
+  });
 }
 
 function staffToSheet(r) {
   return [r.id, r.name, r.first || '', r.last || '', (r.roles || []).join(', '), r.id_number || '',
-    !!r.manager, !!r.is_user, r.status, r.notes || '', r.updated_at, !!r.deleted];
+    !!r.manager, !!r.is_user, r.status, r.notes || '', r.updated_at, !!r.deleted,
+    (r.aliases || []).join(', '), r.photo || '', r.avatar_color || '', r.avatar_text || '', r.role || ''];
 }
 
 function sheetToStaff(a) {
@@ -236,7 +304,9 @@ function sheetToStaff(a) {
     id_number: a[5], manager: toBool(a[6]), is_user: toBool(a[7]),
     status: blank(a[8]) ? 'active' : String(a[8]).trim().toLowerCase(),
     notes: blank(a[9]) ? null : String(a[9]),
-    updated_at: toNum(a[10], 'updated_at'), deleted: toBool(a[11])
+    updated_at: toNum(a[10], 'updated_at'), deleted: toBool(a[11]),
+    aliases: blank(a[12]) ? [] : String(a[12]).split(','),
+    photo: a[13], avatar_color: a[14], avatar_text: a[15], role: a[16]
   });
 }
 
@@ -284,8 +354,16 @@ function mergeInto(map, incoming) {
  * - Local rows missing from the server are dropped (deleted in the Sheet),
  *   unless dirty (created mid-flight or rejected — kept for retry).
  * - Ids in heldIds (Sheet row has a typo) are left exactly as they are locally.
+ * - A table that comes back with nothing at all (no rows, none held) drops nothing. A tab that was renamed, deleted or
+ *   cleared, or a new Sheet, reads as empty, and taking that as "every row was deleted" would wipe the device. Every
+ *   local row is marked dirty instead, so the next sync writes it back.
  * local: {id: row with _dirty flag}; returns a new map. */
 function reconcileClient(local, serverRows, heldIds) {
+  if (!serverRows.length && !(heldIds || []).length) {
+    var back = {};
+    Object.keys(local).forEach(function (id) { back[id] = local[id]._dirty ? local[id] : Object.assign({}, local[id], { _dirty: true }); });
+    return back;
+  }
   var held = {};
   (heldIds || []).forEach(function (id) { held[id] = true; });
   var out = {};
@@ -302,7 +380,7 @@ function reconcileClient(local, serverRows, heldIds) {
 function stripLocal(r) { var c = Object.assign({}, r); delete c._dirty; return c; }
 
 if (typeof module !== 'undefined') {
-  module.exports = { WAGE_COLS: WAGE_COLS, validateWage: validateWage, wageToSheet: wageToSheet, sheetToWage: sheetToWage, wageRateFor: wageRateFor, wageFor: wageFor, CREW_COLS: CREW_COLS, validateCrew: validateCrew, crewToSheet: crewToSheet, sheetToCrew: sheetToCrew, crewHours: crewHours, STAFF_COLS: STAFF_COLS, validateStaff: validateStaff, staffToSheet: staffToSheet, sheetToStaff: sheetToStaff, COLS: COLS, INCOME_COLS: INCOME_COLS, CATEGORIES: CATEGORIES, sumIncome: sumIncome,
+  module.exports = { COLOR_NAMES: COLOR_NAMES, PHOTO_MAX: PHOTO_MAX, ROLE_COLS: ROLE_COLS, validateRole: validateRole, roleToSheet: roleToSheet, sheetToRole: sheetToRole, WAGE_COLS: WAGE_COLS, validateWage: validateWage, wageToSheet: wageToSheet, sheetToWage: sheetToWage, wageRateFor: wageRateFor, wageFor: wageFor, CREW_COLS: CREW_COLS, validateCrew: validateCrew, crewToSheet: crewToSheet, sheetToCrew: sheetToCrew, crewHours: crewHours, STAFF_COLS: STAFF_COLS, validateStaff: validateStaff, staffToSheet: staffToSheet, sheetToStaff: sheetToStaff, COLS: COLS, INCOME_COLS: INCOME_COLS, CATEGORIES: CATEGORIES, sumIncome: sumIncome,
     validateIncome: validateIncome, incomeToSheet: incomeToSheet, sheetToIncome: sheetToIncome, toMin: toMin, toHHMM: toHHMM, hoursWorked: hoursWorked, defaultShiftType: defaultShiftType, tipsPerHour: tipsPerHour, totalIncome: totalIncome,
     validateRow: validateRow, rowToSheet: rowToSheet, sheetToRow: sheetToRow,
     pickNewer: pickNewer, mergeInto: mergeInto, reconcileClient: reconcileClient, stripLocal: stripLocal };

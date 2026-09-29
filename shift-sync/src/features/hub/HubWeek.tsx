@@ -11,6 +11,7 @@ import { TypeIcon } from '../../ui/Badges.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { CrewTimeline } from './CrewTimeline.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { MeBadge } from '../../ui/MeBadge.tsx';
 import { TimeField } from '../../ui/TimeField.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { toast } from '../../ui/toast.tsx';
@@ -21,7 +22,8 @@ import styles from './Hub.module.css';
  * Click a cell to set or change their start and end; hours are worked out from the times. A day with no shift can't hold hours,
  * so its cells are blank until the shift is logged. */
 const monday = signal(weekStart(today()));
-const extra = signal<string[]>([]);
+/** People added to a week with no shift of theirs in it yet, by that week's Monday: added to this week, not every week. */
+const extra = signal<Record<string, string[]>>({});
 const editing = signal<{ view: ShiftView; staff_id: string; name: string } | null>(null);
 /* Two views of the same week: Timeline (days down, a bar per bartender on one time ruler) and Grid (bartenders down, days across). */
 type View = 'timeline' | 'grid';
@@ -29,7 +31,8 @@ const [view, setView] = persisted<View>('crew:view', oneOf(['timeline', 'grid'] 
 
 export function HubWeek() {
   const people = liveStaff.value.map(p => ({ id: p.id, name: p.name, is_user: p.is_user }));
-  const g = crewWeek(liveViews.value, monday.value, people, extra.value);
+  const added = extra.value[monday.value] ?? [];
+  const g = crewWeek(liveViews.value, monday.value, people, added);
   const shown = new Set(g.rows.map(r => r.staff_id));
   const roster = liveStaff.value.filter(p => !shown.has(p.id) && p.status === 'active');
   const thisWeek = monday.value === weekStart(today());
@@ -72,7 +75,7 @@ export function HubWeek() {
             <tbody>
               {g.rows.map(r => (
                 <tr key={r.staff_id}>
-                  <th class="l strong" scope="row">{r.name}{personById(r.staff_id)?.is_user && <span class={styles.you}>you</span>}</th>
+                  <th class="l strong" scope="row">{r.name}{personById(r.staff_id)?.is_user && <span class={styles.you}><MeBadge /></span>}</th>
                   {r.cells.map(c => <td key={c.date}><CellButtons cell={c} staff_id={r.staff_id} name={r.name} /></td>)}
                   <td class="strong">{r.hours ? dec1(r.hours) : '—'}</td>
                 </tr>
@@ -92,7 +95,7 @@ export function HubWeek() {
         <div class={styles.addbar}>
           <label class={styles.add}>
             <span class="label-text">Add a bartender to this week</span>
-            <select class="input" value="" onChange={e => { const id = e.currentTarget.value; if (id) extra.value = [...extra.value, id]; e.currentTarget.value = ''; }}>
+            <select class="input" value="" onChange={e => { const id = e.currentTarget.value; if (id) extra.value = { ...extra.value, [monday.value]: [...added, id] }; e.currentTarget.value = ''; }}>
               <option value="">Choose…</option>
               {roster.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>

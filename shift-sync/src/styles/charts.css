@@ -8,13 +8,13 @@
 .inc-tips { --k: var(--accent); }
 .inc-wage { --k: color-mix(in srgb, var(--accent) 58%, var(--surface)); }
 .inc-other { --k: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
-.pill-key { display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--k-soft); color: var(--k); font-size: 10px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
+.pill-key { display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--k-soft); color: var(--k); font-size: 10px; font-style: normal; font-weight: var(--fw-bold); letter-spacing: .04em; }
 
 /* ---- stat tiles ---------------------------------------------------------------------------------------------- */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: var(--s-2); margin: 0; }
 .tile { display: grid; align-content: start; gap: 2px; min-width: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
-.tile dt { font-size: var(--fs-micro); font-weight: 600; color: var(--ink-2); }
-.tile dd { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; color: var(--ink); overflow-wrap: anywhere; }
+.tile dt { font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--ink-2); }
+.tile dd { margin: 0; font-size: 22px; line-height: 1.2; font-weight: var(--fw-bold); letter-spacing: -.02em; color: var(--ink); overflow-wrap: anywhere; }
 .tile .sub { font-size: var(--fs-meta); line-height: 1.35; color: var(--ink-2); }
 .tile.lead { border-color: var(--line-strong); }
 .tile.lead dd { font-size: 30px; }
@@ -23,8 +23,8 @@
 /* ---- facts: a quiet line of small figures under an input --------------------------------------------------------- */
 .facts { display: flex; flex-wrap: wrap; gap: 2px var(--s-4); margin: 0; padding: 0; list-style: none; font-size: var(--fs-meta); color: var(--ink-2); }
 .facts:empty { display: none; }
-.fact b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-.fact .fn { font-weight: 500; }
+.fact b { font-weight: var(--fw-semi); color: var(--ink); font-variant-numeric: tabular-nums; }
+.fact .fn { font-weight: var(--fw-med); }
 .fact.up .fn { color: var(--good); }
 .fact.down .fn { color: var(--warn); }
 /* the slim shift ribbon: a thin track, no legend */
@@ -42,7 +42,7 @@
 /* ---- charts: HTML laid out in percentages, so they reflow with their card ------------------------------------- */
 .viz { position: relative; display: grid; gap: var(--s-3); min-width: 0; margin: 0; }
 .viz-cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-2); }
-.viz-cap h4 { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.viz-cap h4 { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-semi); }
 .viz-empty { padding: var(--s-5) var(--s-3); border: 1px dashed var(--line-strong); border-radius: var(--r-md); text-align: center; }
 .plot { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: var(--plot-h, 168px) auto; column-gap: var(--s-2); }
 .yaxis { position: relative; min-width: 30px; }
@@ -61,7 +61,7 @@
 .col:hover .bar, .col:focus-visible .bar { filter: brightness(1.14); }
 .col:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: var(--r-sm); }
 .col.on .bar { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px 4px 0 0; }
-.vl { position: absolute; bottom: 100%; left: 50%; margin-bottom: 3px; transform: translateX(-50%); font-size: 11px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vl { position: absolute; bottom: 100%; left: 50%; margin-bottom: 3px; transform: translateX(-50%); font-size: 11px; font-weight: var(--fw-semi); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .line polyline { fill: none; stroke: color-mix(in srgb, var(--ink) 34%, transparent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .pt { position: absolute; width: 24px; height: 24px; padding: 0; border: 0; background: none; transform: translate(-50%, 50%); }
@@ -72,7 +72,7 @@
 .avgline span { position: absolute; z-index: 3; right: 0; bottom: 3px; padding: 0 var(--s-1); background: var(--surface); font-size: 11px; color: var(--ink-2); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-4); margin: 0; padding: 0; list-style: none; font-size: var(--fs-meta); color: var(--ink-2); }
 .legend li { display: inline-flex; align-items: center; gap: 6px; }
-.legend b { font-weight: 600; color: var(--ink); }
+.legend b { font-weight: var(--fw-semi); color: var(--ink); }
 .key { display: inline-block; flex: none; width: 12px; height: 8px; border-radius: 2px; background: var(--k, var(--accent)); }
 .key-dot { width: 8px; border-radius: 50%; background: var(--night); }
 .key-line { height: 3px; background: var(--night); }
@@ -88,9 +88,9 @@
 .viz-table :is(th, td) { padding: 4px var(--s-2); }
 .viz-table :is(th, td):first-child { padding-left: 0; }
 .viztip { position: absolute; z-index: 6; min-width: 120px; max-width: 240px; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); background: var(--ink); color: var(--bg); box-shadow: var(--shadow); font-size: var(--fs-meta); line-height: 1.4; pointer-events: none; }
-.tt-title { margin-bottom: 2px; font-weight: 600; }
+.tt-title { margin-bottom: 2px; font-weight: var(--fw-semi); }
 .tt-row { display: flex; align-items: center; gap: 6px; }
-.tt-row b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tt-row b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
 .tt-row span { opacity: .78; }
 .tt-key { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--k, transparent); box-shadow: 0 0 0 1.5px var(--bg); }
 .tt-key:not([class*="k-"]):not([class*="inc-"]) { display: none; }
@@ -98,10 +98,10 @@
 .hbars { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .hrow { display: grid; grid-template-columns: minmax(64px, 30%) minmax(0, 1fr) auto; align-items: center; gap: var(--s-2); font-size: var(--fs-meta); }
 .hl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hrow.on .hl { font-weight: 600; color: var(--accent); }
+.hrow.on .hl { font-weight: var(--fw-semi); color: var(--accent); }
 .track { height: 14px; border-left: 1px solid var(--line-strong); }
 .hfill { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--k, var(--accent)); }
-.hv { min-width: 40px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.hv { min-width: 40px; font-weight: var(--fw-semi); text-align: right; font-variant-numeric: tabular-nums; }
 
 /* the income mix: three parts of one bar, a 2 px surface gap between them */
 .mixbar { display: flex; gap: 2px; height: 14px; }
@@ -121,7 +121,7 @@
 .ltrack > i { position: absolute; top: 0; bottom: 0; border-radius: 6px; }
 .ltrack .seg-work { background: var(--accent); }
 .ltrack .seg-break { top: -3px; bottom: -3px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--line-strong) 0 2px, var(--surface) 2px 4px); box-shadow: 0 0 0 2px var(--surface); }
-.ltrack .seg-party { display: flex; align-items: center; overflow: hidden; padding: 0 var(--s-2); background: var(--party); color: var(--surface); font-size: 11px; font-style: normal; font-weight: 600; white-space: nowrap; }
+.ltrack .seg-party { display: flex; align-items: center; overflow: hidden; padding: 0 var(--s-2); background: var(--party); color: var(--surface); font-size: 11px; font-style: normal; font-weight: var(--fw-semi); white-space: nowrap; }
 .ltrack .seg-crew { top: 5px; bottom: 5px; background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
 .ltrack .seg-past { top: 5px; bottom: 5px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line-strong); }
 
@@ -129,19 +129,19 @@
 .dateline { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); align-items: end; gap: var(--s-3); }
 .dateline + #dateCal { margin-top: var(--s-1); }
 .datenote { margin: 0; padding-bottom: 10px; font-size: var(--fs-meta); color: var(--ink-2); }
-.datenote.warn { color: var(--warn); font-weight: 500; }
+.datenote.warn { color: var(--warn); font-weight: var(--fw-med); }
 .cal { display: grid; gap: var(--s-3); min-width: 0; }
 .calhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); }
-.caltitle { margin: 0; font-size: var(--fs-title); font-weight: 600; }
+.caltitle { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-semi); }
 .calnav { display: flex; align-items: center; gap: var(--s-2); }
 .calnav .icon-btn { border-color: var(--line-strong); background: var(--surface); }
 .calgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
-.dow { padding: 0 0 2px; font-size: var(--fs-micro); font-weight: 600; letter-spacing: .08em; text-align: center; color: var(--ink-2); }
+.dow { padding: 0 0 2px; font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: .08em; text-align: center; color: var(--ink-2); }
 .cal .day { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; min-height: 60px; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink); text-align: left; transition: background-color .12s, border-color .12s; }
 .cal .day.out { opacity: .5; }
-.cal .day .dn { font-size: 13px; font-weight: 500; line-height: 1.2; }
+.cal .day .dn { font-size: 13px; font-weight: var(--fw-med); line-height: 1.2; }
 .cal .day.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.cal .day.today .dn { font-weight: 700; color: var(--accent); }
+.cal .day.today .dn { font-weight: var(--fw-bold); color: var(--accent); }
 .cal button.day { cursor: pointer; }
 .cal button.day:hover { border-color: var(--accent); background: var(--surface-3); }
 .cal .day.sel { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
@@ -188,7 +188,7 @@
 .cal-browse .day.multi .sc:first-child .sc-total { grid-row: 2; }
 .cal-browse .day.multi .sc:first-child .sc-sub { grid-row: 3; }
 .cal-browse .day.multi .sc:first-child .sc-time { display: block; grid-column: 1 / -1; grid-row: 4; }
-.cal-browse .day.today .dn { color: var(--accent); font-weight: 700; }
+.cal-browse .day.today .dn { color: var(--accent); font-weight: var(--fw-bold); }
 
 
 /* chart grids on a panel, the side column's figure list, and the party shift colour */
@@ -219,8 +219,6 @@
 .mark.mean { border-left: 2px dashed var(--warn); }
 .refline { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--ink-2); pointer-events: none; }
 .refline span { position: absolute; right: 0; bottom: 3px; padding: 0 var(--s-1); background: var(--surface); font-size: 11px; color: var(--ink-2); }
-.delta { font-weight: var(--fw-med); white-space: nowrap; }
-.delta.up { color: var(--good); } .delta.down { color: var(--warn); }
 .insight { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface-2); font-size: var(--fs-body); }
 .insight b { font-weight: var(--fw-semi); }
 .ovtwo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
@@ -232,7 +230,10 @@
 .chartcard p.muted { margin: var(--s-2) 0 0; font-size: var(--fs-meta); }
 .mini .md { display: grid; place-items: center; aspect-ratio: 1; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-2); font: inherit; font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
 .mini .md.out { opacity: 0.35; }
-.mini .md.has { background: color-mix(in srgb, var(--accent) calc(18% + var(--heat, 0) * 62%), var(--surface-2)); color: var(--ink); font-weight: var(--fw-semi); cursor: pointer; }
+.mini .md.has { background: var(--surface-2); color: var(--ink); font-weight: var(--fw-semi); cursor: pointer; }
+/* shaded like the Calendar's days: above the typical rate leans on the primary colour, below on amber */
+.mini .md.has[data-side='hi'] { background: color-mix(in srgb, var(--accent) calc(12% + var(--heat, 0) * 40%), var(--surface)); }
+.mini .md.has[data-side='lo'] { background: color-mix(in srgb, var(--warn) calc(12% + var(--heat, 0) * 36%), var(--surface)); }
 .mini .md.has:hover { outline: 2px solid var(--accent); }
 .mini .md.today { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); }
 .viz-cap:has(.minink) { align-items: center; }

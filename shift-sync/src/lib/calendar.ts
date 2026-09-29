@@ -22,9 +22,6 @@ export const byDate = (views: ShiftView[]): Map<string, ShiftView[]> => {
   return map;
 };
 
-/** 0..1: how much a day earned against the month's best day. */
-export const heat = (dayTotal: number, best: number): number => (best > 0 ? Math.max(0, Math.min(1, dayTotal / best)) : 0);
-
 /* Shading by rate: a day is coloured by how its tips per hour compares with the typical shift in view, not by how much it
  * earned. Above the median leans on the primary colour, below it on amber; the further from the median, the deeper. */
 export interface RateScale { median: number; span: number; at: (rate: number | null) => { mag: number; side: 'hi' | 'lo' } | null }

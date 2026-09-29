@@ -1,6 +1,6 @@
 /* Code.gs — Sheet side. Requires core.gs (a copy of core.js) in the same project.
- * Five tabs: Shifts (parent), Income and Crew (child rows linked by shift_id), Staff (the employee roster),
- * Wages (your hourly wage by effective date). Crew is the hub between Shifts and Staff: one row per bartender per shift,
+ * Six tabs: Shifts (parent), Income and Crew (child rows linked by shift_id), Staff (the employee roster),
+ * Wages (your hourly wage by effective date), Roles (each role's colour, icon and rank). Crew is the hub between Shifts and Staff: one row per bartender per shift,
  * with their start, end and hours. */
 
 /* A function, not a var, so it doesn't depend on core.gs loading first. */
@@ -15,7 +15,9 @@ function tables() {
     { name: 'Crew', key: 'crew', cols: CREW_COLS, parse: sheetToCrew, toSheet: crewToSheet,
       stamp: 7, del: 8, fix: fixCrewCells, validate: validateCrew, held: 'held_crew', recalc: crewHoursCell },
     { name: 'Wages', key: 'wages', cols: WAGE_COLS, parse: sheetToWage, toSheet: wageToSheet,
-      stamp: 5, del: 6, fix: fixWageCells, validate: validateWage, held: 'held_wages' }
+      stamp: 5, del: 6, fix: fixWageCells, validate: validateWage, held: 'held_wages' },
+    { name: 'Roles', key: 'roles', cols: ROLE_COLS, parse: sheetToRole, toSheet: roleToSheet,
+      stamp: 6, del: 7, fix: function (v) {}, validate: validateRole, held: 'held_roles' }
   ];
 }
 
@@ -66,6 +68,10 @@ function setup() {
   inc.getRange('F:F').setNumberFormat('0');
   staff.getRange('A:F').setNumberFormat('@');   // ids like E0621 stay text
   staff.getRange('K:K').setNumberFormat('0');
+  staff.getRange('M:Q').setNumberFormat('@');   // aliases, photo, avatar colour and text, main role stay text
+  var roles = ss.getSheetByName('Roles');
+  roles.getRange('A:D').setNumberFormat('@');
+  roles.getRange('F:F').setNumberFormat('0');
   crew.getRange('A:F').setNumberFormat('@');    // ids and HH:MM times stay text
   crew.getRange('G:G').setNumberFormat('0');
   crew.getRange('I:I').setNumberFormat('0.00');
@@ -90,10 +96,23 @@ function onEdit(e) {
   var n = last - first + 1, si = t.stamp - 1, di = t.del - 1;
   var vals = sh.getRange(first, 1, n, t.cols.length).getValues();
   var now = Date.now();
+  /* A row copied and pasted keeps its id, and two rows with one id overwrite each other. A paste covers the id column
+   * where typing into a cell doesn't, so a pasted row whose id is already on another row gets a new one; a row you
+   * edit cell by cell keeps its own. */
+  var pasted = e.range.getColumn() === 1, taken = {};
+  if (pasted && sh.getLastRow() >= 2) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().forEach(function (x, k) {
+      if (x[0] !== '' && (k + 2 < first || k + 2 > last)) taken[String(x[0]).trim()] = true;
+    });
+  }
   var ids = [], stamps = [], dels = [];
   vals.forEach(function (v) {
     var empty = v.every(function (x, i) { return i === 0 || i === si || i === di || x === ''; });
-    ids.push([v[0] || (empty ? '' : Utilities.getUuid())]);
+    var id = v[0] === '' ? '' : String(v[0]).trim();
+    if (id && taken[id]) id = '';   // a copy of another row: a row of its own from now on
+    if (!id && !empty) id = Utilities.getUuid();
+    if (pasted && id) taken[id] = true;   // the same row pasted twice in one go
+    ids.push([id]);
     stamps.push([empty && !v[0] ? '' : now]);
     dels.push([v[di] === '' && !empty ? false : v[di]]);
   });
@@ -106,12 +125,13 @@ function onEdit(e) {
   }
 }
 
-/* POST { token, rows: [...shifts], income: [...], staff: [...], crew: [...], wages: [...] }
- *   -> { ok, rows, income, staff, crew, wages: <complete merged sets>, held, held_income, held_staff, held_crew, held_wages: [ids], errors }
+/* POST { token, rows: [...shifts], income: [...], staff: [...], crew: [...], wages: [...], roles: [...] }
+ *   -> { ok, rows, income, staff, crew, wages, roles: <complete merged sets>, held, held_income, held_staff, held_crew, held_wages, held_roles: [ids], errors }
  * A missing key is treated as an empty list, so an older app still works. */
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(15000);
+  // Another device's sync holds the lock: say so as data, not as an error page the app can't read.
+  if (!lock.tryLock(15000)) return json({ error: 'The Sheet is busy with another sync. It will try again.' });
   try {
     var body = JSON.parse(e.postData.contents);
     if (body.token !== PropertiesService.getScriptProperties().getProperty('TOKEN')) {
@@ -168,6 +188,15 @@ function readAll(sh, t) {
     t.fix(v, tz);
     try {
       var r = t.parse(v);
+      if (rowNum[r.id] || held[r.id]) {
+        /* One id on two rows (a copy pasted before this script gave copies their own id): neither is taken, so neither
+         * overwrites the other, and the app keeps its own copy until the Sheet says which is which. */
+        var other = rowNum[r.id] || held[r.id];
+        errors.push({ source: 'sheet', row: i + 1, error: 'Same id as row ' + other + ': a copied row keeps its id. Clear the id on the copy and it gets a new one.' });
+        delete map[r.id]; delete rowNum[r.id];
+        held[r.id] = other;
+        continue;
+      }
       map[r.id] = r;
       rowNum[r.id] = i + 1;
     } catch (err) {

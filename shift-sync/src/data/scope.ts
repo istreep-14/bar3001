@@ -5,7 +5,7 @@ import type { Scope, Unit } from '../lib/scope.ts';
 import type { ShiftView } from '../lib/stats.ts';
 
 /* The one period every data screen shares. Persisted, and untouched by navigation:
- * go from Log to Rate and you are looking at the same window. */
+ * go from the Log to Totals and you are looking at the same window. */
 const KEY = 'scope2';
 const valid = (s: any): s is Scope =>
   !!s && (s.mode === 'all' || (s.mode === 'last' && clampN(s.n) === s.n && ['days', 'weeks', 'months', 'years', 'shifts'].includes(s.unit)) ||

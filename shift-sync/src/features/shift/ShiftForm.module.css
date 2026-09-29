@@ -64,6 +64,7 @@
 .pill { min-height: 2rem; padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-body); transition: background-color var(--dur), border-color var(--dur); }
 .pill:hover { border-color: var(--accent); background: var(--surface-3); }
 .pill[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: var(--fw-semi); }
+.pill[aria-pressed='true'] :global(.me-badge) { color: inherit; }
 .pill[aria-pressed='true']::after { content: ' ✕'; font-weight: var(--fw-normal); opacity: 0.8; }
 .check { display: flex; align-items: flex-start; gap: var(--s-3); padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface-2); cursor: pointer; }
 .check input { width: 1.25rem; height: 1.25rem; margin: 2px 0 0; accent-color: var(--accent); }
@@ -75,7 +76,7 @@
 .foot :global(.btn-primary) { min-width: 7.5rem; }
 .spacer { flex: 1; }
 
-@media (max-width: 720px) {
+@media (max-width: 45rem) {
   .modal { width: 100vw; height: 100dvh; border-radius: 0; border: 0; }
   .head { padding: var(--s-3); }
   .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }

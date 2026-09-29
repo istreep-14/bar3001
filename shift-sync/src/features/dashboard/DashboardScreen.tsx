@@ -3,15 +3,21 @@ import { signal } from '@preact/signals';
 import { liveViews, personById, ready } from '../../data/store.ts';
 import { addDays, today } from '../../lib/dates.ts';
 import { bestShifts, waiting, weekCompare } from '../../lib/dashboard.ts';
-import { isPending } from '../../lib/groups.ts';
-import { dec1, dollars, hours, money, moneyWhole, shortDate, weekdayShort } from '../../lib/format.ts';
+import { STATUS_LABEL, isPending, shiftStatus } from '../../lib/groups.ts';
+import { RANK_MIN_HOURS } from '../../lib/stats.ts';
+import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
 import { DeltaPill } from '../../ui/kpi.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ShiftLog } from '../../parts/ShiftLog.tsx';
+import type { LogCol } from '../../parts/ShiftLog.tsx';
 import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
+import { MeBadge } from '../../ui/MeBadge.tsx';
 import styles from './DashboardScreen.module.css';
+
+/** The card is narrower than the Log: its list leaves out the two quiet money columns. */
+const NARROW: LogCol[] = ['wage', 'other'];
 
 /* Dashboard: this week at a glance, and a door to every other page. The numbers across the top are this week against
  * last week (the same Monday-to-Sunday weeks the Log groups by). Under them, the last two weeks as the Log's own grouped
@@ -45,7 +51,7 @@ export function DashboardScreen() {
 
   const kpis = [
     { label: 'Tips', value: dollars(w.now.tips), pct: w.delta.tips },
-    { label: 'Tips / hr', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph },
+    { label: 'Rate', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph },
     { label: 'Hours', value: hours(w.now.hours), pct: w.delta.hours, neutral: true },
     { label: 'Shifts', value: String(w.now.shifts), pct: null },
     { label: 'Other income', value: dollars(w.now.extra), pct: w.delta.extra },
@@ -87,7 +93,7 @@ export function DashboardScreen() {
           </dl>
 
           <Card title="Last two weeks" to="log" link="Open the log">
-            <ShiftLog views={recent} by="week" openId={open} inline={false} />
+            <ShiftLog views={recent} by="week" openId={open} inline={false} hidden={NARROW} />
           </Card>
         </div>
 
@@ -96,7 +102,7 @@ export function DashboardScreen() {
             <div class={styles.days} role="group" aria-label={offset === 0 ? 'Hours each day this week' : 'Hours each day last week'}>
               {w.days.map(d => {
                 const first = d.views.find(v => !isPending(v)) ?? d.views[0], sel = !!first && d.views.some(v => v.shift.id === open);
-                const status = !first ? 'no shift' : d.views.every(isPending) ? 'scheduled, no tips yet' : `${hours(d.hours)}, ${dollars(d.tips)}`;
+                const status = !first ? 'no shift' : d.views.every(isPending) ? STATUS_LABEL[shiftStatus(d.views[0]!)].toLowerCase() : `${hours(d.hours)}, ${dollars(d.tips)}`;
                 const label = `${weekdayShort(d.date)} ${shortDate(d.date)}: ${status}`;
                 return (
                   <button type="button" key={d.date} class={styles.day} aria-label={first ? `${label}. Open` : `${label}. New shift`} aria-pressed={sel}
@@ -110,11 +116,11 @@ export function DashboardScreen() {
             </div>
             <dl class={styles.list}>
               <div><dt>Hours</dt><dd class="num">{hours(w.now.hours)} <span class="muted">of 40</span></dd></div>
-              <div><dt>Best day</dt><dd class="num">{bestDay ? `${weekdayShort(bestDay.date)} · ${money(bestDay.tips / bestDay.hours)}/hr` : '—'}</dd></div>
+              <div><dt>Best day</dt><dd class="num">{bestDay ? `${weekdayShort(bestDay.date)} · ${perHour(bestDay.tips / bestDay.hours)}` : '—'}</dd></div>
             </dl>
           </Card>
 
-          <Card title="Best nights" sub="Tips per hour, last 12 weeks" to="overview" link="Open insights">
+          <Card title="Best nights" sub={`Tips per hour, last 12 weeks, shifts of ${RANK_MIN_HOURS}h or more`} to="overview" link="Open insights">
             {best.length === 0 ? <p class="muted side-note">Nothing in the last 12 weeks yet.</p> : (
               <div class={styles.best}>
                 {best.map((v, i) => (
@@ -129,11 +135,11 @@ export function DashboardScreen() {
           </Card>
 
           {todo.length > 0 && (
-            <Card title="Waiting on tips" to="log" link="Open the log">
+            <Card title="Awaiting tips" to="log" link="Open the log">
               <ul class={styles.todo}>
                 {todo.slice(0, 4).map(v => (
                   <li key={v.shift.id}>
-                    <span><b>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</b><span class="chip" data-kind="pending">No tips yet</span></span>
+                    <span><b>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</b><span class="chip" data-kind="pending">{STATUS_LABEL[shiftStatus(v)]}</span></span>
                     <button type="button" class="btn" onClick={() => openForm(v.shift.id)}>Fill in tips</button>
                   </li>
                 ))}
@@ -144,7 +150,7 @@ export function DashboardScreen() {
           <Card title={offset === 0 ? 'Crew this week' : 'Crew last week'} to="hub/week" link="Open crew week">
             {crewRows.length === 0 ? <p class="muted side-note">No one logged on that week's shifts.</p> : (
               <dl class={styles.list}>
-                {crewRows.map(r => <div key={r.id}><dt>{r.name}{r.you && <span class="muted"> you</span>}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
+                {crewRows.map(r => <div key={r.id}><dt>{r.name}{r.you && <MeBadge />}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
               </dl>
             )}
           </Card>

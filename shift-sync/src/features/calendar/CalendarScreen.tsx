@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { liveViews, viewById } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
-import { longDate } from '../../lib/format.ts';
+import { MONTH_NAMES, MONTH_SHORT, longDate } from '../../lib/format.ts';
 import { summarize } from '../../lib/stats.ts';
 import { closeSheet, openForm, openSheet, sheet } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
@@ -9,7 +9,7 @@ import { StatList } from '../../ui/kpi.tsx';
 import { periodItems } from '../../ui/SideStats.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftDetails } from '../../parts/ShiftDetails.tsx';
-import { MONTH_NAMES, MonthCalendar, MonthNav } from '../../ui/MonthCalendar.tsx';
+import { MonthCalendar, MonthNav } from '../../ui/MonthCalendar.tsx';
 import type { Month } from '../../ui/MonthCalendar.tsx';
 import { StackView } from './StackView.tsx';
 import { oneOf, persisted } from '../../data/persisted.ts';
@@ -27,7 +27,7 @@ export function CalendarScreen() {
   const stack = view.value === 'stack';
   const first = new Date(Date.UTC(month.y, month.m - 2, 1));
   const title = stack
-    ? (first.getUTCFullYear() === month.y ? `${MONTH_NAMES[first.getUTCMonth()]!.slice(0, 3)} – ${MONTH_NAMES[month.m]!.slice(0, 3)} ${month.y}` : `${MONTH_NAMES[first.getUTCMonth()]!.slice(0, 3)} ${first.getUTCFullYear()} – ${MONTH_NAMES[month.m]!.slice(0, 3)} ${month.y}`)
+    ? (first.getUTCFullYear() === month.y ? `${MONTH_SHORT[first.getUTCMonth()]} – ${MONTH_SHORT[month.m]} ${month.y}` : `${MONTH_SHORT[first.getUTCMonth()]} ${first.getUTCFullYear()} – ${MONTH_SHORT[month.m]} ${month.y}`)
     : `${MONTH_NAMES[month.m]} ${month.y}`;
   return (
     <section class="panel" aria-labelledby="cal-title">

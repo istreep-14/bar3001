@@ -1,0 +1,19 @@
+/* The crew's group picture (CrewPhotos.tsx). The figures stand on the row's bottom edge and reach --crew-scale of its height
+   (80%; a page with short rows raises it): they
+   hang off the nearest positioned ancestor (the crew cell, as tall as the row), so they take the row's height and never add
+   to it. In the flow, a slot keeps their width, worked out from --crew-h (the page sets it to the row's height), so what
+   follows (+N, the bar's hours) sits after them. Every figure is square; each after the first tucks --crew-tuck behind the
+   one before (a cut-out's person is narrower than its square, so that is mostly air). */
+.frame {
+  --crew-fig: calc(var(--crew-h, 3rem) * var(--crew-scale, 0.8)); --crew-tuck: calc(var(--crew-fig) * 0.15);
+  display: inline-flex; align-items: center; gap: var(--s-1); vertical-align: middle;
+}
+.slot { flex: none; width: calc(var(--crew-fig) + (var(--n) - 1) * (var(--crew-fig) - var(--crew-tuck))); height: 1px; }
+.group { position: absolute; top: 0; bottom: 0; isolation: isolate; display: flex; align-items: flex-end; }   /* left unset: it stays where the slot starts */
+.fig { position: relative; display: block; flex: none; height: calc(var(--crew-scale, 0.8) * 100%); width: auto; aspect-ratio: 1; object-fit: contain; object-position: bottom; }
+.fig + .fig { margin-left: calc(-1 * var(--crew-tuck)); }
+img.fig { filter: var(--photo-rim); }   /* dark mode: a white edge that follows the figure's outline (tokens.css) */
+.fig[data-opaque] { border-radius: 50% 50% 0 0 / 42% 42% 0 0; object-fit: cover; }   /* a photo with its background: an arch, flat on the row */
+svg.fig { fill: var(--fill); }
+svg.fig text { fill: var(--letters); font-size: 17px; font-weight: var(--fw-bold); text-anchor: middle; letter-spacing: 0.02em; }
+.more { flex: none; padding: 1px 6px; border-radius: var(--r-pill); background: var(--surface-3); color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-semi); font-style: normal; line-height: 1.4; }

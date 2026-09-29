@@ -1,7 +1,7 @@
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
 import { addDays } from '../../lib/dates.ts';
-import { dec1, dollars, perHour, shortDate } from '../../lib/format.ts';
+import { MONTH_NAMES, WEEKDAY_NAMES, dec1, dollars, perHour, shortDate } from '../../lib/format.ts';
 import { BYS, isTime, summaryRows } from '../../lib/summary.ts';
 import type { By, SumRow } from '../../lib/summary.ts';
 import { summarize } from '../../lib/stats.ts';
@@ -20,14 +20,12 @@ import styles from './SummaryScreen.module.css';
 
 /* Summary: the Log's grouped-row totals as a table of their own. Fold the shifts in the period into weeks, months, years, weekdays,
  * types or party / no party, and see every column summed for each; time groups also show the change against the one before. */
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const [by, setBy] = persisted<By>('sum:by', oneOf(BYS.map(b => b.id)), 'week');
 
 const label = (b: By, key: string): string => {
   if (b === 'week') return `${shortDate(key)} – ${shortDate(addDays(key, 6))}`;
-  if (b === 'month') return `${MONTHS[+key.slice(5) - 1]} ${key.slice(0, 4)}`;
-  if (b === 'weekday') return WEEKDAYS[+key]!;
+  if (b === 'month') return `${MONTH_NAMES[+key.slice(5) - 1]} ${key.slice(0, 4)}`;
+  if (b === 'weekday') return WEEKDAY_NAMES[+key]!;
   if (b === 'type') return key === 'day' ? 'Day' : key === 'night' ? 'Night' : 'No type';
   if (b === 'party') return key === 'party' ? 'Party' : 'No party';
   return key;
@@ -46,14 +44,14 @@ export function SummaryScreen() {
       <Stack title={label(b, r.key)} lines={[`${r.s.shifts} shift${r.s.shifts === 1 ? '' : 's'} · ${dec1(r.s.hours)} hr`]} />
     ) },
     { key: 'tips', head: 'Tips', sort: r => r.s.tips, cell: r => <Stack title={dollars(r.s.tips)} lines={[perHour(r.s.tph)]} /> },
-    { key: 'total', head: 'Earned', sort: r => r.s.total, cell: r => <Stack title={dollars(r.s.total)} lines={earnedLines(r)} /> },
+    { key: 'total', head: 'Total', sort: r => r.s.total, cell: r => <Stack title={dollars(r.s.total)} lines={earnedLines(r)} /> },
     { key: 'crew', head: 'Crew', className: 'fit hide-sm', sort: r => r.s.crewHours, cell: r => (r.s.crewHours ? `${dec1(r.s.crewHours)} hr` : '—') },
     ...(time ? [{
       key: 'change', head: 'Vs previous', className: 'hide-sm', sort: (r: SumRow) => pctChange(r.s.total, r.prev?.total),
       cell: (r: SumRow) => (
         <span class="stack">
           <span class="stack-row">{r.prev ? <DeltaPill pct={pctChange(r.s.total, r.prev.total)} /> : '—'} <span class="stack-meta">total</span></span>
-          <span class="stack-row">{r.prev ? <DeltaPill pct={pctChange(r.s.tph, r.prev.tph)} /> : null} <span class="stack-meta">tips/hr</span></span>
+          <span class="stack-row">{r.prev ? <DeltaPill pct={pctChange(r.s.tph, r.prev.tph)} /> : null} <span class="stack-meta">rate</span></span>
         </span>
       )
     }] satisfies Column<SumRow>[] : [])

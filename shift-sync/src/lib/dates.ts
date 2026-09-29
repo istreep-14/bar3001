@@ -1,10 +1,12 @@
 // Dates are 'YYYY-MM-DD' strings everywhere. All math is done in UTC so a
-// device timezone or DST change can never shift a shift to another day.
+// device timezone or DST change can never shift a shift to another day. The one local read is today().
 const DAY = 86_400_000;
 const ms = (d: string) => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
 const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
 
-export const today = (): string => new Date().toLocaleDateString('en-CA');
+/** The device's own date, not UTC's: "today" is the day you're living in. Built from its parts rather than a locale's format
+ *  (en-CA's has changed under browsers before), so it is always 'YYYY-MM-DD'. */
+export const today = (): string => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
 export const addDays = (d: string, n: number): string => iso(ms(d) + n * DAY);
 export const daysBetween = (a: string, b: string): number => Math.round((ms(b) - ms(a)) / DAY);
 /** 0 = Sunday. */

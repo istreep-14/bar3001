@@ -2,12 +2,13 @@ import type { MutableRef } from 'preact/hooks';
 import { CATEGORIES, defaultShiftType, wageRateFor } from '../../../core/core.generated.js';
 import type { Category, ShiftType, Local, Staff } from '../../../core/core.generated.js';
 import { liveViews, liveWages, me, personById } from '../../../data/store.ts';
-import { dec1, hours, longDate, money, moneyWhole, shortDate, weekdayShort } from '../../../lib/format.ts';
+import { dec1, hours, longDate, money, perHour, shortDate, weekdayShort } from '../../../lib/format.ts';
 import type { IncomePart } from '../../../lib/groups.ts';
 import type { ShiftView, Summary } from '../../../lib/stats.ts';
 import { go } from '../../../router.ts';
 import { Facts, Ribbon } from '../../../ui/charts.tsx';
 import { Icon } from '../../../ui/Icon.tsx';
+import { MeBadge } from '../../../ui/MeBadge.tsx';
 import { MixBar, MixKey } from '../../../ui/MixBar.tsx';
 import { MonthCalendar } from '../../../ui/MonthCalendar.tsx';
 import { TimeField } from '../../../ui/TimeField.tsx';
@@ -89,7 +90,7 @@ export function HomePage({ c }: { c: Ctx }) {
           <button type="button" class="linkbtn" onClick={() => show('time')}>{form.date ? `Compare with your past ${weekdayLong(form.date)} shifts` : 'Compare with your past shifts'}</button>
         </div>
         <div class={styles.homeBlock}>
-          <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {money(tph)}/hr</span>}</h3>
+          <h3 class={styles.subhead}>Tips{tph != null && <span class={styles.homeSub}> · {perHour(tph)}</span>}</h3>
           <TipsField c={c} hideLabel />
           <button type="button" class="linkbtn" onClick={() => show('misc')}>Add other income</button>
         </div>
@@ -115,7 +116,7 @@ export function DatePage({ c }: { c: Ctx }) {
           <input class="input" type="date" value={form.date} aria-invalid={!!errors.date} required onInput={e => set({ date: e.currentTarget.value })} />
         </label>
         <p class={styles.datenote + (sameDay.length ? ' ' + styles.warn : '')}>
-          {form.date ? (sameDay.length ? `This day already holds ${sameDay.map(v => (v.shift.shift_type ? (v.shift.shift_type === 'day' ? 'a day' : 'a night') : 'a')).join(' and ')} shift. A second one is fine.` : longDate(form.date)) : 'Pick a day, or leave it blank for now.'}
+          {form.date ? (sameDay.length ? `This day already holds ${sameDay.map(v => (v.shift.shift_type ? (v.shift.shift_type === 'day' ? 'a day' : 'a night') : 'a')).join(' and ')} shift. A second one is fine.` : longDate(form.date)) : 'Pick a day.'}
         </p>
       </div>
       {err('date')}
@@ -129,9 +130,9 @@ export function TimePage({ c }: { c: Ctx }) {
   return (
     <div class={styles.pane} role="tabpanel">
       <TimeFields c={c} />
-      <Facts items={[h != null && { label: 'Worked', value: hours(h) }, h != null && end != null && start != null && end <= start && { label: 'Ends', value: 'the next day' }]} />
+      <Facts items={[h != null && { label: 'Worked', value: hours(h) }, h != null && end != null && start != null && end < start && { label: 'Ends', value: 'the next day' }]} />
       <Ribbon lanes={[{ name: 'This shift', start, end, cls: 'seg-work' }, ...pastSame.map(v => ({ name: `${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}`, start: v.shift.start, end: v.shift.end, cls: 'seg-past' as const }))]} />
-      <p class={styles.hint}>{pastSame.length ? `Under it: your last ${pastSame.length === 1 ? '' : pastSame.length + ' '}${form.date ? weekdayLong(form.date) : ''} shift${pastSame.length === 1 ? '' : 's'}. ` : ''}An end at or before the start means the shift ends the next day.</p>
+      <p class={styles.hint}>{pastSame.length ? `Under it: your last ${pastSame.length === 1 ? '' : pastSame.length + ' '}${form.date ? weekdayLong(form.date) : ''} shift${pastSame.length === 1 ? '' : 's'}. ` : ''}An end before the start means the shift ends the next day.</p>
     </div>
   );
 }
@@ -148,7 +149,7 @@ export function TypePage({ c }: { c: Ctx }) {
               <input type="radio" name="type" value={t} checked={form.type === t}
                 onClick={() => { typeTouched.current = true; set({ type: form.type === t ? '' : t }); }} onChange={() => {}} />
               <b>{t === 'day' ? 'Day' : 'Night'}</b>
-              <span class={styles.typehist}>{a.tph != null ? `${moneyWhole(a.tph)}/hr in tips over ${a.shifts} shift${a.shifts === 1 ? '' : 's'}` : 'No shifts of this type yet'}</span>
+              <span class={styles.typehist}>{a.tph != null ? `${perHour(a.tph)} in tips over ${a.shifts} shift${a.shifts === 1 ? '' : 's'}` : 'No shifts of this type yet'}</span>
             </label>
           );
         })}
@@ -164,8 +165,8 @@ export function TipsPage({ c }: { c: Ctx }) {
     <div class={styles.pane} role="tabpanel">
       <TipsField c={c} />
       <Facts items={[
-        tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${moneyWhole(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${moneyWhole(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
-        { label: 'Total income', value: money(total) }
+        tph != null && { label: 'Rate', value: money(tph), note: avg != null ? `${perHour(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${perHour(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
+        { label: 'Total', value: money(total) }
       ]} />
     </div>
   );
@@ -180,7 +181,7 @@ export function WagePage({ c }: { c: Ctx }) {
           <>
             <span class="label">Estimated wage</span>
             <span class={styles.amt}>{money(wageEst)}</span>
-            <span class={styles.why}>{dec1(h)}h × ${wageRateFor(liveWages.value, form.date)}/hr, the hourly wage in effect on {form.date ? longDate(form.date) : 'that day'}</span>
+            <span class={styles.why}>{dec1(h)}h × {perHour(wageRateFor(liveWages.value, form.date))}, the hourly wage in effect on {form.date ? longDate(form.date) : 'that day'}</span>
           </>
         ) : (
           <>
@@ -190,7 +191,7 @@ export function WagePage({ c }: { c: Ctx }) {
         )}
       </div>
       <p class={styles.hint}>Not typed: worked out from your hours and your hourly wage. <button type="button" class="linkbtn" onClick={() => go('settings/wages')}>Set your hourly wage</button></p>
-      <Facts items={[{ label: 'Total income', value: money(total) }]} />
+      <Facts items={[{ label: 'Total', value: money(total) }]} />
     </div>
   );
 }
@@ -218,7 +219,7 @@ export function OtherPage({ c }: { c: Ctx }) {
       </div>
       {legacy ? <p class={styles.hint}>Earlier entry: {money(legacy)} other income. It still counts toward the total.</p> : null}
       <div><button type="button" class="btn" onClick={() => setForm(f => f && { ...f, lines: [...f.lines, newLine()] })}><Icon name="plus" /> Add other income</button></div>
-      <Facts items={[{ label: 'Other income', value: money(lineSum + legacy) }, { label: 'Total income', value: money(total) }]} />
+      <Facts items={[{ label: 'Other income', value: money(lineSum + legacy) }, { label: 'Total', value: money(total) }]} />
     </div>
   );
 }
@@ -228,9 +229,9 @@ export function CrewPage({ c }: { c: Ctx }) {
   return (
     <div class={styles.pane} role="tabpanel">
       <h3 class="label">Who worked</h3>
-      {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people">People</a> page.</p> : (
+      {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people" onClick={e => { e.preventDefault(); go('people'); }}>People</a> page.</p> : (
         <div class={styles.pills}>
-          {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user ? ' (you)' : ''}</button>)}
+          {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user && <MeBadge />}</button>)}
         </div>
       )}
       {roster.length > 0 && !meOnRoster() && <p class={styles.hint}>Mark one person as "This is me" on the People page to add yourself in one tap.</p>}
@@ -239,7 +240,7 @@ export function CrewPage({ c }: { c: Ctx }) {
         <div class={styles.rows}>
           {form.crew.map(m => (
             <div class={styles.person} key={m.key} role="group" aria-label={m.name}>
-              <div class={styles.pname}><span>{m.name}</span>{personById(m.staff_id)?.is_user && <small>you</small>}{memberHours(m) != null && <small class="num">{dec1(memberHours(m))}h</small>}</div>
+              <div class={styles.pname}><span>{m.name}</span>{personById(m.staff_id)?.is_user && <MeBadge />}{memberHours(m) != null && <small class="num">{dec1(memberHours(m))}h</small>}</div>
               <TimeField label="Start" value={m.start} invalid={!!errors['crew' + m.key]} onChange={v => setMember(m.key, { start: v, follow: false })} />
               <TimeField label="End" value={m.end} invalid={!!errors['crew' + m.key]} pm={false} onChange={v => setMember(m.key, { end: v, follow: false })} />
               <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${m.name}`} onClick={() => setForm(f => f && { ...f, crew: f.crew.filter(x => x.key !== m.key) })}><Icon name="trash" /></button>

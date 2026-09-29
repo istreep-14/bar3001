@@ -1,4 +1,5 @@
 import { addDays, monthKey, parts, weekday, ymd, weekStart } from './dates.ts';
+import { isPending } from './groups.ts';
 import { startOf } from './scope.ts';
 import type { Scope } from './scope.ts';
 import { summarize } from './stats.ts';
@@ -8,8 +9,7 @@ import type { ShiftView, Summary } from './stats.ts';
  * type, weekday or party. Pure and derived from the shifts on the page, nothing stored. Weeks run Monday to Sunday,
  * the way a bar week does. */
 
-/** Monday of the week a date falls in. */
-/** 0 = Monday. */
+/** A date's place in the week, 0 = Monday. */
 export const weekdayIndex = (d: string): number => (weekday(d) + 6) % 7;
 
 export interface Bucket { key: string; n: number; hours: number; tips: number; wage: number; extra: number; total: number }
@@ -36,7 +36,7 @@ export function periods(views: ShiftView[], from: string, to: string): { monthly
   for (let k = keyOf(from), guard = 0; k <= keyOf(to) && guard < 2000; k = step(k), guard++) map.set(k, blank(k));
   for (const v of views) {
     const b = map.get(keyOf(v.shift.date));
-    if (!b) continue;
+    if (!b || isPending(v)) continue;
     b.n += 1; b.hours += v.hours ?? 0; b.tips += v.shift.tips ?? 0; b.wage += v.wage ?? 0; b.extra += v.extra; b.total += v.total;
   }
   return { monthly, buckets: [...map.values()] };

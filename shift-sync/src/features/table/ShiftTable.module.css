@@ -1,0 +1,71 @@
+/* The same toolbar as People: search, Filter, and a count, over the table. */
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-4) 1.15rem var(--s-3); }
+.search { width: min(22rem, 100%); }
+.count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.body { display: flex; flex-direction: column; min-height: 0; }   /* the toolbar keeps its height; the table takes the rest */
+
+/* Date: dd mmm yy (the year a weight lighter); under it, side by side, the weekday and the type, each led by a glyph */
+.day { display: grid; gap: 0; line-height: 1.15; }
+.date { font-size: 0.96875rem; font-weight: var(--fw-semi); color: var(--ink); white-space: nowrap; }
+.yy { font-weight: var(--fw-normal); color: var(--ink-2); }
+.info { display: flex; align-items: center; gap: 10px; font-size: var(--fs-meta); white-space: nowrap; }
+.info > span { display: inline-flex; align-items: center; gap: 5px; }
+.info :global(.icon) { width: 0.75rem; height: 0.75rem; flex: none; }
+.wd { color: var(--ink-2); }
+.wd :global(.icon) { color: var(--ink-4); }
+.ty { font-weight: var(--fw-med); color: var(--tone, var(--ink-3)); }
+.ty[data-kind='day'] > :global(.icon) { color: var(--day-ink); }
+.ty[data-kind='night'] > :global(.icon) { color: var(--night); }
+.party { margin-left: -4px; color: var(--party); }
+
+/* Time & hours: a small rail (hollow dot = start, solid = end) beside start over end, set tight and quieter than the
+   hours after them */
+.tm { display: grid; grid-template-columns: 5px 5.25rem auto; grid-template-rows: auto auto; column-gap: 7px; row-gap: 0; align-items: center; }
+.rail { position: relative; grid-row: 1 / 3; align-self: stretch; width: 5px; }
+.rail::before { content: ''; position: absolute; left: 2px; top: 5px; bottom: 5px; width: 1px; background: var(--line); }
+.rail i { position: absolute; left: 0; width: 5px; height: 5px; border-radius: 50%; }
+.rail i[data-at='start'] { top: 3px; border: 1px solid var(--ink-4); background: var(--surface); }
+.rail i[data-at='end'] { bottom: 3px; background: var(--ink-4); }
+.t { font-size: var(--fs-meta); line-height: 1.1; color: var(--ink-2); white-space: pre; }   /* quieter than the hours beside them */
+.t .fig { font-size: var(--fs-meta); }
+.hh { display: inline-block; width: 1.05rem; text-align: right; }   /* the hour right-aligned in a set width, so the colons line up */
+.t small { font-size: 0.625rem; color: var(--ink-4); letter-spacing: 0.04em; }
+.dur { grid-column: 3; grid-row: 1 / 3; padding-left: 4px; font-size: 1rem; }   /* set like Tips */
+
+/* One-value columns (Tips, Rate, the hours, Note) read a size up from the two-line cells beside them, so a single
+   figure fills its row instead of looking lost in it. */
+.one { font-size: 1rem; }
+.note { font-size: var(--fs-body); }
+/* Rate: a short bar, then the figure */
+.rate { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.rateBar { display: block; width: 3.5rem; flex: none; }
+.rateFig { min-width: 5.25rem; text-align: right; }   /* a set width, so every row's bar starts in the same place */
+
+/* Crew: the group picture, standing on the row's bottom edge (CrewPhotos hangs it off the cell), then the bar's hours; the
+   hover card lists everyone */
+td.crewTd { --crew-h: var(--grid-row); --crew-scale: 0.9; position: relative; }   /* td: the head and foot cells keep their sticky place; the rows are short, so the figures stand taller in them */
+.crew { display: inline-flex; align-items: center; gap: 10px; }
+.crewHours { font-size: var(--fs-body); color: var(--ink-2); }
+.who { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s-2); padding: 5px 6px; border-radius: var(--r-sm); }
+.who:hover { background: var(--surface-2); }
+.who :global(.avatar) { width: 1.625rem; height: 1.625rem; font-size: 0.6875rem; }
+.whoName { display: inline-flex; align-items: center; min-width: 0; font-weight: var(--fw-med); }
+.who > :global(.fig) { font-size: var(--fs-meta); color: var(--ink-2); }
+.whoFoot { display: flex; justify-content: space-between; margin-top: var(--s-1); padding: 7px 6px 2px; border-top: 1px solid var(--line-soft); font-size: var(--fs-meta); color: var(--ink-3); }
+.whoFoot b { font-weight: var(--fw-med); color: var(--ink); }
+
+/* Status: a soft pill with a dot, outlined in its own colour */
+.status { display: inline-flex; align-items: center; gap: 7px; height: 1.75rem; padding: 0 12px 0 10px; border: 1px solid; border-radius: var(--r-pill); font-size: var(--fs-body); font-weight: var(--fw-med); }
+.status i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status[data-s='done'] { color: var(--good); border-color: color-mix(in srgb, var(--good) 35%, transparent); background: color-mix(in srgb, var(--good) 10%, var(--surface)); }
+.status[data-s='worked'] { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); }
+.status[data-s='scheduled'] { color: var(--ink-3); border-color: var(--line); background: var(--surface-2); }
+
+/* the totals row */
+.footLabel { display: inline-flex; align-items: baseline; gap: 6px; }
+.footLabel small { font-size: var(--fs-micro); font-weight: var(--fw-normal); color: var(--ink-3); }
+.tmFoot { display: grid; grid-template-columns: 5px 5.25rem auto; column-gap: 7px; }   /* the row's grid, so the total sits under the hours */
+.tmFoot > * { grid-column: 3; padding-left: 4px; }
+
+/* a shift still short of its numbers (upcoming, or awaiting tips) reads greyed, figures included */
+:global(tr[data-tone='muted']) :is(.date, .t, .dur, :global(.fig-key)) { color: var(--ink-3); }

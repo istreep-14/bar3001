@@ -1,4 +1,5 @@
 import { addDays, daysBetween, parts, ymd, weekStart } from './dates.ts';
+import { WEEKDAY_NAMES } from './format.ts';
 import { weekdayIndex } from './periods.ts';
 import { addMonths } from './scope.ts';
 import { summarize } from './stats.ts';
@@ -21,7 +22,8 @@ export function focusWindow(f: Focus, today: string): Window {
   return win(ymd(y, m, 1), ymd(y, m - 1, 1), addMonths(today, -1), 'This month', 'last month');
 }
 
-export const inRange = (views: ShiftView[], from: string, to: string): ShiftView[] => views.filter(v => v.shift.date >= from && v.shift.date <= to);
+/** The shifts dated from..to, both included: a date filter only. Pending shifts stay in; summarize drops them itself. */
+export const inDates = (views: ShiftView[], from: string, to: string): ShiftView[] => views.filter(v => v.shift.date >= from && v.shift.date <= to);
 
 /** Percent change from `prev` to `now`; null when there is nothing to compare against. */
 export const pctChange = (now: number | null | undefined, prev: number | null | undefined): number | null =>
@@ -44,8 +46,8 @@ export interface WeekPoint {
 export function weeklyBetween(all: ShiftView[], first: string, last: string, today: string): WeekPoint[] {
   const thisWeek = weekStart(today), out: WeekPoint[] = [];
   for (let k = first, guard = 0; k <= last && guard < 1200; k = addDays(k, 7), guard++) {
-    const s = summarize(inRange(all, k, addDays(k, 6)));
-    out.push({ key: k, n: s.shifts, hours: s.hours, tips: s.tips, total: s.total, tph: s.tph, smooth: summarize(inRange(all, addDays(k, -21), addDays(k, 6))).tph, partial: k === thisWeek });
+    const s = summarize(inDates(all, k, addDays(k, 6)));
+    out.push({ key: k, n: s.shifts, hours: s.hours, tips: s.tips, total: s.total, tph: s.tph, smooth: summarize(inDates(all, addDays(k, -21), addDays(k, 6))).tph, partial: k === thisWeek });
   }
   return out;
 }
@@ -72,7 +74,6 @@ export function histogram(values: number[]): Histo | null {
 }
 
 export interface SlotInsight { date: string; label: string; rate: number; base: number; n: number; pct: number | null }
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 /** Your newest shift with a rate against your last (up to 4) of the same weekday and type before it: "Wednesday night: 10% below your last 4". */
 export function slotInsight(all: ShiftView[], take = 4): SlotInsight | null {
   const rated = all.filter(v => v.tph != null).sort((a, b) => b.shift.date.localeCompare(a.shift.date) || (b.shift.start ?? 0) - (a.shift.start ?? 0));
@@ -82,5 +83,5 @@ export function slotInsight(all: ShiftView[], take = 4): SlotInsight | null {
   const same = rated.slice(1).filter(v => v.shift.date < latest.shift.date && weekdayIndex(v.shift.date) === day && v.shift.shift_type === type).slice(0, take);
   const base = summarize(same).tph;
   if (!same.length || base == null) return null;
-  return { date: latest.shift.date, label: `${DAYS[day]}${type ? ' ' + type : ''}`, rate: latest.tph!, base, n: same.length, pct: pctChange(latest.tph, base) };
+  return { date: latest.shift.date, label: `${WEEKDAY_NAMES[day]}${type ? ' ' + type : ''}`, rate: latest.tph!, base, n: same.length, pct: pctChange(latest.tph, base) };
 }

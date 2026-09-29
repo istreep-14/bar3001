@@ -163,7 +163,7 @@ export interface Lane { name: string; start: number | null; end: number | null; 
 const hourLabel = (m: number) => { const h = Math.floor(m / 60) % 24; return `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`; };
 const clockText = (m: number) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${h % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${h < 12 ? 'AM' : 'PM'}`; };
 export function Ribbon({ lanes, slim = true }: { lanes: Lane[]; slim?: boolean }) {
-  const timed = lanes.filter(l => l.start != null && l.end != null).map(l => ({ ...l, s: l.start!, e: l.end! <= l.start! ? l.end! + 1440 : l.end! }));
+  const timed = lanes.filter(l => l.start != null && l.end != null).map(l => ({ ...l, s: l.start!, e: l.end! < l.start! ? l.end! + 1440 : l.end! }));   // past midnight when it ends before it starts, as core counts hours
   if (!timed.length) return <figure class={'viz ribbon' + (slim ? ' slim' : '')}><div class="viz-empty muted">Enter the start and end times to see the shift laid out.</div></figure>;
   const origin = Math.floor(Math.min(...timed.map(l => l.s)) / 60) * 60;
   const total = Math.max(240, Math.ceil((Math.max(...timed.map(l => l.e)) - origin) / 60) * 60);
@@ -266,11 +266,4 @@ export function Histogram({ title, sub, h, fmt }: { title: string; sub?: string;
       {t.node}
     </figure>
   );
-}
-
-/* ── a change against the span before: an arrow and a percentage (never colour alone). `neutral` = no good or bad (hours). ── */
-export function Delta({ pct, vs, neutral }: { pct: number | null; vs: string; neutral?: boolean }) {
-  if (pct == null) return <span class="muted">nothing to compare yet</span>;
-  const r = Math.round(pct), tone = neutral || r === 0 ? 'flat' : r > 0 ? 'up' : 'down';
-  return <span class={'delta ' + tone}>{r > 0 ? '▲' : r < 0 ? '▼' : '▬'} {Math.abs(r)}% <span class="muted">vs {vs}</span></span>;
 }

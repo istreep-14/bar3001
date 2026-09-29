@@ -6,29 +6,33 @@ import { toast } from '../../ui/toast.tsx';
 import styles from './SettingsScreen.module.css';
 
 const csvCell = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+const cents = (n: number | null) => (n == null ? '' : Math.round(n * 100) / 100);
+/** Every shift with its figures. `total` is tips + wage + other income, so all three are columns and it adds up. */
 function exportCsv() {
-  const head = ['date', 'start', 'end', 'shift_type', 'hours', 'tips', 'other_income', 'total', 'notes'];
-  const rows = liveViews.value.map(v => [v.shift.date, toHHMM(v.shift.start), toHHMM(v.shift.end), v.shift.shift_type, v.hours ?? '', v.shift.tips ?? '', v.extra, v.total, v.shift.notes]);
+  const head = ['date', 'start', 'end', 'shift_type', 'hours', 'tips', 'wage', 'other_income', 'total', 'notes'];
+  const rows = liveViews.value.map(v => [v.shift.date, toHHMM(v.shift.start), toHHMM(v.shift.end), v.shift.shift_type, cents(v.hours), v.shift.tips ?? '',
+    cents(v.wage), cents(v.extra), cents(v.total), v.shift.notes]);
   const blob = new Blob([[head, ...rows].map(r => r.map(csvCell).join(',')).join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = 'shifts.csv'; a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 30_000);   // revoked at once, Safari can cancel the download it just started
 }
 
 /** One or more bundle files, in the order chosen (an earlier file wins where a later one repeats a shift). */
 async function importFiles(e: Event) {
   const input = e.currentTarget as HTMLInputElement, files = [...(input.files ?? [])];
   input.value = '';
-  let shifts = 0, crew = 0, people = 0, wages = 0;
+  let shifts = 0, income = 0, crew = 0, people = 0, wages = 0;
   try {
     for (const file of files) {
       const b = JSON.parse(await file.text()) as Bundle;
       if (!Array.isArray(b.rows) || !Array.isArray(b.staff) || !Array.isArray(b.crew) || !Array.isArray(b.income)) throw new Error(`${file.name} is not an import file`);
       const p = await importBundle(b);
-      shifts += p.rows.length; crew += p.crew.length; people += p.staff.length; wages += p.wages.length;
+      shifts += p.rows.length; income += p.income.length; crew += p.crew.length; people += p.staff.length; wages += p.wages.length;
       if (p.problems.length) console.warn('Import problems', file.name, p.problems);
     }
-    if (files.length) toast(shifts + people + wages === 0 ? 'Nothing new to import (already here)' : `Imported ${shifts} shifts, ${crew} crew, ${people} people${wages ? `, ${wages} wages` : ''}`);
+    if (files.length) toast(shifts + income + crew + people + wages === 0 ? 'Nothing new to import (already here)'
+      : `Imported ${shifts} shifts, ${income} income lines, ${crew} crew, ${people} people${wages ? `, ${wages} wages` : ''}`);
   } catch (err) {
     toast(`Could not import: ${err instanceof Error ? err.message : 'bad file'}`);
   }

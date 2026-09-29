@@ -11,6 +11,16 @@ const p = (rel) => new URL(rel, root);
 const src = readFileSync(p('core/core.js'), 'utf8');
 const names = Object.keys(createRequire(import.meta.url)(p('core/core.js').pathname));
 
+// core.d.ts is written by hand: every export has to be declared there and nothing else may be, or the app's types drift
+// from what the code exports without any error. Checked here, so dev, build, typecheck and test all refuse to run on drift.
+const dts = readFileSync(p('core/core.d.ts'), 'utf8');
+const declared = [...dts.matchAll(/^export (?:const|function) (\w+)/gm)].map(m => m[1]);
+const missing = names.filter(n => !declared.includes(n)), extra = declared.filter(n => !names.includes(n));
+if (missing.length || extra.length) {
+  console.error('core/core.d.ts does not match core/core.js.' + (missing.length ? `\n  not declared: ${missing.join(', ')}` : '') + (extra.length ? `\n  declared but not exported: ${extra.join(', ')}` : ''));
+  process.exit(1);
+}
+
 writeFileSync(p('apps-script/core.gs'), src);
 // src/core/ holds only generated files and is gitignored, so a fresh clone (or CI) doesn't have it yet.
 mkdirSync(p('src/core/'), { recursive: true });
