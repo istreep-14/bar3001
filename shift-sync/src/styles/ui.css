@@ -77,9 +77,13 @@ select.input { appearance: none; padding-right: var(--s-6);
    doesn't read taller than it needs to be. Opt in per page with a `.tbl-tight` ancestor. */
 .tbl-tight .tbl th, .tbl-tight .tbl td { padding: 0.3rem 0.65rem; }
 .tbl th { white-space: nowrap; }
-/* the header band: column heads only (row heads down the side, like a bartender's name, stay plain cells) */
+/* the header band: column heads only (row heads down the side, like a bartender's name, stay plain cells). A frozen
+   head sits over whatever scrolls under it, not just beside it, so it carries the same soft elevation as a panel
+   (`--shadow-sm`) rather than just the hairline every cell already gets — that's what actually reads as "on top"
+   once rows are sliding past underneath. */
 .tbl thead th {
   position: sticky; top: 0; z-index: 1; background: var(--th-bg); border-bottom: 1px solid var(--th-line);
+  box-shadow: var(--shadow-sm);
   font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--th-ink);
 }
 .tbl :is(tbody, tfoot) th { border-bottom: 1px solid var(--line-soft); color: var(--ink); font-weight: var(--fw-med); }
@@ -105,15 +109,26 @@ select.input { appearance: none; padding-right: var(--s-6);
 /* grouped rows (Table `group`): no rule inside a block; between blocks, a separator row (a hairline with a little air) */
 .tbl[data-grouped] tbody td { border-bottom: 0; }
 .tbl tbody tr.tbl-sep td { height: var(--s-3); padding: 0; background: linear-gradient(var(--line-soft), var(--line-soft)) center / 100% 1px no-repeat; }
+/* a heading above a block (Table `groupLabel`), in place of the plain separator: the block's name, quiet and set off from
+   the rows it names */
+.tbl tbody tr.tbl-band td { height: auto; padding: var(--s-3) 1rem var(--s-2); background: none; border-bottom: 0; }
+.tbl-log .tbl tbody tr.tbl-band td { padding: var(--s-4) var(--s-3) var(--s-1); white-space: normal; }
+.tbl tbody tr.tbl-band + tr td { border-top: 0; }
 
 /* the Log's look (Table `log`), so People, Other income and Crew read as the same kind of list as the Log: single-line
    rows at the Log's size, inset from the panel's edges under a head band that still runs edge to edge, a hairline
    between rows, a rounded hover, and the accent bar on the selected row (or every row of a selected block). */
-.tbl-log { padding: 0 var(--s-4) var(--s-5); }
+.tbl-log { --log-band: 1.5rem; --log-head: 2.25rem; padding: 0 var(--s-4) var(--s-5); }
 .tbl-log .tbl { width: 100%; font-size: var(--fs-lead); }
 .tbl-log .tbl :is(th, td) { padding: 0 var(--s-2); }
 .tbl-log .tbl :is(th, td):first-child { padding-left: var(--s-3); }
-.tbl-log .tbl thead th { height: 2.25rem; }
+.tbl-log .tbl thead th { height: var(--log-head); }
+/* a column-group band (Table `group` on a column, like Income) sits in its own sticky row above the head row — same
+   idea as the grid's own `--grid-band` offset. Without it both rows stick to the very top of the scroll and paint
+   over one another once the body scrolls under them; giving the band row this same height is what makes the offset
+   exact rather than approximate. */
+.tbl-log .tbl thead tr.gh th { height: var(--log-band); font-size: var(--fs-micro); }
+.tbl-log .tbl thead[data-grouped] tr:not(.gh) th { top: var(--log-band); }
 .tbl-log .tbl thead th:first-child::before, .tbl-log .tbl thead th:last-child::after { content: ''; position: absolute; top: 0; bottom: -1px; width: var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); }
 .tbl-log .tbl thead th:first-child::before { right: 100%; }
 .tbl-log .tbl thead th:last-child::after { left: 100%; }
@@ -127,6 +142,12 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-log .tbl[data-grouped] tbody tr:not([data-first]) td { border-top-left-radius: 0; border-top-right-radius: 0; }
 .tbl-log .tbl[data-grouped] tbody tr:not([data-last]) td { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .tbl-log .tbl tbody tr[data-row]:hover, .tbl-log .tbl tbody tr[aria-current='true'] { background: none; }
+/* the first column frozen on horizontal scroll, the same idea as the grid's own sticky column. `:where()` keeps this
+   at the tone rules' own specificity (0,2,3), so a toned row's own background (below) still wins over this default
+   one by simply coming later in the file — a band or separator row (one cell spanning every column) is excluded, or
+   it would try to stick as if it were only the first column wide. */
+:where(.tbl-log) .tbl tbody tr:not(:where(.tbl-sep, .tbl-band)) > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+:where(.tbl-log) .tbl thead th:first-child { position: sticky; left: 0; z-index: 2; }
 /* a row's tone (Table `tone`): yours has a faint gold fill, a manager's a faint blue one (yours wins if you're both); an inactive
    person's reads greyed out, the way an offline member does. The fill deepens on hover and when selected instead of being
    replaced, so the row still says whose it is. */
@@ -141,6 +162,13 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-log .tbl tbody tr[data-row]:hover td { background: var(--surface-2); }
 .tbl-log .tbl tbody tr[aria-current='true'] td { background: var(--accent-wash); }
 .tbl-log .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+/* a rule marking where a column group starts (`groupStart`), the same idea as the grid's, just quieter at the Log's size */
+.tbl-log .tbl :is(th, td).gs { box-shadow: inset 1px 0 0 var(--line-soft); padding-left: calc(var(--s-3) - 1px); }
+/* Table `separators`: a quieter rule between every column, not just where a group starts — several similar figures
+   side by side (Income's Tips/Wage/Other/Total/Rate) blur into one run of numbers without it. Half as strong as
+   `.gs` and lower specificity (2 classes + a plain adjacency vs. `.gs`'s 3 classes), so a real group boundary still
+   reads as the stronger rule wherever the two would otherwise land on the same cell. */
+.tbl-rules .tbl :is(th, td) + :is(th, td) { box-shadow: inset 1px 0 0 color-mix(in srgb, var(--line-soft) 55%, transparent); }
 /* set widths (columns with a `weight`): shares of the width, a draggable edge between heads, and cells that cut off with an
    ellipsis instead of pushing their neighbours. A phone scrolls the table sideways rather than crushing it. */
 .tbl-fixed .tbl { table-layout: fixed; min-width: 52rem; }
@@ -249,7 +277,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .shiftcell { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
 .shiftcell .tbadge { flex: none; }
 /* ── avatars: a small overlapping stack of initials, the same shape wherever crew show up. No border: the fill runs to the edge ── */
-.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: 0.625rem; font-weight: var(--fw-semi); }
+.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; overflow: hidden; background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: 0.625rem; font-weight: var(--fw-semi); }
 .avatars { display: inline-flex; align-items: center; }
 .avatars .avatar + .avatar { margin-left: calc(-1 * var(--av-overlap, 0.5rem)); }   /* a stack sets --av-overlap to its own tuck */
 /* in a stack each circle is cut back where the next one tucks over it, a sliver of whatever is behind, so faces of one fill still read apart */
@@ -268,7 +296,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 /* the site-wide avatar fill (Settings → Appearance, lib/theme.ts) stands in for the colour picked from the id; a person's own pick still wins */
 .avatar[data-auto] { background: var(--avatar-bg, color-mix(in srgb, var(--ac) 18%, var(--surface))); color: var(--avatar-ink, var(--ac)); }
 .avatar[data-custom] { color: var(--ac-ink); background: var(--ac); }   /* a hex someone picked is the fill, exactly; letters black or white (Avatar.tsx) */
-.avatar[data-photo] { overflow: hidden; background: color-mix(in srgb, var(--ac) 30%, var(--surface)); background: oklch(from var(--ac) var(--photo-bg-l) var(--photo-bg-c) h); }   /* the person's hue, one lightness for all (tokens --photo-bg-*); shows through a see-through photo */
+.avatar[data-photo] { background: color-mix(in srgb, var(--ac) 30%, var(--surface)); background: oklch(from var(--ac) var(--photo-bg-l) var(--photo-bg-c) h); }   /* the person's hue, one lightness for all (tokens --photo-bg-*); shows through a see-through photo */
 .avatar[data-photo][data-auto] { background: var(--avatar-bg, oklch(from var(--ac) var(--photo-bg-l) var(--photo-bg-c) h)); }
 .avatar[data-photo][data-custom] { background: var(--ac); }   /* ...unless they picked an exact colour */
 .avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }   /* block: no baseline gap to push the row's contents up */

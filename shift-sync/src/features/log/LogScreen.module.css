@@ -2,11 +2,10 @@
 .banner svg { color: var(--danger); margin-top: 2px; }
 .banner ul { margin: var(--s-1) 0 0; padding-left: var(--s-4); list-style: disc; }
 .week { display: grid; gap: var(--s-1); }
-.weekHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0 var(--s-1); font-size: var(--fs-meta); }
 .list { border-top: 1px solid var(--line); }
 
 .body { min-height: 0; }
 .scroll { overflow: auto; }
 /* phone: the group label is the week or month once, bold, with its total */
 .bandName { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); }
-.weekHead { font-size: var(--fs-body); padding: var(--s-3) var(--s-1) var(--s-1); }
+.weekHead { display: flex; justify-content: space-between; align-items: baseline; padding: var(--s-3) var(--s-1) var(--s-1); font-size: var(--fs-body); }

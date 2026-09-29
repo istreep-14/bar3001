@@ -3,6 +3,7 @@ import { personById } from '../data/store.ts';
 import { DASH, clockPlain, dec1, hours, money, perHour } from '../lib/format.ts';
 import { incomeParts } from '../lib/groups.ts';
 import type { ShiftView } from '../lib/stats.ts';
+import { PersonAvatar } from './PersonAvatar.tsx';
 import { MixBar, MixKey } from '../ui/MixBar.tsx';
 import { MeBadge } from '../ui/MeBadge.tsx';
 import styles from './ShiftDetails.module.css';
@@ -38,7 +39,7 @@ export function ShiftDetails({ v, layout, onEdit }: { v: ShiftView; layout: 'sta
                 const p = personById(c.staff_id), h = hoursWorked(c.start, c.end);
                 return (
                   <div key={c.id}>
-                    <dt>{p?.name ?? c.name ?? 'Unknown'}{p?.is_user && <MeBadge />}</dt>
+                    <dt><PersonAvatar id={c.staff_id} fallback={c.name} />{p?.name ?? c.name ?? 'Unknown'}{p?.is_user && <MeBadge />}</dt>
                     <dd class="num"><small>{clockPlain(c.start) || DASH} – {clockPlain(c.end) || DASH}</small>{h == null ? DASH : `${dec1(h)}h`}</dd>
                   </div>
                 );

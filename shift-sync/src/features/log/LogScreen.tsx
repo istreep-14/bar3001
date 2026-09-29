@@ -80,7 +80,7 @@ export function LogScreen() {
             <section key={g.key} class={styles.week} aria-label={g.label}>
               <div class={styles.weekHead}>
                 <h2 class={styles.bandName}>{g.label}</h2>
-                <span class="num">{g.done ? dollars(g.total) : DASH}</span>
+                <span class="fig fig-key">{g.done ? dollars(g.total) : DASH}</span>
               </div>
               <ul class={styles.list}>{g.views.map(v => <ShiftCard key={v.shift.id} v={v} ctx={ctx} selected={selected === v.shift.id} />)}</ul>
             </section>

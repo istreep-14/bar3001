@@ -26,6 +26,10 @@ export interface Column<T> {
   /** A share of the width: once any column has one, the table lays out to those shares (2 is twice as wide as 1), and the
    *  edges between them can be dragged. A column without one (a chevron) keeps its own small width. */
   weight?: number;
+  /** This column absorbs whatever width the other weighted columns don't use, instead of sharing it proportionally with
+   *  them — so a wide screen widens the name column, say, not every numeric one alongside it. At most one column should
+   *  set this; it needs no `weight` of its own. */
+  fill?: boolean;
 }
 interface Props<T> {
   rows: T[];
@@ -39,11 +43,16 @@ interface Props<T> {
   /** Rows that share a key and sit together once sorted are one block: no rule between them, a `once` column filled only
    *  on the first, a rule and a little air between blocks. Sorted another way, the blocks break up and each row says it all. */
   group?: (row: T) => string;
+  /** With `group`: a heading rendered above each block instead of the plain separator, given the block's key. */
+  groupLabel?: (key: string) => ComponentChildren;
   /** The Log's look: single-line rows at the Log's size, inset from the panel's edges, the accent bar on a selected row. */
   log?: boolean;
   /** A data grid, for looking things up across many columns: full-width rows with a faint stripe, the first column held in
    *  place while the rest scroll sideways, and a rule between column groups. */
   grid?: boolean;
+  /** A quiet rule between every column, not just where a group starts — for a row of similar figures (Income's five)
+   *  that are easy to lose track of otherwise. */
+  separators?: boolean;
   /** A totals row pinned under the rows, a cell per column key (what it says is the page's: sums of every row, not the page). */
   foot?: Partial<Record<string, ComponentChildren>>;
   /** Rows whose cells run two lines (a name over a full name): a little taller, every row the same height. */
@@ -66,6 +75,7 @@ interface Props<T> {
 const cls = (c: Column<any>) => [c.groupStart && 'gs', c.className].filter(Boolean).join(' ') || undefined;
 /* Column shares someone dragged, remembered per table (by its label) on this device. Double-click an edge to forget them. */
 const SHARE = 96;   // percent of the width the weighted columns split; the rest is the chevron's
+const REM_PER_WEIGHT = 5;   // with a `fill` column: a plain weighted column's own width, in rem per weight unit
 const widthsKey = (label: string) => `cols:${label}`;
 function readWidths(label: string): Record<string, number> {
   try { const v = JSON.parse(localStorage.getItem(widthsKey(label)) ?? '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
@@ -78,7 +88,7 @@ function writeWidths(label: string, w: Record<string, number> | null) {
 const [pageSize, setPageSize] = persisted<number>('pagesize', oneOf(PAGE_SIZES), 50);
 
 /** The one grid component: sortable heads, paging, arrow-key row navigation, and rows grouped into blocks that say a value once. */
-export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, group, log, grid, foot, tone, tall, rank, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
+export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, group, groupLabel, log, grid, separators, foot, tone, tall, rank, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
   // The sorts clicked, newest first: the top one decides, the ones under it break its ties (so the order you had is kept).
   const [sorts, setSorts] = useState<{ key: string; dir: Dir }[]>(defaultSort ? [defaultSort] : []);
   const sort = sorts[0] ?? null;
@@ -102,12 +112,16 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
   // Widths: the columns' shares, as dragged (and remembered) or as given.
   const table = useRef<HTMLTableElement>(null);
   const weighted = columns.filter(c => c.weight);
+  const fillMode = columns.some(c => c.fill);
   const [saved, setSaved] = useState<Record<string, number>>(() => (weighted.length ? readWidths(label) : {}));
   const weights = weighted.map(c => saved[c.key] ?? c.weight!);
   const total = weights.reduce((a, b) => a + b, 0);
   const startResize = (i: number) => (e: PointerEvent) => {
     e.preventDefault(); e.stopPropagation();
-    const x0 = e.clientX, w0 = weights, perUnit = ((table.current?.offsetWidth ?? 1) * SHARE) / 100 / total;
+    const x0 = e.clientX, w0 = weights;
+    const perUnit = fillMode
+      ? REM_PER_WEIGHT * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16)
+      : ((table.current?.offsetWidth ?? 1) * SHARE) / 100 / total;
     let last = saved;
     const move = (ev: PointerEvent) => {
       const w = resizeWeights(w0, i, (ev.clientX - x0) / perUnit);
@@ -129,10 +143,20 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
 
   return (
     <>
-      <div class={['tbl-wrap', fill && 'fill', log && 'tbl-log', grid && 'tbl-grid', weighted.length && 'tbl-fixed'].filter(Boolean).join(' ')}>
+      <div class={['tbl-wrap', fill && 'fill', log && 'tbl-log', grid && 'tbl-grid', separators && 'tbl-rules', weighted.length && 'tbl-fixed'].filter(Boolean).join(' ')}>
         <table ref={table} class="tbl" aria-label={label} data-grouped={group ? '' : undefined}>
           {weighted.length > 0 && (
-            <colgroup>{columns.map(c => <col key={c.key} style={c.weight ? { width: `${((saved[c.key] ?? c.weight) / total) * SHARE}%` } : undefined} />)}</colgroup>
+            <colgroup>{columns.map(c => {
+              if (c.weight) {
+                const w = saved[c.key] ?? c.weight;
+                return <col key={c.key} style={{ width: fillMode ? `${w * REM_PER_WEIGHT}rem` : `${(w / total) * SHARE}%` }} />;
+              }
+              // In fill mode a column needs an explicit width or none at all — an undefined one competes for the
+              // fill column's own remaining space instead of leaving it all to it (a chevron would otherwise end up
+              // as wide as the name column it's supposed to trail). Every unweighted column but the fill one gets a
+              // narrow utility width here; the fill column alone is left undefined, so it alone takes the rest.
+              return <col key={c.key} style={fillMode && !c.fill ? { width: '2.25rem' } : undefined} />;
+            })}</colgroup>
           )}
           <thead data-grouped={colBands.length ? '' : undefined}>
             {colBands.length > 0 && (
@@ -163,7 +187,9 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
               const on = selectedId === id || !!selected?.(r);
               return (
                 <Fragment key={id}>
-                  {group && first && i > 0 && <tr class="tbl-sep" aria-hidden="true"><td colSpan={columns.length} /></tr>}
+                  {group && first && (groupLabel
+                    ? <tr class="tbl-band" aria-hidden="true"><td colSpan={columns.length}>{groupLabel(group(r))}</td></tr>
+                    : i > 0 && <tr class="tbl-sep" aria-hidden="true"><td colSpan={columns.length} /></tr>)}
                   <tr data-row={onRow ? '' : undefined} data-first={group && first ? '' : undefined}  data-last={last ? '' : undefined} data-tone={tone?.(r)} data-tall={tall ? '' : undefined} tabIndex={onRow ? 0 : undefined} aria-current={on ? 'true' : undefined}
                     onClick={() => onRow?.(r)}
                     onKeyDown={ev => {
