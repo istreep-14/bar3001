@@ -234,7 +234,7 @@ or the URL keeps serving old code.
 - Type dates as `YYYY-MM-DD` and times as `HH:MM` (24h). Past midnight is fine: `18:00`-`02:00` = 8h.
 - New rows typed by hand get an `id` and `updated_at` automatically.
 - **Wages tab** = your hourly wage by start date (`date` = the day it starts applying). Edited from Settings > Hourly wage; the app estimates each shift's wage from it.
-- **Staff tab** = the roster. `aliases` is one cell, comma-separated (`Abs, AC`); `avatar_color` is `#rrggbb` or one of teal, orange, green, cyan, violet, pink, blue, rose, indigo; `avatar_text` is up to 3 characters; `role` is the main role (keep it out of `roles`). Leave `photo` to the app.
+- **Staff tab** = the roster. `aliases` is one cell, comma-separated (`Abs, AC`); `avatar_color` is `#rrggbb` or one of teal, orange, green, cyan, violet, pink, blue, rose, indigo, gold (any other name is held as a typo); `avatar_text` is up to 3 characters; `role` is the main role (keep it out of `roles`). Leave `photo` to the app.
 - **Roles tab** = one row per role: `name`, `color` (`#rrggbb` or teal, orange, green, cyan, violet, pink, blue, rose, indigo, gold), `icon` (cocktail, beer, bell, box, door, key, music, chef, bolt, heart, flame, sparkle, star, shield, crown, users) and `sort` (rank, lowest first). Rename a role in the app, not here: the app renames it on everyone who has it.
 - **Crew tab** = child rows of Shifts too, the hub between Shifts and Staff (its last column, `hours`, is derived): one per bartender on the shift (`staff_id` is the person's id from the Staff tab; `name` is just a readable copy). Managed from the app's shift drawer.
 - **Income tab** = child rows of Shifts, zero to many per shift, linked by `shift_id` (copy the shift's `id`).
@@ -242,6 +242,7 @@ or the URL keeps serving old code.
   Delete by `deleted` = TRUE or deleting the row. Deleting a shift in the app also deletes its income.
 - The old single `other` column on Shifts is kept and still counted, but the app no longer edits it.
 - Tips/hr and totals are derived in the app, not stored.
+- Money is a plain number. Tips can't be negative; an Income line can (a tip-out).
 - Leave `id` and `updated_at` alone. Copying a whole row and pasting it gives the copy an id of its own.
 - Delete by setting `deleted` to TRUE, or delete the row. Both propagate. Emptying a whole tab
   doesn't: an empty tab reads as lost, and the app writes its copy back.

@@ -79,6 +79,8 @@ export const PHOTO_MAX: number;
 export const CREW_COLS: string[];
 export const WAGE_COLS: string[];
 export const ROLE_COLS: string[];
+/** The palette names a colour can take besides a '#rrggbb' hex (the app's swatches, tested to match). */
+export const COLOR_NAMES: string[];
 export function validateRole(r: unknown): Role;
 export function validateWage(r: unknown): Wage;
 export function wageRateFor(rates: Pick<Wage, 'date' | 'rate'>[] | undefined, date: string): number | null;
@@ -96,6 +98,24 @@ export function totalIncome(r: Pick<Shift, 'tips' | 'other'>, income?: Pick<Inco
 export function defaultShiftType(startMin: number | null | undefined): ShiftType | null;
 export function validateRow(r: unknown): Shift;
 export function validateIncome(r: unknown): Income;
+
+/** A Sheet row is an array of cells in the tab's column order (`COLS`, `INCOME_COLS`...). `sheetTo*` parse and validate
+ *  one, throwing on a typo; `*ToSheet` write one. */
+export type SheetRow = unknown[];
+export function rowToSheet(r: Shift): SheetRow;
+export function sheetToRow(a: SheetRow): Shift;
+export function incomeToSheet(r: Income): SheetRow;
+export function sheetToIncome(a: SheetRow): Income;
+export function crewToSheet(r: Crew): SheetRow;
+export function sheetToCrew(a: SheetRow): Crew;
+export function wageToSheet(r: Wage): SheetRow;
+export function sheetToWage(a: SheetRow): Wage;
+export function staffToSheet(r: Staff): SheetRow;
+export function sheetToStaff(a: SheetRow): Staff;
+export function roleToSheet(r: Role): SheetRow;
+export function sheetToRole(a: SheetRow): Role;
+/** Server side: merges incoming rows into an {id: row} map, last write wins; returns the ids that changed. */
+export function mergeInto<T extends { id: string; updated_at: number }>(map: Record<string, T>, incoming: T[]): string[];
 export function pickNewer<T extends { updated_at: number }>(current: T | undefined, incoming: T | undefined): T;
 export function reconcileClient<T extends { id: string; updated_at: number }>(
   local: Record<string, Local<T>>, serverRows: T[], heldIds?: string[]): Record<string, Local<T>>;

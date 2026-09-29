@@ -41,8 +41,11 @@ var CATEGORIES = ['Chump', 'Cash', 'Venmo', 'Consideration', 'Overtime'];
 var STAFF_COLS = ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted',
   'aliases', 'photo', 'avatar_color', 'avatar_text', 'role'];
 var ROLE_COLS = ['id', 'name', 'color', 'icon', 'sort', 'updated_at', 'deleted'];
-/* A colour a person's avatar or a role can take: a hex, or the name of one of the app's palette colours. */
-var COLOR_RE = /^#[0-9a-fA-F]{6}$|^[a-z][a-z-]{0,23}$/;
+/* A colour a person's avatar or a role can take: a hex, or the name of one of the app's palette colours. A name the app
+ * doesn't have would draw no colour at all, so it is refused like any other typo (the app's swatches are tested against
+ * this list). */
+var COLOR_NAMES = ['teal', 'orange', 'green', 'cyan', 'violet', 'pink', 'blue', 'rose', 'indigo', 'gold'];
+function okColor(v) { return /^#[0-9a-fA-F]{6}$/.test(v) || COLOR_NAMES.indexOf(v) >= 0; }
 /* A photo is stored in its Sheet cell, and a cell holds 50,000 characters. */
 var PHOTO_MAX = 45000;
 
@@ -113,9 +116,10 @@ function validateRow(r) {
     var v = r[k];
     if (v !== null && (!Number.isInteger(v) || v < 0 || v >= 1440)) throw new Error('Bad ' + k + ' ' + v);
   });
-  if (r.tips !== null && typeof r.tips !== 'number') throw new Error('Bad tips ' + r.tips);
+  /* Money is a finite number everywhere. Tips can't go below zero; an income line can (a tip-out, a refund). */
+  if (r.tips !== null && (typeof r.tips !== 'number' || !isFinite(r.tips) || r.tips < 0)) throw new Error('Bad tips ' + r.tips + ' (a number, 0 or more)');
   var other = r.other === undefined ? null : r.other;   // rows from before this column existed
-  if (other !== null && typeof other !== 'number') throw new Error('Bad other ' + other);
+  if (other !== null && (typeof other !== 'number' || !isFinite(other))) throw new Error('Bad other ' + other);
   var type = r.shift_type === undefined ? null : r.shift_type;
   if (type !== null && type !== 'day' && type !== 'night') throw new Error('Bad shift_type ' + type + ' (day or night)');
   if (!Number.isFinite(r.updated_at)) throw new Error('Bad updated_at ' + r.updated_at);
@@ -233,7 +237,7 @@ function validateStaff(r) {
   if (photo !== null && !/^data:image\/(jpeg|png|webp);base64,/.test(photo)) throw new Error('Bad photo (a data:image URL)');
   if (photo !== null && photo.length > PHOTO_MAX) throw new Error('Photo is too large');
   var color = text(r.avatar_color);
-  if (color !== null && !COLOR_RE.test(color)) throw new Error('Bad avatar_color "' + color + '" (#rrggbb or a palette name)');
+  if (color !== null && !okColor(color)) throw new Error('Bad avatar_color "' + color + '" (#rrggbb or one of ' + COLOR_NAMES.join(', ') + ')');
   var initials = text(r.avatar_text);
   if (initials !== null && initials.length > 3) throw new Error('Avatar text is 3 characters at most');
   /* One entry per spelling, case-insensitive, never the name itself. A comma would split the Sheet cell, so it can't be in one. */
@@ -267,7 +271,7 @@ function validateRole(r) {
   if (blank(r.name)) throw new Error('Missing name');
   if (String(r.name).indexOf(',') >= 0) throw new Error('A role name can\'t hold a comma');
   var color = blank(r.color) ? null : String(r.color).trim();
-  if (color !== null && !COLOR_RE.test(color)) throw new Error('Bad color "' + color + '" (#rrggbb or a palette name)');
+  if (color !== null && !okColor(color)) throw new Error('Bad color "' + color + '" (#rrggbb or one of ' + COLOR_NAMES.join(', ') + ')');
   var icon = blank(r.icon) ? null : String(r.icon).trim();
   if (icon !== null && !/^[a-z][a-zA-Z0-9-]{0,31}$/.test(icon)) throw new Error('Bad icon "' + icon + '"');
   var sort = blank(r.sort) ? 0 : Number(r.sort);
@@ -376,7 +380,7 @@ function reconcileClient(local, serverRows, heldIds) {
 function stripLocal(r) { var c = Object.assign({}, r); delete c._dirty; return c; }
 
 if (typeof module !== 'undefined') {
-  module.exports = { PHOTO_MAX: PHOTO_MAX, ROLE_COLS: ROLE_COLS, validateRole: validateRole, roleToSheet: roleToSheet, sheetToRole: sheetToRole, WAGE_COLS: WAGE_COLS, validateWage: validateWage, wageToSheet: wageToSheet, sheetToWage: sheetToWage, wageRateFor: wageRateFor, wageFor: wageFor, CREW_COLS: CREW_COLS, validateCrew: validateCrew, crewToSheet: crewToSheet, sheetToCrew: sheetToCrew, crewHours: crewHours, STAFF_COLS: STAFF_COLS, validateStaff: validateStaff, staffToSheet: staffToSheet, sheetToStaff: sheetToStaff, COLS: COLS, INCOME_COLS: INCOME_COLS, CATEGORIES: CATEGORIES, sumIncome: sumIncome,
+  module.exports = { COLOR_NAMES: COLOR_NAMES, PHOTO_MAX: PHOTO_MAX, ROLE_COLS: ROLE_COLS, validateRole: validateRole, roleToSheet: roleToSheet, sheetToRole: sheetToRole, WAGE_COLS: WAGE_COLS, validateWage: validateWage, wageToSheet: wageToSheet, sheetToWage: sheetToWage, wageRateFor: wageRateFor, wageFor: wageFor, CREW_COLS: CREW_COLS, validateCrew: validateCrew, crewToSheet: crewToSheet, sheetToCrew: sheetToCrew, crewHours: crewHours, STAFF_COLS: STAFF_COLS, validateStaff: validateStaff, staffToSheet: staffToSheet, sheetToStaff: sheetToStaff, COLS: COLS, INCOME_COLS: INCOME_COLS, CATEGORIES: CATEGORIES, sumIncome: sumIncome,
     validateIncome: validateIncome, incomeToSheet: incomeToSheet, sheetToIncome: sheetToIncome, toMin: toMin, toHHMM: toHHMM, hoursWorked: hoursWorked, defaultShiftType: defaultShiftType, tipsPerHour: tipsPerHour, totalIncome: totalIncome,
     validateRow: validateRow, rowToSheet: rowToSheet, sheetToRow: sheetToRow,
     pickNewer: pickNewer, mergeInto: mergeInto, reconcileClient: reconcileClient, stripLocal: stripLocal };

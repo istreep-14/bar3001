@@ -41,6 +41,10 @@ test('validation rejects bad rows', () => {
   assert.throws(() => c.validateRow(row({ date: '9/25/2026' })));
   assert.throws(() => c.validateRow(row({ start: 1440 })));
   assert.throws(() => c.validateRow(row({ tips: '240' })));
+  assert.throws(() => c.validateRow(row({ tips: -5 })), /Bad tips/);
+  assert.throws(() => c.validateRow(row({ tips: Infinity })), /Bad tips/);
+  assert.throws(() => c.validateRow(row({ other: NaN })), /Bad other/);
+  assert.equal(c.validateRow(row({ tips: 0 })).tips, 0);
   assert.throws(() => c.validateRow(row({ updated_at: undefined })));
 });
 
@@ -165,7 +169,8 @@ test('staff aliases: trimmed, one per spelling, never the name, no commas; avata
   assert.equal(v.avatar_text, 'ab');
   assert.deepEqual(c.sheetToStaff(c.staffToSheet(v)), v);
   const photo = 'data:image/jpeg;base64,' + 'A'.repeat(100);
-  assert.equal(c.validateStaff({ ...p, photo, avatar_color: 'venmo' }).photo, photo);
+  assert.equal(c.validateStaff({ ...p, photo, avatar_color: 'cyan' }).photo, photo);
+  assert.throws(() => c.validateStaff({ ...p, avatar_color: 'venmo' }), /Bad avatar_color/);   // no such swatch: it would draw nothing
   assert.throws(() => c.validateStaff({ ...p, photo: 'https://x/y.png' }), /Bad photo/);
   assert.throws(() => c.validateStaff({ ...p, photo: 'data:image/png;base64,' + 'A'.repeat(50000) }), /too large/);
   assert.throws(() => c.validateStaff({ ...p, avatar_color: 'rgb(0,0,0)' }), /Bad avatar_color/);
