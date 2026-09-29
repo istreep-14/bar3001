@@ -19,16 +19,17 @@ function exportCsv() {
 async function importFiles(e: Event) {
   const input = e.currentTarget as HTMLInputElement, files = [...(input.files ?? [])];
   input.value = '';
-  let shifts = 0, crew = 0, people = 0, wages = 0;
+  let shifts = 0, income = 0, crew = 0, people = 0, wages = 0;
   try {
     for (const file of files) {
       const b = JSON.parse(await file.text()) as Bundle;
       if (!Array.isArray(b.rows) || !Array.isArray(b.staff) || !Array.isArray(b.crew) || !Array.isArray(b.income)) throw new Error(`${file.name} is not an import file`);
       const p = await importBundle(b);
-      shifts += p.rows.length; crew += p.crew.length; people += p.staff.length; wages += p.wages.length;
+      shifts += p.rows.length; income += p.income.length; crew += p.crew.length; people += p.staff.length; wages += p.wages.length;
       if (p.problems.length) console.warn('Import problems', file.name, p.problems);
     }
-    if (files.length) toast(shifts + people + wages === 0 ? 'Nothing new to import (already here)' : `Imported ${shifts} shifts, ${crew} crew, ${people} people${wages ? `, ${wages} wages` : ''}`);
+    if (files.length) toast(shifts + income + crew + people + wages === 0 ? 'Nothing new to import (already here)'
+      : `Imported ${shifts} shifts, ${income} income lines, ${crew} crew, ${people} people${wages ? `, ${wages} wages` : ''}`);
   } catch (err) {
     toast(`Could not import: ${err instanceof Error ? err.message : 'bad file'}`);
   }

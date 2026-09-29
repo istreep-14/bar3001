@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { defaultShiftType, hoursWorked, tipsPerHour, toHHMM, wageFor } from '../../core/core.generated.js';
+import { hoursWorked, tipsPerHour, toHHMM, wageFor } from '../../core/core.generated.js';
 import type { ShiftType } from '../../core/core.generated.js';
 import { liveStaff, liveViews, liveWages, personById, ready, removeShift, saveShift, undoRemove, viewById } from '../../data/store.ts';
 import { today, weekday } from '../../lib/dates.ts';
@@ -33,7 +33,7 @@ function initial(id: string): Form | null {
   const s = v.shift;
   return {
     date: s.date, start: toHHMM(s.start), end: toHHMM(s.end),
-    type: s.shift_type ?? defaultShiftType(s.start) ?? '', party: !!s.party,
+    type: s.shift_type ?? '', party: !!s.party,   // a type left unset stays unset: the start-time guess is for new shifts only
     tips: s.tips == null ? '' : String(s.tips), notes: s.notes ?? '',
     lines: v.income.map(i => newLine({ id: i.id, category: i.category, amount: String(i.amount), note: i.note ?? '' })),
     crew: v.crew.map(c => newMember({ id: c.id, staff_id: c.staff_id, name: personById(c.staff_id)?.name ?? c.name ?? 'Unknown', start: toHHMM(c.start), end: toHHMM(c.end), follow: false }))

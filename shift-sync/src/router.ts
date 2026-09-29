@@ -15,7 +15,17 @@ const LEGACY: Record<string, Screen> = { earnings: 'overview', rate: 'overview',
 
 const read = () => location.hash.replace(/^#\/?/, '');
 const raw = signal(read());
-window.addEventListener('hashchange', () => { raw.value = read(); });
+/* Back, or a plain link, that would leave an editor with unsaved changes asks first, the same as a move made in the app
+ * (`go`, `push`) does. A hash change can't be cancelled, so "no" puts the editor's address back. */
+let at = location.hash;
+window.addEventListener('hashchange', () => {
+  if (guard.dirty) {
+    if (!confirm('Discard your changes?')) { history.pushState(null, '', at); return; }
+    guard.dirty = false;
+  }
+  at = location.hash;
+  raw.value = read();
+});
 
 const parsed = computed(() => {
   const [path = '', query = ''] = raw.value.split('?');
@@ -40,7 +50,13 @@ const hash = (path: string, q?: Record<string, string>) => '#/' + path + (q ? '?
 
 /** An open editor reports unsaved changes here so navigating away can ask first. */
 export const guard = { dirty: false };
-const discard = () => !guard.dirty || confirm('Discard your changes?');
+/** True when there is nothing unsaved, or you agree to drop it (which clears the flag, so the hash change that follows doesn't ask again). */
+const discard = () => {
+  if (!guard.dirty) return true;
+  if (!confirm('Discard your changes?')) return false;
+  guard.dirty = false;
+  return true;
+};
 
 /** When the app last navigated on its own: a click outside the drawer that already navigated (a row, a rail link) shouldn't also close it. */
 let navAt = 0;

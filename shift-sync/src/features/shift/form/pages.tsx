@@ -229,7 +229,7 @@ export function CrewPage({ c }: { c: Ctx }) {
   return (
     <div class={styles.pane} role="tabpanel">
       <h3 class="label">Who worked</h3>
-      {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people">People</a> page.</p> : (
+      {roster.length === 0 ? <p class={styles.hint}>Your roster is empty. Add people (and mark yourself) on the <a href="#/people" onClick={e => { e.preventDefault(); go('people'); }}>People</a> page.</p> : (
         <div class={styles.pills}>
           {roster.map(p => <button type="button" key={p.id} class={styles.pill} aria-pressed={inCrew.has(p.id)} onClick={() => (inCrew.has(p.id) ? setForm(f => f && { ...f, crew: f.crew.filter(m => m.staff_id !== p.id) }) : addMember(p.id))}>{p.name}{p.is_user && <MeBadge />}</button>)}
         </div>

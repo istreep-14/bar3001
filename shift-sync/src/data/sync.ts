@@ -1,7 +1,8 @@
 import { computed, signal } from '@preact/signals';
+import type { Signal } from '@preact/signals';
 import { reconcileClient, stripLocal } from '../core/core.generated.js';
 import type { Crew, Income, Local, Role, Shift, Staff, Wage } from '../core/core.generated.js';
-import { replaceAll } from './db.ts';
+import { saveSynced } from './db.ts';
 import { connected, settings } from './settings.ts';
 import { crewRows, incomeRows, roleRows, setChangeHandler, shifts, staffRows, wageRows } from './store.ts';
 
@@ -22,6 +23,10 @@ interface Reply {
 }
 
 let running = false, again = false;
+
+const takeIn = <T extends { id: string }>(sig: Signal<Record<string, T>>, rows: T[]) => {
+  if (rows.length) sig.value = { ...sig.value, ...Object.fromEntries(rows.map(r => [r.id, r])) };
+};
 
 /* Staff fields newer than some deployed Sheet scripts. An older script drops them and hands the row back without them; taking
  * that copy would wipe them here too (and a main role, already moved out of `roles`, would be lost outright). So while the
@@ -48,10 +53,18 @@ export async function sync(): Promise<void> {
     const res = await fetch(api, { method: 'POST', body: JSON.stringify({ token, rows: dirtyRows, income: dirtyIncome, staff: dirtyStaff, crew: dirtyCrew, wages: dirtyWages, roles: dirtyRoles }) });
     const data = (await res.json()) as Reply;
     if (data.error) throw new Error(data.error === 'auth' ? 'Token rejected. Check the connection settings.' : data.error);
-    // Reconcile against the live signals, so edits made while the request was in flight survive.
-    shifts.value = reconcileClient(shifts.value, data.rows, data.held);
-    incomeRows.value = reconcileClient(incomeRows.value, data.income ?? [], data.held_income);
-    // A deployment from before the Staff / Crew / Wages / Roles tabs returns no `staff` / `crew` / `wages` / `roles` at all. Leave the local copy alone then.
+    // Reconcile against the live signals, so edits made while the request was in flight survive. A tab that comes back
+    // empty keeps this device's rows and marks them to be written back (core's reconcileClient); `emptied` says which.
+    const emptied: string[] = [];
+    const take = <T extends { id: string; updated_at: number }>(tab: string, local: Record<string, Local<T>>, server: T[], held?: string[]) => {
+      const out = reconcileClient(local, server, held);
+      const back = Object.keys(out).filter(id => out[id]!._dirty && local[id] && !local[id]!._dirty).length;
+      if (back) emptied.push(`${tab} (${back} ${back === 1 ? 'row' : 'rows'})`);
+      return out;
+    };
+    shifts.value = take('Shifts', shifts.value, data.rows, data.held);
+    // A deployment from before a tab existed returns no key for it at all. Leave the local copy alone then.
+    if (data.income) incomeRows.value = take('Income', incomeRows.value, data.income, data.held_income);
     const stale = !!data.staff?.length && NEW_STAFF.some(k => !(k in data.staff![0]!));
     if (data.staff) {
       const local = staffRows.value;
@@ -59,16 +72,24 @@ export async function sync(): Promise<void> {
         const l = local[r.id];
         return l ? { ...r, ...Object.fromEntries(NEW_STAFF.map(k => [k, l[k] ?? null])), aliases: l.aliases ?? [] } as Staff : r;
       }) : data.staff;
-      const merged = reconcileClient(local, server, data.held_staff);
+      const merged = take('Staff', local, server, data.held_staff);
       if (stale) for (const [id, p] of Object.entries(merged)) if (!p._dirty && hasNewStaff(p)) merged[id] = { ...p, _dirty: true };
       staffRows.value = merged;
     }
-    if (data.crew) crewRows.value = reconcileClient(crewRows.value, data.crew, data.held_crew);
-    if (data.wages) wageRows.value = reconcileClient(wageRows.value, data.wages, data.held_wages);
-    if (data.roles) roleRows.value = reconcileClient(roleRows.value, data.roles, data.held_roles);
-    await replaceAll(Object.values(shifts.value), Object.values(incomeRows.value), Object.values(staffRows.value), Object.values(crewRows.value), Object.values(wageRows.value), Object.values(roleRows.value));
-    sheetProblems.value = [...(stale || (!data.roles && Object.keys(roleRows.value).length) ? [STALE] : []), ...(data.errors ?? []).map(e =>
-      e.source === 'sheet' ? `${e.table} sheet, row ${e.row}: ${e.error}` : `${e.table} ${e.id}: ${e.error}`)];
+    if (data.crew) crewRows.value = take('Crew', crewRows.value, data.crew, data.held_crew);
+    if (data.wages) wageRows.value = take('Wages', wageRows.value, data.wages, data.held_wages);
+    if (data.roles) roleRows.value = take('Roles', roleRows.value, data.roles, data.held_roles);
+    const kept = await saveSynced({ rows: Object.values(shifts.value), income: Object.values(incomeRows.value), staff: Object.values(staffRows.value),
+      crew: Object.values(crewRows.value), wages: Object.values(wageRows.value), roles: Object.values(roleRows.value) });
+    // Unsynced edits another tab stored that this tab didn't have: take them in, and send them on the next pass.
+    takeIn(shifts, kept.rows); takeIn(incomeRows, kept.income); takeIn(staffRows, kept.staff);
+    takeIn(crewRows, kept.crew); takeIn(wageRows, kept.wages); takeIn(roleRows, kept.roles);
+    if (emptied.length || Object.values(kept).some(rs => rs.length)) again = true;
+    sheetProblems.value = [
+      ...(stale || (!data.roles && Object.keys(roleRows.value).length) ? [STALE] : []),
+      ...(emptied.length ? [`The Sheet came back with nothing in ${emptied.join(', ')}, so this device is writing its copy back rather than deleting it. To delete rows from the Sheet, set deleted to TRUE.`] : []),
+      ...(data.errors ?? []).map(e => e.source === 'sheet' ? `${e.table} sheet, row ${e.row}: ${e.error}` : `${e.table} ${e.id}: ${e.error}`)
+    ];
     localStorage.setItem(LAST, String((lastSynced.value = Date.now())));
     syncState.value = 'idle';
   } catch (err) {

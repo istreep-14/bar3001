@@ -350,8 +350,16 @@ function mergeInto(map, incoming) {
  * - Local rows missing from the server are dropped (deleted in the Sheet),
  *   unless dirty (created mid-flight or rejected — kept for retry).
  * - Ids in heldIds (Sheet row has a typo) are left exactly as they are locally.
+ * - A table that comes back with nothing at all (no rows, none held) drops nothing. A tab that was renamed, deleted or
+ *   cleared, or a new Sheet, reads as empty, and taking that as "every row was deleted" would wipe the device. Every
+ *   local row is marked dirty instead, so the next sync writes it back.
  * local: {id: row with _dirty flag}; returns a new map. */
 function reconcileClient(local, serverRows, heldIds) {
+  if (!serverRows.length && !(heldIds || []).length) {
+    var back = {};
+    Object.keys(local).forEach(function (id) { back[id] = local[id]._dirty ? local[id] : Object.assign({}, local[id], { _dirty: true }); });
+    return back;
+  }
   var held = {};
   (heldIds || []).forEach(function (id) { held[id] = true; });
   var out = {};

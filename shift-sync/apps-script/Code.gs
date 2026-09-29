@@ -96,10 +96,23 @@ function onEdit(e) {
   var n = last - first + 1, si = t.stamp - 1, di = t.del - 1;
   var vals = sh.getRange(first, 1, n, t.cols.length).getValues();
   var now = Date.now();
+  /* A row copied and pasted keeps its id, and two rows with one id overwrite each other. A paste covers the id column
+   * where typing into a cell doesn't, so a pasted row whose id is already on another row gets a new one; a row you
+   * edit cell by cell keeps its own. */
+  var pasted = e.range.getColumn() === 1, taken = {};
+  if (pasted && sh.getLastRow() >= 2) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().forEach(function (x, k) {
+      if (x[0] !== '' && (k + 2 < first || k + 2 > last)) taken[String(x[0]).trim()] = true;
+    });
+  }
   var ids = [], stamps = [], dels = [];
   vals.forEach(function (v) {
     var empty = v.every(function (x, i) { return i === 0 || i === si || i === di || x === ''; });
-    ids.push([v[0] || (empty ? '' : Utilities.getUuid())]);
+    var id = v[0] === '' ? '' : String(v[0]).trim();
+    if (id && taken[id]) id = '';   // a copy of another row: a row of its own from now on
+    if (!id && !empty) id = Utilities.getUuid();
+    if (pasted && id) taken[id] = true;   // the same row pasted twice in one go
+    ids.push([id]);
     stamps.push([empty && !v[0] ? '' : now]);
     dels.push([v[di] === '' && !empty ? false : v[di]]);
   });
@@ -174,6 +187,15 @@ function readAll(sh, t) {
     t.fix(v, tz);
     try {
       var r = t.parse(v);
+      if (rowNum[r.id] || held[r.id]) {
+        /* One id on two rows (a copy pasted before this script gave copies their own id): neither is taken, so neither
+         * overwrites the other, and the app keeps its own copy until the Sheet says which is which. */
+        var other = rowNum[r.id] || held[r.id];
+        errors.push({ source: 'sheet', row: i + 1, error: 'Same id as row ' + other + ': a copied row keeps its id. Clear the id on the copy and it gets a new one.' });
+        delete map[r.id]; delete rowNum[r.id];
+        held[r.id] = other;
+        continue;
+      }
       map[r.id] = r;
       rowNum[r.id] = i + 1;
     } catch (err) {

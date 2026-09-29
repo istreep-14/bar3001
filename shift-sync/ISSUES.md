@@ -7,20 +7,20 @@ drifted apart, or where a safe change today becomes a nasty one later.
 
 ## Tier 1 — fix before they bite
 
-### 1. `core/core.d.ts` is hand-maintained and already 11 exports behind
+### 1. `core/core.d.ts` is hand-maintained and already 13 exports behind
 `scripts/sync-core.mjs` copies it verbatim to `src/core/core.generated.d.ts`; nothing checks
 it against `core/core.js`. Comparing the two right now:
 
 ```
-exported by core/core.js (35)   declared by core/core.d.ts (24 runtime + 8 types)
+exported by core/core.js (40)   declared by core/core.d.ts (27 runtime + 9 types)
 ```
 
-The 11 missing are every sheet serializer plus one merge helper:
+The 13 missing are every sheet serializer plus one merge helper:
 `rowToSheet`, `sheetToRow`, `incomeToSheet`, `sheetToIncome`, `crewToSheet`, `sheetToCrew`,
-`wageToSheet`, `sheetToWage`, `staffToSheet`, `sheetToStaff`, `mergeInto`.
+`wageToSheet`, `sheetToWage`, `staffToSheet`, `sheetToStaff`, `roleToSheet`, `sheetToRole`, `mergeInto`.
 
 This is invisible today because `src/` only uses the 24 that *are* declared. The first time
-you import one of the other 11 into the app — a CSV export, say — you get a confusing
+you import one of the other 13 into the app — a CSV export, say — you get a confusing
 "no exported member" error pointing at a file you did not write. Worse, it fails *silently
 in the other direction*: adding an export to `core.js` that nobody imports produces no error
 at all, so the declaration can rot indefinitely.
@@ -42,32 +42,17 @@ shifts, which is precisely the bug the `isPending` rule exists to prevent.
 the other. `trends.inRange` is a pure date filter, so `datedInRange` would read cleanly
 next to `dashboard`'s.
 
-### 3. `importBundle` can add rows without ever triggering a sync
-`data/store.ts:224`:
-
-```ts
-if (s.length + p.length + w.length) onChange();
-```
-
-That covers shifts, staff and wages but **not income or crew**. A bundle that adds only
-income or crew lines persists them to IndexedDB as `_dirty` and returns, without asking
-`sync.ts` to run. They sit unsynced until some unrelated write, a tab regaining focus, or
-the device coming back online. Not data loss, but a confusing "the import didn't show up in
-my Sheet".
-
-**Fix:** `if (s.length + i.length + p.length + c.length + w.length)`.
+### 3. (fixed) `importBundle` asked for a sync only when it added shifts, people or wages
+It now counts income and crew too. In practice this never bit: `planImport` only adds income and
+crew under shifts it adds in the same import. The Settings toast now counts income lines as well.
 
 ## Tier 2 — real, but only bites when you touch the area
 
-### 4. `DESIGN.md` points at a file that moved
-`DESIGN.md:46` says `features/shift/ShiftDetails.tsx`. The file is at
-`src/parts/ShiftDetails.tsx` — it moved in `a08af7f` ("Folder rule, id lookups, and a tidy
-style layer") and the doc did not follow. The `## Components` list is otherwise current.
+### 4. (fixed) `DESIGN.md` pointed at `features/shift/ShiftDetails.tsx`
+It now names `src/parts/ShiftDetails.tsx`.
 
-### 5. `DESIGN.md` describes Insights' delta as `Delta`, but Insights uses `DeltaPill`
-`DESIGN.md:96` names `Delta` in `ui/charts.tsx`. What `OverviewScreen.tsx:11` actually
-imports is `DeltaPill` from `ui/kpi.tsx`, used in six files. `charts.Delta` is dead — see
-#6 — so the doc names a component that nothing renders.
+### 5. (fixed) `DESIGN.md` named `Delta` where Insights uses `DeltaPill`
+The doc no longer names `charts.Delta`, which is still dead code (#6).
 
 ### 6. Three pieces of dead code
 - **`src/ui/Cur.tsx`** — the entire file. `Cur` is exported and imported nowhere.
@@ -154,10 +139,10 @@ Fine as is; just be aware there are now two localStorage idioms in `data/`.
 `const valid = (s: any): s is Scope` — a type guard over untyped JSON, which needs it. Listed
 so a future `noExplicitAny` lint knows the exception is deliberate.
 
-### 16. `sync.ts` rewrites all five stores on every sync
-`sync.ts:49` calls `replaceAll`, which clears and re-puts every row in every table. The
-transaction is atomic, so a closed tab cannot corrupt anything, but it is O(total rows) of
-writes on each sync. Fine to a few thousand rows; worth knowing before the data grows.
+### 16. `sync.ts` rewrites every store on every sync
+`db.saveSynced` reads each store and writes the whole merged set back in one transaction. It no
+longer clears the stores blind (it keeps another tab's unsynced rows), but it is still O(total rows)
+of writes on each sync. Fine to a few thousand rows; worth knowing before the data grows.
 
 ### 17. `vite.config.ts:13` is a Vite 8 workaround
 `injectRegister: 'script'`, with a comment that the `virtual:pwa-register` import does not

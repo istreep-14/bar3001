@@ -103,7 +103,7 @@ to IndexedDB, ask sync to run. Components read signals and change data only thro
 store's actions — there is no other write path.
 
 **A sync.** `sync.ts` POSTs only the rows flagged `_dirty` to the Apps Script endpoint,
-receives the full merged set back, and reconciles it with `reconcileClient` from core. Three
+receives the full merged set back, and reconciles it with `reconcileClient` from core. These
 rules make this safe:
 
 - A local row that is dirty *and* newer than the server's wins, so an edit made while the
@@ -112,7 +112,13 @@ rules make this safe:
   dirty, or its id is in the server's `held` list.
 - A held id is a Sheet row the server could not parse. It is left exactly as it is locally
   and reported in `sheetProblems`, so a typo is visible and fixable instead of silently
-  duplicating or eating the row.
+  duplicating or eating the row. Two Sheet rows with one id (a copied row) are held the same way.
+- A table that comes back with nothing at all is never read as "every row was deleted": a
+  renamed, deleted or cleared tab, or a new Sheet, looks exactly like that. The device keeps its
+  rows, marks them dirty, and writes them back on the next pass.
+- The write to IndexedDB (`db.saveSynced`) reads what is stored in the same transaction and
+  keeps any unsynced row this tab never saw, so a second tab's sync can't erase the first
+  tab's offline edits.
 
 Deletes are soft on both sides (`deleted: true`), which is what makes undo and the
 last-write-wins merge work.
@@ -231,8 +237,9 @@ or the URL keeps serving old code.
   Delete by `deleted` = TRUE or deleting the row. Deleting a shift in the app also deletes its income.
 - The old single `other` column on Shifts is kept and still counted, but the app no longer edits it.
 - Tips/hr and totals are derived in the app, not stored.
-- Leave `id` and `updated_at` alone.
-- Delete by setting `deleted` to TRUE, or delete the row. Both propagate.
+- Leave `id` and `updated_at` alone. Copying a whole row and pasting it gives the copy an id of its own.
+- Delete by setting `deleted` to TRUE, or delete the row. Both propagate. Emptying a whole tab
+  doesn't: an empty tab reads as lost, and the app writes its copy back.
 - A row with a typo is skipped and shown as an error in the app until fixed;
   it isn't lost or duplicated.
 

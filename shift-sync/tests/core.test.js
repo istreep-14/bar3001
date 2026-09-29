@@ -84,7 +84,17 @@ test('reconcileClient: server wins unless local dirty and newer', () => {
 test('reconcileClient keeps held rows (Sheet typo) instead of dropping them', () => {
   const local = { h: { ...row({ id: 'h' }), _dirty: false } };
   assert.equal(c.reconcileClient(local, [], ['h']).h.id, 'h');
-  assert.equal(c.reconcileClient(local, []).h, undefined);
+  assert.equal(c.reconcileClient(local, [], ['h']).h._dirty, false);
+  assert.equal(c.reconcileClient(local, [row({ id: 'x' })]).h, undefined);
+});
+
+test('reconcileClient: an empty table (renamed tab, new Sheet) drops nothing and writes every row back', () => {
+  const local = { a: { ...row(), _dirty: false }, b: { ...row({ id: 'b', updated_at: 7 }), _dirty: true } };
+  const out = c.reconcileClient(local, []);
+  assert.deepEqual(Object.keys(out).sort(), ['a', 'b']);
+  assert.equal(out.a._dirty, true);
+  assert.equal(out.b.updated_at, 7);
+  assert.equal(local.a._dirty, false);   // the input is not changed
 });
 
 test('stripLocal removes client-only fields', () => {

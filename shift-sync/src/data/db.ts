@@ -19,7 +19,12 @@ const dbp: Promise<IDBDatabase> = new Promise((res, rej) => {
     if (!db.objectStoreNames.contains('wages')) db.createObjectStore('wages', { keyPath: 'id' });
     if (!db.objectStoreNames.contains('roles')) db.createObjectStore('roles', { keyPath: 'id' });
   };
-  r.onsuccess = () => res(r.result);
+  r.onsuccess = () => {
+    // A newer build opened the database in another tab and needs to upgrade it: let go, or that tab waits forever, and
+    // reload into the new build.
+    r.result.onversionchange = () => { r.result.close(); location.reload(); };
+    res(r.result);
+  };
   r.onerror = () => rej(r.error);
 });
 
@@ -43,13 +48,32 @@ export const loadAll = <K extends TableName>(name: K) =>
 export const putMany = <K extends TableName>(name: K, records: Tables[K][]) =>
   run<void>([name], 'readwrite', s => { records.forEach(r => s[name].put(r)); });
 
-/** Replace all tables atomically (used after a sync hands back the full merged set). */
-export const replaceAll = (rows: Local<Shift>[], income: Local<Income>[], staff: Local<Staff>[], crew: Local<Crew>[], wages: Local<Wage>[], roles: Local<Role>[]) =>
-  run<void>(['rows', 'income', 'staff', 'crew', 'wages', 'roles'], 'readwrite', s => {
-    s.rows.clear(); rows.forEach(r => s.rows.put(r));
-    s.income.clear(); income.forEach(r => s.income.put(r));
-    s.staff.clear(); staff.forEach(r => s.staff.put(r));
-    s.crew.clear(); crew.forEach(r => s.crew.put(r));
-    s.wages.clear(); wages.forEach(r => s.wages.put(r));
-    s.roles.clear(); roles.forEach(r => s.roles.put(r));
+export type AllTables = { [K in TableName]: Tables[K][] };
+type AnyRow = Local<{ id: string; updated_at: number }>;
+
+/** Writes the merged set a sync hands back, every table in one transaction. What the database holds is read in that same
+ *  transaction: a row stored as unsynced that the set lacks, or has an older copy of, is another tab's work this tab
+ *  never saw. It is kept (not dropped, not overwritten) and returned, so the caller can take it in and send it. */
+export async function saveSynced(next: AllTables): Promise<AllTables> {
+  const db = await dbp;
+  const names = Object.keys(next) as TableName[];
+  const kept = Object.fromEntries(names.map(n => [n, []])) as unknown as Record<TableName, AnyRow[]>;
+  return new Promise((res, rej) => {
+    const t = db.transaction(names, 'readwrite');
+    for (const n of names) {
+      const store = t.objectStore(n), want = new Map((next[n] as AnyRow[]).map(r => [r.id, r]));
+      const req = store.getAll() as IDBRequest<AnyRow[]>;
+      req.onsuccess = () => {
+        for (const had of req.result) {
+          const w = want.get(had.id);
+          if (had._dirty && (!w || had.updated_at > w.updated_at)) { kept[n].push(had); want.delete(had.id); }
+          else if (!w) store.delete(had.id);
+        }
+        want.forEach(r => store.put(r));
+      };
+    }
+    t.oncomplete = () => res(kept as unknown as AllTables);
+    t.onerror = () => rej(t.error);
+    t.onabort = () => rej(t.error);
   });
+}

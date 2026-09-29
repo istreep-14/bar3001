@@ -13,7 +13,7 @@ function fakeSheet(name, header, rows) {
       grid[r - 1 + i] = grid[r - 1 + i] || Array(header.length).fill('');
       grid[r - 1 + i][c - 1 + j] = x;
     })),
-    getRow: () => r, getNumRows: () => nr, getSheet: () => sheet
+    getRow: () => r, getColumn: () => c, getNumRows: () => nr, getSheet: () => sheet
   });
   const sheet = {
     getName: () => name,
@@ -97,6 +97,27 @@ test('onEdit stamps id and updated_at on manual rows, skips blank rows', () => {
   assert.equal(h.grid[1][7], false);
   assert.equal(h.grid[2][0], '');
   assert.equal(h.grid[2][6], '');
+});
+
+test('a pasted copy of a row gets an id of its own; a row edited cell by cell keeps its id', () => {
+  const orig = ['a', '2026-09-26', '17:00', '01:00', 80, '', 500, false];
+  const h = harness([orig, [...orig], ['a', '2026-09-27', '17:00', '01:00', 90, '', 500, false]]);
+  h.ctx.onEdit({ range: h.sheet.getRange(3, 1, 1, 8) });     // row 3 pasted over whole: a copy of row 2
+  assert.equal(h.grid[1][0], 'a');
+  assert.equal(h.grid[2][0], 'gen1');
+  h.ctx.onEdit({ range: h.sheet.getRange(4, 5, 1, 1) });     // row 4 edited in one cell: its id is left alone
+  assert.equal(h.grid[3][0], 'a');
+});
+
+test('two Sheet rows with one id are both held and reported, and the app can\'t overwrite either', () => {
+  const h = harness([['a', '2026-09-25', '18:00', '02:00', 100, '', 500, false], ['a', '2026-09-26', '18:00', '02:00', 200, '', 600, false]]);
+  const res = h.post({ token: 'T', rows: [row({ updated_at: 9999 })] });
+  assert.deepEqual(res.held, ['a']);
+  assert.equal(res.rows.length, 0);
+  assert.match(res.errors[0].error, /Same id as row 2/);
+  assert.equal(h.grid[1][4], 100);
+  assert.equal(h.grid[2][4], 200);
+  assert.equal(h.grid.length, 3);
 });
 
 const inc = (o = {}) => ({ id: 'i1', shift_id: 'a', category: 'Cash', amount: 40, note: null, updated_at: 1000, deleted: false, ...o });
@@ -216,7 +237,7 @@ test('wages: rows append to the Wages tab, a Date cell reads back as YYYY-MM-DD,
 
 test('a hand edit of a Crew start or end refreshes its hours cell', () => {
   const h = harness([], [], [], [['c1', 'a', 'p1', 'Abby', '18:00', '22:30', 500, false, 99]]);
-  h.ctx.onEdit({ range: { getSheet: () => h.crewSheet, getRow: () => 2, getNumRows: () => 1 } });
+  h.ctx.onEdit({ range: h.crewSheet.getRange(2, 6, 1, 1) });   // the end time
   assert.equal(h.crew[1][8], 4.5);
 });
 

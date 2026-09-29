@@ -4,7 +4,7 @@ import { knownRoles } from '../../data/roles.ts';
 import { liveViews, personById, ready, removeStaff, saveStaff, undoRemoveStaff } from '../../data/store.ts';
 import { DASH, clockPlain } from '../../lib/format.ts';
 import { groupShifts, rowDay } from '../../lib/groups.ts';
-import { closeDrawer, guard, openSheet } from '../../router.ts';
+import { closeDrawer, go, guard, openSheet } from '../../router.ts';
 import { handle, initials, rolesOf } from '../../lib/people.ts';
 import { Avatar } from '../../ui/Avatar.tsx';
 import { ColorPicker } from '../../ui/ColorPicker.tsx';
@@ -204,7 +204,7 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
               </select>
               {form.role && <RoleTag name={form.role} />}
             </span>
-            <span class="hint">The one shown by their name. Colours, icons and the order roles rank in are in <a href="#/settings/roles">Settings</a>.</span>
+            <span class="hint">The one shown by their name. Colours, icons and the order roles rank in are in <a href="#/settings/roles" onClick={e => { e.preventDefault(); go('settings/roles'); }}>Settings</a>.</span>
           </label>
           <div class="field" role="group" aria-label="Other roles"><span class="label-text">Other roles</span>
             <div class={styles.chips}>

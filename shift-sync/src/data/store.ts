@@ -296,7 +296,7 @@ export async function importBundle(b: Bundle): Promise<Plan> {
   staffRows.value = { ...staffRows.value, ...Object.fromEntries(p.map(r => [r.id, r])) };
   crewRows.value = { ...crewRows.value, ...Object.fromEntries(c.map(r => [r.id, r])) };
   await Promise.all([putMany('rows', s), putMany('income', i), putMany('staff', p), putMany('crew', c), putMany('wages', w)]);
-  if (s.length + p.length + w.length) onChange();
+  if (s.length + i.length + p.length + c.length + w.length) onChange();
   return plan;
 }
 
