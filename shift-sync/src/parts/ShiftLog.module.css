@@ -20,11 +20,12 @@
 .bandTips { font-size: var(--fs-tips); font-weight: var(--fw-bold); color: var(--ink); }
 .bandTotal { font-size: var(--fs-fig); font-weight: var(--fw-semi); color: var(--ink-2); }
 
+.item { content-visibility: auto; contain-intrinsic-size: auto 3.25rem; }
 .item + .item { border-top: 1px solid var(--line-soft); }
 
 .row { width: 100%; min-height: 3.25rem; padding-block: 1px !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-fig); text-align: left; border-radius: var(--r-md); cursor: pointer; }
 .row:hover { background: var(--surface-2); }
-.item[data-selected] .row { background: var(--accent-wash); box-shadow: inset 3px 0 0 var(--accent); }
+.item[data-selected] .row { background: var(--sel-bg); box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
 /* The figures, by how much they say about the shift: tips strongest; total, rate and hours a step down; the flat extras quiet. */
 .tips { font-size: var(--fs-tips); font-weight: var(--fw-bold); color: var(--ink); }
 .total { font-weight: var(--fw-semi); color: var(--ink-2); }

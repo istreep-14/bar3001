@@ -14,5 +14,5 @@
 .fig + .fig { margin-left: calc(-1 * var(--crew-tuck)); }
 .fig[data-opaque] { border-radius: 50% 50% 0 0 / 42% 42% 0 0; object-fit: cover; }   /* a photo with its background: an arch, flat on the row */
 svg.fig { fill: var(--fill); }
-svg.fig text { fill: var(--letters); font-size: 17px; font-weight: var(--fw-bold); text-anchor: middle; letter-spacing: 0.02em; }
+svg.fig text { fill: var(--letters); font-size: var(--fs-tips); font-weight: var(--fw-bold); text-anchor: middle; letter-spacing: 0.02em; }
 .more { flex: none; padding: 1px 6px; border-radius: var(--r-pill); background: var(--surface-3); color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-semi); font-style: normal; line-height: 1.4; }

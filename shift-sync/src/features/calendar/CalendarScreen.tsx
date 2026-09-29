@@ -5,8 +5,8 @@ import { MONTH_NAMES, MONTH_SHORT, longDate } from '../../lib/format.ts';
 import { summarize } from '../../lib/stats.ts';
 import { closeSheet, openForm, openSheet, sheet } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
-import { StatList } from '../../ui/kpi.tsx';
-import { periodItems } from '../../ui/SideStats.tsx';
+import { Page } from '../../ui/Page.tsx';
+import { SideStats, periodItems } from '../../ui/SideStats.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftDetails } from '../../parts/ShiftDetails.tsx';
 import { MonthCalendar, MonthNav } from '../../ui/MonthCalendar.tsx';
@@ -30,26 +30,19 @@ export function CalendarScreen() {
     ? (first.getUTCFullYear() === month.y ? `${MONTH_SHORT[first.getUTCMonth()]} – ${MONTH_SHORT[month.m]} ${month.y}` : `${MONTH_SHORT[first.getUTCMonth()]} ${first.getUTCFullYear()} – ${MONTH_SHORT[month.m]} ${month.y}`)
     : `${MONTH_NAMES[month.m]} ${month.y}`;
   return (
-    <section class="panel" aria-labelledby="cal-title">
-      <header class="panel-head">
-        <h2 id="cal-title" aria-live="polite">{title}</h2>
-        <div class="panel-tools">
-          <div class="seg" role="radiogroup" aria-label="Calendar view">
-            <label><input type="radio" name="cal-view" checked={!stack} onChange={() => setView('month')} /><span>Month</span></label>
-            <label><input type="radio" name="cal-view" checked={stack} onChange={() => setView('stack')} /><span>3 months</span></label>
-          </div>
-          <MonthNav month={month} onMonth={setMonth} />
+    <Page title={title} id="cal-title" live tools={
+      <>
+        <div class="seg" role="radiogroup" aria-label="Calendar view">
+          <label><input type="radio" name="cal-view" checked={!stack} onChange={() => setView('month')} /><span>Month</span></label>
+          <label><input type="radio" name="cal-view" checked={stack} onChange={() => setView('stack')} /><span>3 months</span></label>
         </div>
-      </header>
-      {stack ? <div class="panel-body"><StackView all={liveViews.value} end={month} /></div> : (
-        <div class="split">
-          <div class="panel-body">
-            <MonthCalendar mode="browse" views={liveViews.value} month={month} onMonth={setMonth} onOpen={id => openSheet(id)} onNew={d => openForm('new', d)} />
-          </div>
-          {isDesktop.value && <DaySide month={month} />}
-        </div>
-      )}
-    </section>
+        <MonthNav month={month} onMonth={setMonth} />
+      </>
+    } side={stack || !isDesktop.value ? undefined : <DaySide month={month} />}>
+      {stack
+        ? <StackView all={liveViews.value} end={month} />
+        : <MonthCalendar mode="browse" views={liveViews.value} month={month} onMonth={setMonth} onOpen={id => openSheet(id)} onNew={d => openForm('new', d)} />}
+    </Page>
   );
 }
 
@@ -59,7 +52,7 @@ function DaySide({ month }: { month: Month }) {
   const key = `${month.y}-${String(month.m + 1).padStart(2, '0')}`;
   const s = summarize(liveViews.value.filter(x => x.shift.date.startsWith(key)));
   return (
-    <aside class="panel-body side" aria-label="Selected day">
+    <SideStats ariaLabel="Selected day" label={MONTH_NAMES[month.m]} items={periodItems(s)}>
       {v ? (
         <div class="side-block day-card">
           <div class="day-card-head">
@@ -74,10 +67,6 @@ function DaySide({ month }: { month: Month }) {
       ) : (
         <div class="side-block"><p class="muted side-note">Pick a shift to see it here. An empty day starts a new one.</p></div>
       )}
-      <div class="side-block">
-        <h3 class="label">{MONTH_NAMES[month.m]}</h3>
-        <StatList items={periodItems(s)} />
-      </div>
-    </aside>
+    </SideStats>
   );
 }

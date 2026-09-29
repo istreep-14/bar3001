@@ -69,7 +69,8 @@ export const liveViews = computed<ShiftView[]>(() => {
     .sort(byRecent);
 });
 
-/** A person stored before aliases and avatars existed (on this device, or from a Sheet script not yet updated) has none. */
+/** A person stored before aliases and avatars existed (on this device, or from a Sheet script not yet updated) has none.
+ *  A current row is returned as stored, so a recompute does not copy its photo string. */
 const withAvatar = (p: Local<Staff>): Local<Staff> => Array.isArray(p.aliases) ? p
   : { ...p, aliases: [], photo: p.photo ?? null, avatar_color: p.avatar_color ?? null, avatar_text: p.avatar_text ?? null, role: p.role ?? null };
 /** The roster, by name. */

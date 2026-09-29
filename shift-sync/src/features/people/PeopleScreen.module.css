@@ -1,4 +1,4 @@
-.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-4) 1.15rem var(--s-3); }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-4) var(--inset-x) var(--s-3); }
 .search { width: min(22rem, 100%); }
 .count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .long { display: none; }
@@ -6,7 +6,7 @@
 @media (min-width: 56rem) { .long { display: inline; } }
 
 .list { border-top: 1px solid var(--line); }
-.item { width: 100%; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 1.15rem; text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); }
+.item { width: 100%; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--inset-x); text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); }
 .item:hover { background: var(--surface-2); }
 .item > :global(.who) { flex: 1; min-width: 0; }
 .item[data-tone='me'] { background: var(--me-wash); }
@@ -15,7 +15,7 @@
 .item[data-tone='manager']:hover { background: color-mix(in srgb, var(--mgr) 12%, var(--surface)); }
 .item[data-tone='muted'] :global(:is(.who-name, .who-sub, .role-name)) { color: var(--ink-3); }
 .item[data-tone='muted'] :global(:is(.avatar, .role)) { opacity: 0.6; }
-.item[aria-current='true'] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.item[aria-current='true'] { background: var(--sel-bg); box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
 .item[data-tone='me'][aria-current='true'] { background: color-mix(in srgb, var(--me) 20%, var(--surface)); }
 .item[data-tone='manager'][aria-current='true'] { background: color-mix(in srgb, var(--mgr) 16%, var(--surface)); }
 .flag { display: inline-flex; align-items: center; gap: var(--s-1); color: var(--ink-2); font-size: var(--fs-meta); }

@@ -9,9 +9,9 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   (Dashboard, Log, Calendar, Insights, Other income), *Crew* (Crew, People) and *Settings*; below them New shift, the sync state and the
   light/dark switch (see *Rail, groups and pages*). On a phone the groups are a bottom tab bar, the group's pages a pill strip,
   and a top bar carries the sync state and New shift.
-- **Every page is one panel:** a head (title left, its controls right) and a body. A page with two views has a tab row on the
-  canvas above its panel. Nothing inside a panel is boxed again except what you act on (an opened row, the Calendar's day card).
-  The Log's grouping and period controls live in the panel head, not in a toolbar row above the list.
+- **Every page is one panel:** `ui/Page.tsx` draws the head (title left, its controls right) and the body. A page with two views has a tab row on the
+  canvas above its panel. Nothing inside a panel is boxed again except what you act on (an opened row, the Calendar's day card, a dashboard tile).
+  The Log's grouping and period controls live in the panel head, not in a toolbar row above the list. A selected row is `--sel-bg` with a `--sel-bar` of `--sel-bar-w` on its leading edge.
 - **Two levels:** you browse pages; you enter or edit a shift in a **dialog** (the form). A shift's read-only look is
   `ShiftDetails`: an opened row on the Log, the side card on the Calendar, and elsewhere the **drawer** (a floating card *over*
   the page's right edge on desktop, never resizing it; a sheet on phone). Clicking outside the drawer, its close button, or the
@@ -21,9 +21,11 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   `#/journal`, `#/log/multi`, `#/settings`, `#/hub`) land on their replacement.
 
 ## Tokens (`tokens.css`)
-- **Surfaces:** page `--bg` < panel `--surface` (1px `--line`, soft shadow) < raised (dialog, drawer, tooltip: `--shadow`).
-  `--surface-2` is an input's or tile's fill, `--surface-3` a hover. Dark mode is written twice (a test keeps the two blocks identical).
-- **Type:** Poppins, self-hosted. Title 16, body 14, small 12, labels 12 semibold (sentence case), tiles 22/30. A mouse gets a denser scale.
+- **Surfaces:** canvas `--bg` < panel `--surface-2` (1px `--line`, soft shadow) < content you act on `--surface` < raised (dialog, drawer, tooltip: `--shadow`).
+  `--surface-3` is the pressed or inset shade. Dark mode is written twice (a test keeps the two blocks identical).
+- **Type:** Poppins, self-hosted. Title 16, body 14, small 12, labels 12 semibold (sentence case). Tiles are `--fs-tile` (22) and `--fs-stat` (30); chart labels are `--fs-axis`. Those four stay put when a mouse densifies the rest of the ladder. `--fs-lead` follows `--fs-body`.
+- **Selection:** `--sel-bg`, `--sel-bar`, `--sel-bar-w`. One recipe for a selected table row, a person, and a log card.
+- **Chrome:** `--inset-x` is the toolbar inset. `--measure` is the settings column. Rail text is `--rail-ink` and `--rail-ink-hi`. Dialogs share `--overlay`, `--r-lg`, `--shadow`, and head padding `--s-3` `--s-4`.
 - **Times:** always 12-hour. Reading form `6:00 PM` (`clockPlain`) in rows, cards, lists and labels; the compact `6:00p` (`clockShort`)
   only inside dense cells (calendar days, the crew grid); every editable time is a `TimeField`.
 - **Spacing:** 4px scale (`--s-1..7`). **Radii:** 8, 12, 16, pill. **Accent:** teal.

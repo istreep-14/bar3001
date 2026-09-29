@@ -104,8 +104,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl tbody tr { transition: background var(--dur) var(--ease); }
 .tbl tbody tr[data-row] { cursor: pointer; }
 .tbl tbody tr[data-row]:hover { background: var(--surface-2); }
-.tbl tbody tr[aria-current='true'] { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
-.tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
+.tbl tbody tr[aria-current='true'] { background: var(--sel-bg); }
+.tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
 /* grouped rows (Table `group`): no rule inside a block; between blocks, a separator row (a hairline with a little air) */
 .tbl[data-grouped] tbody td { border-bottom: 0; }
 .tbl tbody tr.tbl-sep td { height: var(--s-3); padding: 0; background: linear-gradient(var(--line-soft), var(--line-soft)) center / 100% 1px no-repeat; }
@@ -160,8 +160,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl tbody tr[data-tone='muted'] td, .tbl tbody tr[data-tone='muted'] :is(.who-name, .role-name) { color: var(--ink-3); }
 .tbl tbody tr[data-tone='muted'] :is(.avatar, .role) { opacity: 0.6; }
 .tbl-log .tbl tbody tr[data-row]:hover td { background: var(--surface-2); }
-.tbl-log .tbl tbody tr[aria-current='true'] td { background: var(--accent-wash); }
-.tbl-log .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.tbl-log .tbl tbody tr[aria-current='true'] td { background: var(--sel-bg); }
+.tbl-log .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
 /* a rule marking where a column group starts (`groupStart`), the same idea as the grid's, just quieter at the Log's size */
 .tbl-log .tbl :is(th, td).gs { box-shadow: inset 1px 0 0 var(--line-soft); padding-left: calc(var(--s-3) - 1px); }
 /* Table `separators`: a quieter rule between every column, not just where a group starts — several similar figures
@@ -188,8 +188,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-grid.tbl-fixed .tbl { min-width: 70rem; }
 @media (max-width: 40rem) { .tbl-grid.tbl-fixed .tbl { min-width: 0; } }
 .tbl-grid .tbl :is(th, td) { padding: 0 var(--s-3); box-sizing: border-box; }
-.tbl-grid .tbl :is(th, td):first-child { position: sticky; left: 0; z-index: 1; padding-left: 1.15rem; box-shadow: inset -1px 0 0 var(--line-soft); }
-.tbl-grid .tbl thead th { height: var(--grid-head); font-size: 0.65625rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+.tbl-grid .tbl :is(th, td):first-child { position: sticky; left: 0; z-index: 1; padding-left: var(--inset-x); box-shadow: inset -1px 0 0 var(--line-soft); }
+.tbl-grid .tbl thead th { height: var(--grid-head); font-size: var(--fs-micro); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
 .tbl-grid .tbl thead th[aria-sort='ascending'], .tbl-grid .tbl thead th[aria-sort='descending'] { color: var(--ink); }
 .tbl-grid .tbl thead th:is([aria-sort='ascending'], [aria-sort='descending']) .th-sort .icon { opacity: 1; color: var(--accent); }
 .tbl-grid .tbl thead th:first-child { z-index: 3; }
@@ -200,8 +200,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-grid .tbl .r .th-sort { flex-direction: row-reverse; }
 .tbl-grid .tbl td { height: var(--grid-row); background: var(--surface); white-space: nowrap; }
 .tbl-grid .tbl tbody tr[data-row]:hover td { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }   /* toward the ink: darker in light, lighter in dark */
-.tbl-grid .tbl tbody tr[aria-current='true'] td { background: var(--accent-wash); }
-.tbl-grid .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset 3px 0 0 var(--accent), inset -1px 0 0 var(--line-soft); }
+.tbl-grid .tbl tbody tr[aria-current='true'] td { background: var(--sel-bg); }
+.tbl-grid .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar), inset -1px 0 0 var(--line-soft); }
 .tbl-grid .tbl tbody tr:last-child td { border-bottom: 1px solid var(--line-soft); }
 /* keyboard focus on a row: the row's own edges, not an outline the sticky column would cut */
 .tbl-grid .tbl tbody tr:focus-visible { outline: none; }
@@ -277,7 +277,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .shiftcell { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
 .shiftcell .tbadge { flex: none; }
 /* ── avatars: a small overlapping stack of initials, the same shape wherever crew show up. No border: the fill runs to the edge ── */
-.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; overflow: hidden; background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: 0.625rem; font-weight: var(--fw-semi); }
+.avatar { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; overflow: hidden; background: color-mix(in srgb, var(--ac, var(--ink-3)) 18%, var(--surface)); color: var(--ac, var(--ink-2)); font-size: var(--fs-micro); font-weight: var(--fw-semi); }
 .avatars { display: inline-flex; align-items: center; }
 .avatars .avatar + .avatar { margin-left: calc(-1 * var(--av-overlap, 0.5rem)); }   /* a stack sets --av-overlap to its own tuck */
 /* in a stack each circle is cut back where the next one tucks over it, a sliver of whatever is behind, so faces of one fill still read apart */
@@ -287,8 +287,8 @@ select.input { appearance: none; padding-right: var(--s-6);
 }
 .avatar-more { background: var(--surface-3); color: var(--ink-2); }
 /* sizes: sm (default) in a row's crew stack, md beside a name in a table, lg at the head of a person's drawer */
-.avatar[data-size='md'] { width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; }
-.avatar[data-size='lg'] { width: 3.5rem; height: 3.5rem; font-size: 1.125rem; }
+.avatar[data-size='md'] { width: 1.75rem; height: 1.75rem; font-size: var(--fs-meta); }
+.avatar[data-size='lg'] { width: 3.5rem; height: 3.5rem; font-size: var(--fs-hero); }
 /* the status dot rides the circle's lower right edge, ringed in the surface so it reads as sitting on top */
 .avatar-wrap { position: relative; display: inline-flex; flex: none; }
 .avatar-dot { position: absolute; right: -1px; bottom: -1px; width: 26%; height: 26%; min-width: 0.375rem; min-height: 0.375rem; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 1.5px var(--surface); }
@@ -372,7 +372,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .dial { position: relative; display: inline-grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; }
 .dial svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .dial-arc { fill: none; stroke: var(--fill, var(--ink-3)); stroke-width: 1.1; stroke-linecap: round; opacity: 0.5; }   /* thin and faint: the figure inside leads */
-.dial-value { position: relative; font-size: 0.875rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.dial-value { position: relative; font-size: var(--fs-body); line-height: 1; font-variant-numeric: tabular-nums; }
 
 /* ── hover card (ui/HoverCard.tsx): detail too rich for a tooltip, opened beside its trigger ── */
 .hovercard-at { display: inline-flex; border-radius: var(--r-sm); }
@@ -382,7 +382,7 @@ select.input { appearance: none; padding-right: var(--s-6);
    (the same words go in sr-only text for anyone who can't hover); \A in the text breaks a line. ── */
 .tip { position: relative; }
 .tip::after {
-  content: attr(data-tip); position: absolute; z-index: 5; bottom: calc(100% + 6px); right: 0; width: max-content; max-width: 16rem;
+  content: attr(data-tip); position: absolute; z-index: var(--z-pop); bottom: calc(100% + 6px); right: 0; width: max-content; max-width: 16rem;
   padding: 5px 8px; border-radius: var(--r-sm); background: var(--ink); color: var(--surface); box-shadow: var(--shadow-sm);
   font-size: var(--fs-meta); font-style: normal; font-weight: var(--fw-med); line-height: 1.35; text-align: left; white-space: pre-line;
   opacity: 0; transform: translateY(2px); pointer-events: none; transition: opacity 120ms ease, transform 120ms ease;

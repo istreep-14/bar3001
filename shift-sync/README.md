@@ -211,7 +211,7 @@ ten pages. `ShiftForm.tsx` holds the state and the derived figures. The Crew pag
 - `WEEK_START` in `lib/dates.ts` is Monday. Change it there and nowhere else; `tests/weeks.test.ts`
   fails if any page disagrees.
 - No raw colour, font weight or size in a component: `styles/tokens.css` only. Colours and weights are checked by
-  `tests/tokens.test.ts`. The Log's figure sizes are `--fs-fig` and `--fs-tips`; other font sizes are still literal (ISSUES.md #19).
+  `tests/tokens.test.ts`, including font sizes (the scale, or a relative `em`).
 - Where a part lives says what it may touch — enforced by `tests/layers.test.ts`.
 - One of each: table, calendar, drawer, form, empty state, toast.
 

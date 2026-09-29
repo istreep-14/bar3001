@@ -12,6 +12,7 @@ import { DeltaPill } from '../../ui/kpi.tsx';
 import { Stack } from '../../ui/Stack.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { PartyBadge, TypeBadge } from '../../ui/Badges.tsx';
+import { Page } from '../../ui/Page.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
 import { openSheet } from '../../router.ts';
@@ -32,26 +33,22 @@ const [trend, setTrend] = persisted<number>('ov:trend', oneOf(TREND.map(t => t.n
 export function OverviewScreen() {
   const all = liveViews.value;
   return (
-    <section class="panel" aria-labelledby="ov-title">
-      <header class="panel-head">
-        <h2 id="ov-title">Insights</h2>
-        <div class="panel-tools">
-          <div class="seg" role="radiogroup" aria-label="Recent span">
-            {FOCUS.map(f => <label key={f.id}><input type="radio" name="ov-focus" checked={focus.value === f.id} onChange={() => setFocus(f.id)} /><span>{f.label}</span></label>)}
-          </div>
-          <div class="seg" role="radiogroup" aria-label="Trend length">
-            {TREND.map(t => <label key={t.n}><input type="radio" name="ov-trend" checked={trend.value === t.n} onChange={() => setTrend(t.n)} /><span>{t.label}</span></label>)}
-          </div>
+    <Page title="Insights" id="ov-title" tools={
+      <>
+        <div class="seg" role="radiogroup" aria-label="Recent span">
+          {FOCUS.map(f => <label key={f.id}><input type="radio" name="ov-focus" checked={focus.value === f.id} onChange={() => setFocus(f.id)} /><span>{f.label}</span></label>)}
         </div>
-      </header>
-      <div class="panel-body">
-        {ready.value && all.length === 0 ? (
-          <FirstShiftEmpty>
-            Charts fill in as you log shifts. Everything saves on this device first, so it works with no signal.
-          </FirstShiftEmpty>
-        ) : <Body all={all} />}
-      </div>
-    </section>
+        <div class="seg" role="radiogroup" aria-label="Trend length">
+          {TREND.map(t => <label key={t.n}><input type="radio" name="ov-trend" checked={trend.value === t.n} onChange={() => setTrend(t.n)} /><span>{t.label}</span></label>)}
+        </div>
+      </>
+    }>
+      {ready.value && all.length === 0 ? (
+        <FirstShiftEmpty>
+          Charts fill in as you log shifts. Everything saves on this device first, so it works with no signal.
+        </FirstShiftEmpty>
+      ) : <Body all={all} />}
+    </Page>
   );
 }
 

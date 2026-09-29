@@ -41,8 +41,11 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
   const [saving, setSaving] = useState(false);
   const [newRole, setNewRole] = useState('');
   const [newAlias, setNewAlias] = useState('');
-  const baseline = useRef(JSON.stringify(form));
-  const dirty = form !== null && JSON.stringify(form) !== baseline.current;
+  const formRest = (f: Form) => { const { photo: _photo, ...rest } = f; return JSON.stringify(rest); };
+  const snap = (f: Form | null) => ({ rest: f ? formRest(f) : '', photo: f?.photo ?? null });
+  const baseline = useRef(snap(form));
+  const dirty = form !== null && (formRest(form) !== baseline.current.rest || form.photo !== baseline.current.photo);
+  const markClean = (f: Form) => { baseline.current = snap(f); guard.dirty = false; };
 
   useEffect(() => { if (!form && ready.value) closeDrawer(); }, [form]);
   useEffect(() => { guard.dirty = dirty; return () => { guard.dirty = false; }; }, [dirty]);
@@ -50,13 +53,13 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
   if (!form) return null;
 
   const set = (patch: Partial<Form>) => setForm(f => f && { ...f, ...patch });
-  const finish = () => { baseline.current = JSON.stringify(form); guard.dirty = false; frame.current?.close(); };
+  const finish = () => { markClean(form); frame.current?.close(); };
   const requestClose = () => { if (dirty && !confirm('Discard your changes?')) return; finish(); };
   const cancelEdit = () => {
     if (isNew) return requestClose();
     if (dirty && !confirm('Discard your changes?')) return;
     const f = fromPerson(existing!);
-    baseline.current = JSON.stringify(f); guard.dirty = false;
+    markClean(f);
     setForm(f); setError(''); setEditing(false);
   };
   const toggleRole = (r: string) => set({ roles: form.roles.includes(r) ? form.roles.filter(x => x !== r) : [...form.roles, r] });
@@ -93,7 +96,7 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
       setNewAlias('');
       toast(isNew ? 'Person added' : 'Person saved');
       if (isNew) finish();
-      else { const saved = personById(id); const nf = saved ? fromPerson(saved) : f; baseline.current = JSON.stringify(nf); guard.dirty = false; setForm(nf); setEditing(false); setSaving(false); }
+      else { const saved = personById(id); const nf = saved ? fromPerson(saved) : f; markClean(nf); setForm(nf); setEditing(false); setSaving(false); }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save.');
       setSaving(false);

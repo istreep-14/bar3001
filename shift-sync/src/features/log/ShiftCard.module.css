@@ -1,6 +1,6 @@
 .card { width: 100%; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-2); text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); transition: background var(--dur) var(--ease); }
 .card:hover { background: var(--surface-2); }
-.card[aria-current='true'] { background: var(--accent-wash); box-shadow: inset 3px 0 0 var(--accent); }
+.card[aria-current='true'] { background: var(--sel-bg); box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
 /* The date, drawn rather than written: a shift IS its date. No box, so nothing nests. */
 .date { display: grid; justify-items: center; line-height: 1.1; }
 .month { font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--ink-2); }

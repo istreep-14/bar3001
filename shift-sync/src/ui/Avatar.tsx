@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'preact/hooks';
+import { memo } from 'preact/compat';
+import { thumbNow, thumbUrl } from './avatarThumb.ts';
 import { hashOf, initials } from '../lib/people.ts';
 import { onColor } from '../lib/theme.ts';
 import { SWATCHES, swatchColor } from './swatches.ts';
@@ -16,16 +19,28 @@ export function avatarColor(id: string, color?: string | null): { value: string;
 }
 
 /** A person's circle: their photo when they have one, else their letters on their colour. `status` adds a dot on its
- *  lower right edge, green for active and red for inactive (the word goes with it for anyone who can't tell them apart). */
+ *  lower right edge, green for active and red for inactive (the word goes with it for anyone who can't tell them apart).
+ *  A photo is drawn down to a shared 48px thumb, so a list does not decode the stored image on every circle. */
 export type AvatarSize = 'sm' | 'md' | 'lg';
-export function Avatar({ id, name, look, size = 'sm', status }: { id: string; name: string; look?: AvatarLook; size?: AvatarSize; status?: 'active' | 'inactive' }) {
+export const Avatar = memo(function Avatar({ id, name, look, size = 'sm', status }: { id: string; name: string; look?: AvatarLook; size?: AvatarSize; status?: 'active' | 'inactive' }) {
   const c = avatarColor(id, look?.avatar_color);
+  const photo = look?.photo || null;
+  const [src, setSrc] = useState<string | null>(() => (photo ? thumbNow(id, photo) : null));
+  useEffect(() => {
+    if (!photo) { setSrc(null); return; }
+    const hit = thumbNow(id, photo);
+    if (hit) { setSrc(hit); return; }
+    setSrc(null);
+    let live = true;
+    void thumbUrl(id, photo).then(url => { if (live) setSrc(url); });
+    return () => { live = false; };
+  }, [id, photo]);
   // a colour picked by hex is painted exactly, with black or white letters, whichever reads better on it
   const ink = c.custom ? onColor(c.value) : null;
   const circle = (
-    <span class="avatar" data-size={size === 'sm' ? undefined : size} data-custom={c.custom ? '' : undefined} data-auto={c.auto ? '' : undefined} data-photo={look?.photo ? '' : undefined}
+    <span class="avatar" data-size={size === 'sm' ? undefined : size} data-custom={c.custom ? '' : undefined} data-auto={c.auto ? '' : undefined} data-photo={photo ? '' : undefined}
       style={{ '--ac': c.value, ...(ink ? { '--ac-ink': ink } : {}) }} title={name} role="img" aria-label={name}>
-      {look?.photo ? <img src={look.photo} alt="" /> : initials(name, look?.avatar_text)}
+      {src ? <img src={src} alt="" loading="lazy" decoding="async" /> : initials(name, look?.avatar_text)}
     </span>
   );
   if (!status) return circle;
@@ -34,4 +49,4 @@ export function Avatar({ id, name, look, size = 'sm', status }: { id: string; na
       {circle}<i class="avatar-dot" data-status={status} title={status === 'active' ? 'Active' : 'Inactive'} />
     </span>
   );
-}
+});

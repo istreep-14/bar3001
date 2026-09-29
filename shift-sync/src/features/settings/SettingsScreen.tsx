@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import type { Screen } from '../../router.ts';
-import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Page } from '../../ui/Page.tsx';
 import { Appearance } from './Appearance.tsx';
 import { Roles } from './Roles.tsx';
 import { SheetSync } from './SheetSync.tsx';
@@ -24,16 +24,13 @@ export function SettingsScreen({ page }: { page: Screen }) {
     if (id) document.getElementById(id)?.scrollIntoView({ block: 'start' });
   }, [page]);
   return (
-    <section class="panel" aria-labelledby="settings-title">
-      <PanelHead title="Settings" id="settings-title" />
-      <div class={`panel-body ${styles.screen}`}>
-        {AREAS.map(a => (
-          <section key={a.id} id={a.id} class={styles.area} aria-labelledby={`${a.id}-h`} data-current={a.page === page ? '' : undefined}>
-            <h2 id={`${a.id}-h`} class={styles.areaTitle}>{a.title}</h2>
-            {a.body()}
-          </section>
-        ))}
-      </div>
-    </section>
+    <Page title="Settings" id="settings-title" bodyClass={styles.screen}>
+      {AREAS.map(a => (
+        <section key={a.id} id={a.id} class={styles.area} aria-labelledby={`${a.id}-h`} data-current={a.page === page ? '' : undefined}>
+          <h3 id={`${a.id}-h`} class={styles.areaTitle}>{a.title}</h3>
+          {a.body()}
+        </section>
+      ))}
+    </Page>
   );
 }
