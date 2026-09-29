@@ -45,6 +45,7 @@ export interface WeekPoint {
 /** One point per Monday–Sunday week from `first` to `last` (both Mondays), oldest first. */
 export function weeklyBetween(all: ShiftView[], first: string, last: string, today: string): WeekPoint[] {
   const thisWeek = weekStart(today), out: WeekPoint[] = [];
+  // 1200 weeks is about 23 years. A bad first/last pair stops here instead of spinning.
   for (let k = first, guard = 0; k <= last && guard < 1200; k = addDays(k, 7), guard++) {
     const s = summarize(inDates(all, k, addDays(k, 6)));
     out.push({ key: k, n: s.shifts, hours: s.hours, tips: s.tips, total: s.total, tph: s.tph, smooth: summarize(inDates(all, addDays(k, -21), addDays(k, 6))).tph, partial: k === thisWeek });

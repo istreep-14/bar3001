@@ -52,7 +52,8 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   shift adds up to with the mix bar), then pages in three groups (Info: Date, Time, Type · Income: Tips, Wage, Other · Details: Crew,
   Party, Notes), each with a live summary and a problem dot. The pages are components in `form/pages.tsx`; the page list, the form
   object and validation (`check`) are in `form/model.ts`, pure and tested. No time presets: the Time page draws your last few same-weekday shifts
-  under this one. Close confirms in place ("Discard changes?"); Delete acts at once with Undo.
+  under this one. The Crew page is `CrewPicker`: type a name or a nickname and the roster filters as you type (`findPeople`), with the people
+  already on the shift as chips above the field. Close confirms in place ("Discard changes?"); Delete acts at once with Undo.
 - `ui/TimeField.tsx`: every editable time is hour · minute · AM/PM (`lib/time12.ts` converts), so no device shows a 24-hour clock.
 - `parts/ShiftDetails.tsx`: the one read-only shift block (mix bar + Time / Crew / Money stacked lists), used by the drawer and
   the Log's opened row. Each list has a quiet Edit link that opens the form on its page (Time, Crew, Other). In the drawer the
@@ -224,7 +225,7 @@ double-click an edge to reset). Notes aren't a column (they're in the drawer, an
 - **Row formatting stays quiet:** the role's colour lives only in the Role cell and the avatar's frame. Being you or a manager tints the row's fill (gold
   `--me-wash`, blue `--mgr-wash`; yours wins, so as a manager you get both marks but the gold row); inactive greys the row (text,
   avatar and marks). A tinted row deepens on hover and when selected.
-- **Search** matches names and aliases the way a crew picker will (`findPeople`: exact, then starts with, then a later word starts
+- **Search** matches names and aliases the same way the shift form's crew picker does (`findPeople`: exact, then starts with, then a later word starts
   with, then contains), then roles, ID and notes; the best matches stay on top whatever column is sorted under them (`Table`
   `rank`). **Filter** (`ui/FilterMenu.tsx`, `lib/filters.ts`) picks any mix of role, other roles, status, manager and photo, with
   a count beside each value and a removable chip for each pick.
@@ -235,8 +236,8 @@ are free text. It syncs to the Staff tab. A person has one **main role** (`role`
 before the main role existed reads its first role as main until it is saved (`rolesOf` in `lib/people.ts`).
 - **Aliases** (*Also known as*): zero or more other names a person goes by (a nickname, a short name, a common misspelling).
   `lib/people.ts`'s `findPeople` matches what's typed against the name, first, last and full name and every alias (case and
-  accents ignored; a name beats an alias at the same strength) and says which alias matched. The People search uses it (a hit
-  by alias reads *as "Marky"*); it is there for a crew picker that filters as you type.
+  accents ignored; a name beats an alias at the same strength) and says which alias matched. The People search and the shift
+  form's crew picker both use it, and a hit by alias reads *as "Marky"*.
 - **Avatar:** the circle everywhere a person shows (the Log's crew stack, Crew, People, the drawer's head). A photo if they have one
   (cropped square and shrunk to 160px on the device, so it fits a Sheet cell); else their letters (their own, up to 3, or their
   initials) on their colour: one of the palette swatches (tokens, so it follows the theme), any colour by hex (its letters lean
@@ -251,12 +252,14 @@ before the main role existed reads its first role as main until it is saved (`ro
   as WebP (or PNG), stepping the size down to fit the cell; an opaque photo is a JPEG. `ui/Avatar.tsx` draws it from props; `parts/PersonAvatar.tsx` looks the person up.
 
 ## Rules that keep it from drifting
-- No raw colour, weight or size in a component: tokens only (colours and weights are tested; font sizes are not yet, ISSUES.md #19).
+- No raw colour, weight or size in a component: tokens only (colours and weights are tested; the Log's 15px and 17px figures are `--fs-fig` and `--fs-tips`; other font sizes are still literal, ISSUES.md #19).
 - One of each: table, calendar, drawer, form, empty state, toast.
 - A new page is a folder in `features/`, an entry in `router.ts` and in `app.tsx`'s groups, and a panel.
-- **Where a part lives says what it may touch** (`tests/layers.test.ts` checks it): `ui/` is generic and driven by props (it may
-  navigate, never read or write data); `parts/` holds domain parts more than one page uses (a shift's card, the grouped list, the
-  sync pill) and may read the store; `features/<page>/` is one page and what only it uses. `parts/` never imports a page.
+- **Where a part lives says what it may touch** (`tests/layers.test.ts` checks it): `ui/` is generic. It may navigate, and it may
+  read or write the shared period (`data/scope.ts`) and remembered view choices (`data/persisted.ts`) — the period control, a
+  table's page size, toasts and the viewport are module state on purpose. It may not import the store or the sync client.
+  `parts/` holds domain parts more than one page uses (a shift's card, the grouped list, the sync pill) and may read the store;
+  `features/<page>/` is one page and what only it uses. `parts/` never imports a page.
 - **Styles:** `tokens.css` values, `base.css` type roles, `ui.css` controls (buttons, fields, table, chips, time field), `layout.css`
   how a page is laid out (panel, split, side column), `charts.css` what goes in it (charts, tiles, calendars, KPI parts), and a
   `.module.css` beside any component with styles of its own. The two dark blocks in `tokens.css` are checked identical by a test.

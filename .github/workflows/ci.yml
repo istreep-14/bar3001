@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.x'   # package.json asks for >=22.18: the tests run .ts files with Node's own type stripping
+          node-version: '22.18'   # package.json asks for >=22.18: pin the floor so a later 22.x can't change type stripping under CI
           cache: npm
           cache-dependency-path: shift-sync/package-lock.json
       - run: npm ci

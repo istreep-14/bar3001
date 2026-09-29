@@ -2,7 +2,7 @@
 
 An audit of the codebase as it stands, ranked by how likely it is to cost you time.
 Every item cites where it lives. Nothing here is a blocker — the app builds, typechecks and
-passes 153 tests — these are the places where the code, the docs and the stated rules have
+passes 155 tests — these are the places where the code, the docs and the stated rules have
 drifted apart, or where a safe change today becomes a nasty one later.
 
 ## Tier 1 — fix before they bite
@@ -33,21 +33,11 @@ The doc no longer names `charts.Delta`, which is still dead code (#6).
 per-page icons, which nothing drew, are gone. Exported symbols still aren't checked by `noUnusedLocals`, so the class of
 rot remains possible; a `knip`-style unused-export check in CI is the cheap net.
 
-### 7. The "ui/ is props-driven" rule is not what the code does
-`DESIGN.md:134` and the `layers.test.ts` header both say `ui/` parts "may navigate, never
-read or write data". In practice:
-
-| File | What it does instead |
-| --- | --- |
-| `ui/ScopeControl.tsx` | Takes **zero props**; reads and writes the shared `data/scope.ts` signals (`:1`, `:10`, `:17`, `:22`, `:39`, `:44`) |
-| `ui/Table.tsx:44` | A module-level `persisted` signal for page size, shared by every `Table` on the page |
-| `ui/toast.tsx` | A module-level signal plus an imperative `toast()` command |
-| `ui/viewport.ts:5` | A module-level `matchMedia` signal |
-| `ui/DrawerFrame.tsx:25-26` | Assigns the router's `drawerAsk.close` global on every render |
-
-`Table`'s shared page size is deliberate — the comment at `:43` says so — so this is not a
-bug. But the doc and the test both overstate the boundary, and that gap is what would let the
-next `ui/` component quietly start reading the store.
+### 7. (fixed) The "ui/ is props-driven" rule overstated the boundary
+`ui/` may navigate, and it may read or write the shared period (`data/scope.ts`) and remembered view choices
+(`data/persisted.ts`): the period control, a table's page size, toasts and the viewport. It still may not import the store
+or the sync client. `DESIGN.md`, the README and `tests/layers.test.ts` now say that, so the next `ui/` component cannot
+quietly start reading the store and still pass.
 
 ### 8. (fixed) The layering test was two regexes over raw text
 `tests/layers.test.ts` now finds every import in `src/` (either quote, `import`, `export ... from`, `import()`), resolves
@@ -66,30 +56,23 @@ exactly why #1 has gone unnoticed.
 The file's comment now says `today()` is the one local read, and `today()` builds the date from its parts instead of
 relying on the `en-CA` locale format.
 
-### 11. Magic runaway-loop guards
-`lib/periods.ts:37` (`guard < 2000`) and `lib/trends.ts:46` (`guard < 1200`). They stop a
-bad date range from hanging the tab. The numbers are unexplained; a comment saying what they
-bound and why would help.
+### 11. (fixed) Magic runaway-loop guards
+`lib/periods.ts` (`guard < 2000`, about 38 years of weeks) and `lib/trends.ts` (`guard < 1200`, about 23 years) now say
+what the cap bounds: a bad date range stops instead of hanging the tab.
 
-### 12. `DEFAULT_SCOPE` aliases a preset object
-`lib/scope.ts:24` is `export const DEFAULT_SCOPE: Scope = PRESETS[1]!.scope` — a reference,
-not a copy, and `persisted()` hands it straight to `signal()` when localStorage is empty. Safe
-today because `setScope` always replaces the object wholesale. A `{ ...PRESETS[1]!.scope }`
-would remove the question.
+### 12. (fixed) `DEFAULT_SCOPE` aliases a preset object
+It is a copy of the 30-day preset now (`copyScope`), and `tests/scope.test.ts` fails if the two become the same object.
 
-### 13. `shiftStatus` tests `other` for truthiness
-`lib/groups.ts:22` uses `!v.shift.other`, so an `other` of `0` reads as "no money logged"
-and the shift stays `worked`/pending. Almost certainly what you want, but `== null` would say
-it on purpose instead of by accident.
+### 13. (fixed) `shiftStatus` tests `other` for truthiness
+An `other` of `0` is no money on purpose (`== null || === 0`), the same as a blank, and a test says so. A non-zero amount
+still counts the shift done.
 
-### 14. `settings.ts` hand-rolls what `persisted.ts` provides
-`data/settings.ts:12-15` does its own `try`/`catch` around `localStorage`, with a plain
-object instead of a validator — because `Settings` is not a single value the way `Scope` is.
-Fine as is; just be aware there are now two localStorage idioms in `data/`.
+### 14. (fixed) `settings.ts` hand-rolls what `persisted.ts` provides
+Connection settings go through `persistedObject`, the same helper as every other remembered choice: defaults merged under
+a saved object, a non-object ignored, writes best-effort.
 
-### 15. `data/scope.ts:10` has the repo's only `any`
-`const valid = (s: any): s is Scope` — a type guard over untyped JSON, which needs it. Listed
-so a future `noExplicitAny` lint knows the exception is deliberate.
+### 15. (fixed) `data/scope.ts` had the repo's only `any`
+The scope validator now narrows `unknown`. JSON still isn't trusted; it just isn't typed as `any` to get there.
 
 ### 16. `sync.ts` rewrites every store on every sync
 `db.saveSynced` reads each store and writes the whole merged set back in one transaction. It no
@@ -100,16 +83,15 @@ of writes on each sync. Fine to a few thousand rows; worth knowing before the da
 `injectRegister: 'script'`, with a comment that the `virtual:pwa-register` import does not
 resolve under Vite 8 yet. Revisit on the next Vite bump.
 
-### 18. CI pins a floating Node
-`.github/workflows/ci.yml` uses `node-version: '22.x'`, which tracks the latest 22. Fine, and
-the comment explains the `>=22.18` floor from `package.json` — but it means CI can change
-under you. `22.18` exactly would make a type-stripping regression reproducible.
+### 18. (fixed) CI pins a floating Node
+`.github/workflows/ci.yml` pins `node-version: '22.18'`, the floor `package.json` asks for, so a later 22.x cannot change
+type stripping under CI.
 
-### 19. About 35 font sizes are still literal
-Colours and weights are tokens now, and `tests/tokens.test.ts` keeps them that way. Font sizes are not: `charts.css` sets
-its labels in px (10, 11, 13, 22, 30) and a dozen module rules use one-off rems (0.5625rem to 1.375rem). Snapping them to
-the `--fs-*` scale changes what they look like, and that scale itself gets denser for a mouse, so each needs a look
-rather than a find-and-replace.
+### 19. About 30 font sizes are still literal
+Colours and weights are tokens, and `tests/tokens.test.ts` keeps them that way. The Log's two figure sizes are tokens now
+(`--fs-fig` 15px, `--fs-tips` 17px) and they stay put when a mouse densifies the type ladder. The rest are not on that
+ladder: `charts.css` sets its labels in px (10, 11, 13, 22, 30) and module rules use one-off rems (0.5625rem to 1.375rem).
+Pointing those at `--fs-*` would change them on a mouse, so each still needs a look rather than a find-and-replace.
 
 ## Repo state
 The review's work is on `main` (merged from `review-fixes`). `shift-sync/dist/` is build output on disk, git-ignored. The

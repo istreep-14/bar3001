@@ -17,16 +17,16 @@
 .band { min-height: 2.25rem; margin: var(--s-2) 0 0; border-bottom: 1px solid var(--line); }
 .bandLabel { display: flex; align-items: center; gap: var(--s-3); }
 .bandName { font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
-.bandTips { font-size: 1.0625rem; font-weight: var(--fw-bold); color: var(--ink); }
-.bandTotal { font-size: 0.9375rem; font-weight: var(--fw-semi); color: var(--ink-2); }
+.bandTips { font-size: var(--fs-tips); font-weight: var(--fw-bold); color: var(--ink); }
+.bandTotal { font-size: var(--fs-fig); font-weight: var(--fw-semi); color: var(--ink-2); }
 
 .item + .item { border-top: 1px solid var(--line-soft); }
 
-.row { width: 100%; min-height: 3.25rem; padding-block: 1px !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: 0.9375rem; text-align: left; border-radius: var(--r-md); cursor: pointer; }
+.row { width: 100%; min-height: 3.25rem; padding-block: 1px !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-fig); text-align: left; border-radius: var(--r-md); cursor: pointer; }
 .row:hover { background: var(--surface-2); }
 .item[data-selected] .row { background: var(--accent-wash); box-shadow: inset 3px 0 0 var(--accent); }
 /* The figures, by how much they say about the shift: tips strongest; total, rate and hours a step down; the flat extras quiet. */
-.tips { font-size: 1.0625rem; font-weight: var(--fw-bold); color: var(--ink); }
+.tips { font-size: var(--fs-tips); font-weight: var(--fw-bold); color: var(--ink); }
 .total { font-weight: var(--fw-semi); color: var(--ink-2); }
 .total:global(.figure) { display: inline-flex; align-items: center; height: var(--fig-h); }
 .total:global(.figure) :global(.figure-under) { top: calc(50% + 0.75em); }   /* under the figure, inside the block's height */

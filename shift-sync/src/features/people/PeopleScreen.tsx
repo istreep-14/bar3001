@@ -38,13 +38,15 @@ const FIELDS: Record<string, { label: string; get: Field<Staff>; labels?: Record
 /* People: the employee roster, read like the Log (one line a person, the same head band, hover and selected row).
  * Identity only (no shift counts or hours, so it can't be read as a leaderboard). Not scoped: a person is not an event,
  * so there is no period control.
- *   Search: names and aliases first, the way a crew picker will (a name that starts with what's typed ranks above one that
- *   only contains it), then roles, ID and notes. The best matches stay on top whatever column is sorted.
+ *   Search: names and aliases first, the same rules as the crew picker (a name that starts with what's typed ranks above
+ *   one that only contains it), then roles, ID and notes. A hit by nickname says which one. The best matches stay on top.
  *   Filter: any mix of role, other roles, status, manager and photo. */
 export function PeopleScreen() {
   const all = liveStaff.value;
   const q = query.value.trim();
-  const score = new Map(q ? findPeople(all, q).map(m => [m.person.id, m.score]) : []);
+  const matches = q ? findPeople(all, q) : [];
+  const score = new Map(matches.map(m => [m.person.id, m.score]));
+  const viaOf = new Map(matches.flatMap(m => (m.via ? [[m.person.id, m.via] as const] : [])));
   const searched = q ? all.filter(p => score.has(p.id) || haystack(p).includes(q.toLowerCase())) : all;
   const fields = Object.fromEntries(Object.entries(FIELDS).map(([k, f]) => [k, f.get]));
   const rows = applyFilters(searched, filters.value, fields);
@@ -59,7 +61,7 @@ export function PeopleScreen() {
   const rankOf = (p: Staff) => { const m = rolesOf(p).main; return m == null ? null : (rank.get(m.toLowerCase()) ?? 900) + m.toLowerCase(); };
   const no = <span class={styles.no}>No</span>;
   const columns: Column<Local<Staff>>[] = [
-    { key: 'person', head: 'Person', weight: 2.4, sort: p => p.name.toLowerCase(), cell: p => <PersonCell p={p} /> },
+    { key: 'person', head: 'Person', weight: 2.4, sort: p => p.name.toLowerCase(), cell: p => <PersonCell p={p} via={viaOf.get(p.id)} /> },
     { key: 'role', head: 'Role', weight: 1.7, sort: rankOf, cell: p => {
       const { main, others } = rolesOf(p);
       return (
@@ -94,7 +96,7 @@ export function PeopleScreen() {
                 {[...rows].sort((a, b) => (score.get(b.id) ?? 0) - (score.get(a.id) ?? 0)).map(p => (
                   <li key={p.id}>
                     <button class={styles.item} data-tone={toneOf(p)} aria-current={openId.value === p.id ? 'true' : undefined} onClick={() => openPerson(p.id)}>
-                      <PersonCell p={p} />
+                      <PersonCell p={p} via={viaOf.get(p.id)} />
                       {rolesOf(p).main && <RoleTag name={rolesOf(p).main!} />}
                     </button>
                   </li>
@@ -133,8 +135,9 @@ const toneOf = (p: Staff) => (p.is_user ? 'me' : p.status === 'inactive' ? 'mute
 
 /** A person in two lines: their avatar (framed in their colour, with the active/inactive dot); on top, the short name they go
  *  by in bold, a crown if it's you, a shield if they manage and their employee ID; under it, small, their first and last name. */
-function PersonCell({ p }: { p: Staff }) {
+function PersonCell({ p, via }: { p: Staff; via?: string }) {
   const full = [p.first, p.last].filter(Boolean).join(' ');
+  const sub = [full, via ? `as “${via}”` : ''].filter(Boolean).join(' · ');
   return (
     <span class="who">
       <PersonAvatar id={p.id} size="md" status />
@@ -143,7 +146,7 @@ function PersonCell({ p }: { p: Staff }) {
           <span class="who-name">{p.name}</span>{p.is_user && <MeBadge />}{p.manager && <ManagerBadge />}
           {p.id_number && <span class="idtag">#{p.id_number}</span>}
         </span>
-        {full && <span class="who-sub">{full}</span>}
+        {sub && <span class="who-sub">{sub}</span>}
       </span>
     </span>
   );

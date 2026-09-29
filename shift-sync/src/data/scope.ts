@@ -7,9 +7,16 @@ import type { ShiftView } from '../lib/stats.ts';
 /* The one period every data screen shares. Persisted, and untouched by navigation:
  * go from the Log to Totals and you are looking at the same window. */
 const KEY = 'scope2';
-const valid = (s: any): s is Scope =>
-  !!s && (s.mode === 'all' || (s.mode === 'last' && clampN(s.n) === s.n && ['days', 'weeks', 'months', 'years', 'shifts'].includes(s.unit)) ||
-    (s.mode === 'range' && /^\d{4}-\d{2}-\d{2}$/.test(s.from) && /^\d{4}-\d{2}-\d{2}$/.test(s.to)));
+const UNITS = ['days', 'weeks', 'months', 'years', 'shifts'];
+const isYmd = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+/** A scope read back from storage. JSON is untyped, so this narrows `unknown` instead of trusting the shape. */
+const valid = (s: unknown): s is Scope => {
+  if (!s || typeof s !== 'object') return false;
+  const o = s as { mode?: unknown; n?: unknown; unit?: unknown; from?: unknown; to?: unknown };
+  if (o.mode === 'all') return true;
+  if (o.mode === 'last') return typeof o.n === 'number' && clampN(o.n) === o.n && typeof o.unit === 'string' && UNITS.includes(o.unit);
+  return o.mode === 'range' && isYmd(o.from) && isYmd(o.to);
+};
 export const [scope, setScope] = persisted<Scope>(KEY, valid, DEFAULT_SCOPE);
 export const setLast = (n: number, unit: Unit) => setScope({ mode: 'last', n: Math.min(MAX_N, n), unit });
 

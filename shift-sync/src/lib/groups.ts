@@ -18,7 +18,8 @@ export type ShiftStatus = 'scheduled' | 'worked' | 'done';
  *  the money is in. Only 'done' shifts count toward totals, so a shift can't skew a number before it's known. */
 export function shiftStatus(v: ShiftView): ShiftStatus {
   if (v.shift.end == null) return 'scheduled';
-  if (v.shift.tips == null && v.income.length === 0 && !v.shift.other) return 'worked';
+  // A legacy `other` of 0 is no money, the same as null. Only a non-zero amount was actually logged.
+  if (v.shift.tips == null && v.income.length === 0 && (v.shift.other == null || v.shift.other === 0)) return 'worked';
   return 'done';
 }
 
