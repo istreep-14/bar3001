@@ -108,7 +108,7 @@ has a shift with money in, else last week, and a switch picks either. Across the
 total) against the week before (weeks run Monday to Sunday everywhere, `WEEK_START` in `lib/dates.ts`); a running week is compared with the same days of last week (`lib/dashboard.ts`, tested). Under them, that
 week and the one before as the Log's own grouped list (rows open the drawer here). Beside them: day capsules (height = hours, outlined = no
 shift, accent outline = waiting on tips), best nights by tips/hr over 12 weeks (shifts of 2h or more, `rankable` in `lib/stats.ts`, the
-same floor as the Calendar's best and slowest), shifts waiting on tips with Fill in tips, and the crew with
+same floor as the Calendar's best and slowest), shifts awaiting tips (or upcoming) with Fill in tips, and the crew with
 hours only. Each card is the part its full page uses and ends in a link to that page.
 
 ## Insights (was Overview)
@@ -121,6 +121,8 @@ or more are averaged per week); **how rates are spread** (histogram, median and 
 in small (`MiniCalendar`, shaded by rate the way the Calendar is, with the same key) beside the 8 latest shifts (the same `Table`). All of it is `lib/trends.ts`, pure and tested.
 
 ## Money and rates
+- **Words:** a rate is **Rate** wherever a label is short (heads, stat lists, KPIs) and *tips per hour* in sentences and
+  chart titles; a shift's sum is **Total**; a shift's state is Done, **Awaiting tips** or **Upcoming** (`STATUS_LABEL`).
 - **Tips per hour** is tips ÷ hours and nothing else. It is the only ranking metric. Wage and other income never enter it.
 - **A rate is written one way:** `perHour` in `lib/format.ts`, '$12.40/hr', two decimals like all money. Where the unit
   already sits beside it (a Rate column head, a small '/hr' span, a label that says per hour) the figure is `money` of the
@@ -187,12 +189,12 @@ one dark, its arrow in the accent), hairline rows at 36px, the date held in plac
 totals row pinned to the bottom. Below 70rem the grid scrolls sideways rather than crushing its columns.
 - **Date:** `04 Sep 26`, one style, the year a weight lighter. Under it, side by side, the short weekday and the type, each
   led by a glyph the same size (a calendar; the sun or moon). The type's word is coloured by how the shift went,
-  continuously from red through plain ink to green by where its tip rate stands among the done shifts listed
+  continuously from red through plain ink to green by where its rate stands among the done shifts listed
   (`lib/meters.ts` `standing`, `scaleColor`); a shift short of its tips stays grey. A party is a pink star after it.
 - **Time & hours:** start over end beside a small rail (a hollow dot for the start, a solid one for the end), the hour
   padded so the colons line up (`clockParts`), then the hours, set like Tips. No overnight marker; the rail and the hours
   say it. Sorts by start.
-- **Tips** (a weight up) and **Tip rate** (a short bar, a share of the best rate listed, then the figure). Wage, Other and
+- **Tips** (a weight up) and **Rate** (a short bar, a share of the best rate listed, then the figure). Wage, Other and
   Total aren't in this view.
 - **Crew:** up to three faces then +N, and the hours everyone worked on the bar. Hovering or focusing it opens a card
   (`ui/HoverCard.tsx`) listing each person with their face, name (a crown for you) and own hours, and the bar's total.
@@ -200,9 +202,9 @@ totals row pinned to the bottom. Below 70rem the grid scrolls sideways rather th
   last, cut off with an ellipsis.
 - **Type:** everything is Poppins. Figures use even-width digits (`tabular-nums`), and times pad a one-digit hour with a
   figure space, so digits and colons line up down a column. (Monospaced faces were tried and set aside.)
-- **Sizes:** the one-value columns read a size up from the two-line cells (Tips and Tip rate 16px, the hours 15px, the
+- **Sizes:** the one-value columns read a size up from the two-line cells (Tips and Rate 16px, the hours 15px, the
   crew's faces 30px, the status pill 28px tall); rows are 36px, the two-line cells set tight to fill them, so a single figure fills its row instead of looking lost in it.
-- **Totals row:** every done shift the search and filters leave, not only this page: hours, tips, tip rate (tips over hours
+- **Totals row:** every done shift the search and filters leave, not only this page: hours, tips, rate (tips over hours
   across the shifts that have both, the same Rate as the side panels) and the bar's hours. It is the page's summary, so there's no side panel.
 - A row opens the shift in the drawer; a shift short of its numbers reads greyed. On a phone: Date, Time & hours and Tips.
 

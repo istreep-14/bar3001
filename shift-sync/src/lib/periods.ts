@@ -9,8 +9,7 @@ import type { ShiftView, Summary } from './stats.ts';
  * type, weekday or party. Pure and derived from the shifts on the page, nothing stored. Weeks run Monday to Sunday,
  * the way a bar week does. */
 
-/** Monday of the week a date falls in. */
-/** 0 = Monday. */
+/** A date's place in the week, 0 = Monday. */
 export const weekdayIndex = (d: string): number => (weekday(d) + 6) % 7;
 
 export interface Bucket { key: string; n: number; hours: number; tips: number; wage: number; extra: number; total: number }

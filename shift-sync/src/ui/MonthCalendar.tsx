@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { addDays, today as todayText } from '../lib/dates.ts';
 import { byDate, monthGrid, rateScale } from '../lib/calendar.ts';
-import { clockShort, hours, moneyWhole, perHour, perHourWhole, shortDate, weekdayShort } from '../lib/format.ts';
+import { MONTH_NAMES, WEEKDAY_SHORT, clockShort, hours, moneyWhole, perHour, perHourWhole, shortDate, weekdayShort } from '../lib/format.ts';
 import { summarize } from '../lib/stats.ts';
 import type { ShiftView } from '../lib/stats.ts';
 import { pctChange } from '../lib/trends.ts';
@@ -10,21 +10,18 @@ import { MiniStat } from './kpi.tsx';
 import { PartyIcon, TypeIcon } from './Badges.tsx';
 import { Icon } from './Icon.tsx';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const LETTER = { day: 'D', night: 'N' } as const;
 const NAME = { day: 'Day', night: 'Night' } as const;
 const letter = (t: ShiftView['shift']['shift_type']) => (t ? LETTER[t] : '?');
 const typeName = (t: ShiftView['shift']['shift_type']) => (t ? NAME[t] : 'Shift');
 
 export interface Month { y: number; m: number }
-export const MONTH_NAMES = MONTHS;
 
 /* A month calendar that shows the shifts you have logged, in two sizes:
  *   pick    the Date page of the shift form: tap a day to set the shift's date. Days that already hold a shift carry
  *           its type (D or N) and tips; arrow keys move between days.
- *   browse  the Calendar page: each shift is a chip (type, hours, income) that opens it, a day's shade is how much it
- *           earned against the month's best, and an empty day starts a new shift on that date.
+ *   browse  the Calendar page: each shift is a chip (type, hours, income) that opens it, shaded by its tips per hour
+ *           against the month's typical shift (`rateScale`), and an empty day starts a new shift on that date.
  * Weeks run Monday to Sunday. `exclude` is the shift being edited (it doesn't count as "already logged"). */
 export function MonthCalendar({ mode, views, selected = null, exclude = null, month, onMonth, onPick, onOpen, onNew }: {
   mode: 'pick' | 'browse'; views: ShiftView[]; selected?: string | null; exclude?: string | null; month?: Month; onMonth?: (m: Month) => void;
@@ -64,12 +61,12 @@ export function MonthCalendar({ mode, views, selected = null, exclude = null, mo
     <div class={'cal cal-' + mode} style={{ '--rows': String(cells.length / 7) }}>
       {mode === 'pick' && (
         <div class="calhead">
-          <h3 class="caltitle" aria-live="polite">{MONTHS[view.m]} {view.y}</h3>
+          <h3 class="caltitle" aria-live="polite">{MONTH_NAMES[view.m]} {view.y}</h3>
           <MonthNav month={view} onMonth={setView} />
         </div>
       )}
-      <div class="calgrid" ref={grid} role={mode === 'pick' ? 'group' : 'presentation'} aria-label={`${MONTHS[view.m]} ${view.y}`} onKeyDown={onKey}>
-        {DOW.map(d => <span class="dow" key={d} aria-hidden="true">{d}</span>)}
+      <div class="calgrid" ref={grid} role={mode === 'pick' ? 'group' : 'presentation'} aria-label={`${MONTH_NAMES[view.m]} ${view.y}`} onKeyDown={onKey}>
+        {WEEKDAY_SHORT.map(d => <span class="dow" key={d} aria-hidden="true">{d}</span>)}
         {cells.map(c => {
           const list = days.get(c.date) ?? [];
           const n = +c.date.slice(8);
@@ -110,8 +107,8 @@ export function MonthCalendar({ mode, views, selected = null, exclude = null, mo
         })}
       </div>
       <div class="calfoot">
-        {totals.shifts === 0 ? <p class="muted">Nothing logged in {MONTHS[view.m]} yet.</p>
-          : mode === 'pick' ? <Facts items={[{ label: MONTHS[view.m]!, value: `${totals.shifts} shift${totals.shifts === 1 ? '' : 's'}` }, { label: 'Hours', value: hours(totals.hours) }, { label: 'Tips', value: moneyWhole(totals.tips) }]} />
+        {totals.shifts === 0 ? <p class="muted">Nothing logged in {MONTH_NAMES[view.m]} yet.</p>
+          : mode === 'pick' ? <Facts items={[{ label: MONTH_NAMES[view.m]!, value: `${totals.shifts} shift${totals.shifts === 1 ? '' : 's'}` }, { label: 'Hours', value: hours(totals.hours) }, { label: 'Tips', value: moneyWhole(totals.tips) }]} />
           : <div class="calkpis">
             <MiniStat label="Shifts" value={totals.shifts} pct={pctChange(totals.shifts, before.shifts)} neutral hint="Against last month" />
             <MiniStat label="Hours" value={hours(totals.hours)} pct={pctChange(totals.hours, before.hours)} neutral />

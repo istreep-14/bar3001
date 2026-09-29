@@ -1,18 +1,12 @@
 import { useState } from 'preact/hooks';
 import type { Role } from '../../core/core.generated.js';
-import { DEFAULT_ROLES, unlistedRoles } from '../../data/roles.ts';
+import { DEFAULT_ROLES, USUAL_ROLES as USUAL, unlistedRoles } from '../../data/roles.ts';
 import { liveRoles, liveStaff, moveRole, removeRole, saveRole, undoRemoveRole } from '../../data/store.ts';
 import { ColorPicker } from '../../ui/ColorPicker.tsx';
 import { Icon, ROLE_ICONS } from '../../ui/Icon.tsx';
 import { RoleBadge } from '../../ui/RoleBadge.tsx';
 import { toast } from '../../ui/toast.tsx';
 import styles from './SettingsScreen.module.css';
-
-/** What "Add the usual roles" sets up: the suggestions, each with a colour and an icon to start from. */
-const USUAL: Record<string, { color: string; icon: string }> = {
-  'Head Bartender': { color: 'gold', icon: 'star' }, Bartender: { color: 'teal', icon: 'cocktail' }, Server: { color: 'blue', icon: 'bell' },
-  Barback: { color: 'orange', icon: 'box' }, Host: { color: 'violet', icon: 'door' }, Manager: { color: 'rose', icon: 'shield' }
-};
 
 /** The roles people can have, top to bottom in rank (the way a server's role list reads; People sorts by it), each with a
  *  colour and an icon that show wherever the role does. Renaming a role renames it on everyone who has it. */

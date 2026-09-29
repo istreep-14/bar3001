@@ -1,17 +1,17 @@
 import { byDate, monthGrid, rateScale } from '../../lib/calendar.ts';
 import type { RateScale } from '../../lib/calendar.ts';
 import { addDays, today, ymd, weekStart } from '../../lib/dates.ts';
-import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
+import { MONTH_NAMES, WEEKDAY_LETTERS, dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { RANK_MIN_HOURS, rankable, summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { summaryRows } from '../../lib/summary.ts';
 import type { SumRow } from '../../lib/summary.ts';
-import { inRange, pctChange, weeklyBetween } from '../../lib/trends.ts';
+import { inDates, pctChange, weeklyBetween } from '../../lib/trends.ts';
 import { openForm, openSheet } from '../../router.ts';
 import { TypeIcon } from '../../ui/Badges.tsx';
 import { ComboChart } from '../../ui/charts.tsx';
 import { DeltaPill, MiniStat } from '../../ui/kpi.tsx';
-import { MONTH_NAMES, RateKey } from '../../ui/MonthCalendar.tsx';
+import { RateKey } from '../../ui/MonthCalendar.tsx';
 import type { Month } from '../../ui/MonthCalendar.tsx';
 import { Stack } from '../../ui/Stack.tsx';
 import { Table } from '../../ui/Table.tsx';
@@ -21,7 +21,6 @@ import styles from './StackView.module.css';
 /* Three months at a glance: the months stacked newest first on the left, each day shaded by its tips per hour, and beside them what
  * those months add up to: KPIs against the three months before, a month table, tips and rate by week, and the best and slowest
  * shifts by rate. Everything is the same data and numbers as the Log; only the framing differs. */
-const LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const key = (y: number, m: number) => `${y}-${String(m + 1).padStart(2, '0')}`;
 const monthsEnding = (end: Month, n: number): Month[] => Array.from({ length: n }, (_, i) => { const d = new Date(Date.UTC(end.y, end.m - i, 1)); return { y: d.getUTCFullYear(), m: d.getUTCMonth() }; });
 const firstOf = (m: Month) => ymd(m.y, m.m, 1);
@@ -30,13 +29,13 @@ const lastOf = (m: Month) => addDays(ymd(m.y, m.m + 1, 1), -1);
 export function StackView({ all, end, count = 3 }: { all: ShiftView[]; end: Month; count?: number }) {
   const months = monthsEnding(end, count);
   const from = firstOf(months[months.length - 1]!), to = lastOf(months[0]!);
-  const inWin = inRange(all, from, to);
+  const inWin = inDates(all, from, to);
   const scale = rateScale(inWin.map(v => v.tph));
   const s = summarize(inWin);
   // the same span just before, for the change pills
   const prevEnd = { y: new Date(Date.UTC(end.y, end.m - count, 1)).getUTCFullYear(), m: new Date(Date.UTC(end.y, end.m - count, 1)).getUTCMonth() };
   const prevMonths = monthsEnding(prevEnd, count);
-  const before = summarize(inRange(all, firstOf(prevMonths[prevMonths.length - 1]!), lastOf(prevMonths[0]!)));
+  const before = summarize(inDates(all, firstOf(prevMonths[prevMonths.length - 1]!), lastOf(prevMonths[0]!)));
 
   return (
     <div class={styles.layout}>
@@ -74,7 +73,7 @@ function MiniMonth({ month, all, scale }: { month: Month; all: ShiftView[]; scal
         <span class={styles.mstats}>{s.shifts} shift{s.shifts === 1 ? '' : 's'}{s.tph != null && <> · <b>{perHour(s.tph)}</b></>}</span>
       </header>
       <div class={styles.grid}>
-        {LETTERS.map((l, i) => <span key={i} class={styles.dow} aria-hidden="true">{l}</span>)}
+        {WEEKDAY_LETTERS.map((l, i) => <span key={i} class={styles.dow} aria-hidden="true">{l}</span>)}
         {cells.map(c => {
           const n = +c.date.slice(8), list = days.get(c.date) ?? [];
           if (!c.inMonth) return <span key={c.date} class={styles.out} />;
@@ -98,13 +97,13 @@ function MiniMonth({ month, all, scale }: { month: Month; all: ShiftView[]; scal
 function MonthTable({ all, months }: { all: ShiftView[]; months: Month[] }) {
   const oldest = months[months.length - 1]!;
   const before = new Date(Date.UTC(oldest.y, oldest.m - 1, 1));
-  const wide = inRange(all, ymd(before.getUTCFullYear(), before.getUTCMonth(), 1), lastOf(months[0]!));
+  const wide = inDates(all, ymd(before.getUTCFullYear(), before.getUTCMonth(), 1), lastOf(months[0]!));
   const want = new Set(months.map(m => key(m.y, m.m)));
   const rows = summaryRows(wide, 'month').filter(r => want.has(r.key));
   const columns: Column<SumRow>[] = [
     { key: 'm', head: 'Month', cell: r => <Stack title={`${MONTH_NAMES[+r.key.slice(5) - 1]} ${r.key.slice(2, 4) === String(new Date().getFullYear()).slice(2) ? '' : '’' + r.key.slice(2, 4)}`.trim()} lines={[`${r.s.shifts} shift${r.s.shifts === 1 ? '' : 's'} · ${dec1(r.s.hours)} hr`]} /> },
     { key: 'tips', head: 'Tips', cell: r => <Stack title={dollars(r.s.tips)} lines={[perHour(r.s.tph)]} /> },
-    { key: 'total', head: 'Earned', className: 'fit', cell: r => dollars(r.s.total) },
+    { key: 'total', head: 'Total', className: 'fit', cell: r => dollars(r.s.total) },
     { key: 'd', head: 'Vs previous', className: 'fit', hint: 'Tips per hour against the month before', cell: r => <DeltaPill pct={pctChange(r.s.tph, r.prev?.tph)} /> }
   ];
   return (

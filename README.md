@@ -24,7 +24,7 @@ npm run dev      # http://localhost:5173
 Then, in order of what you'll want next:
 
 ```
-npm test         # 122 tests: core sync rules, Apps Script against a fake Sheet, every lib/ helper
+npm test         # core sync rules, Apps Script against a fake Sheet, every lib/ helper
 npm run typecheck
 npm run build    # typecheck + production build into shift-sync/dist/
 ```

@@ -130,9 +130,9 @@ export function TimePage({ c }: { c: Ctx }) {
   return (
     <div class={styles.pane} role="tabpanel">
       <TimeFields c={c} />
-      <Facts items={[h != null && { label: 'Worked', value: hours(h) }, h != null && end != null && start != null && end <= start && { label: 'Ends', value: 'the next day' }]} />
+      <Facts items={[h != null && { label: 'Worked', value: hours(h) }, h != null && end != null && start != null && end < start && { label: 'Ends', value: 'the next day' }]} />
       <Ribbon lanes={[{ name: 'This shift', start, end, cls: 'seg-work' }, ...pastSame.map(v => ({ name: `${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}`, start: v.shift.start, end: v.shift.end, cls: 'seg-past' as const }))]} />
-      <p class={styles.hint}>{pastSame.length ? `Under it: your last ${pastSame.length === 1 ? '' : pastSame.length + ' '}${form.date ? weekdayLong(form.date) : ''} shift${pastSame.length === 1 ? '' : 's'}. ` : ''}An end at or before the start means the shift ends the next day.</p>
+      <p class={styles.hint}>{pastSame.length ? `Under it: your last ${pastSame.length === 1 ? '' : pastSame.length + ' '}${form.date ? weekdayLong(form.date) : ''} shift${pastSame.length === 1 ? '' : 's'}. ` : ''}An end before the start means the shift ends the next day.</p>
     </div>
   );
 }
@@ -165,8 +165,8 @@ export function TipsPage({ c }: { c: Ctx }) {
     <div class={styles.pane} role="tabpanel">
       <TipsField c={c} />
       <Facts items={[
-        tph != null && { label: 'Per hour', value: money(tph), note: avg != null ? `${perHour(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${perHour(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
-        { label: 'Total income', value: money(total) }
+        tph != null && { label: 'Rate', value: money(tph), note: avg != null ? `${perHour(Math.abs(tph - avg))} ${tph >= avg ? 'above' : 'below'} your ${perHour(avg)} average` : undefined, tone: avg == null ? undefined : tph >= avg ? 'up' : 'down' },
+        { label: 'Total', value: money(total) }
       ]} />
     </div>
   );
@@ -191,7 +191,7 @@ export function WagePage({ c }: { c: Ctx }) {
         )}
       </div>
       <p class={styles.hint}>Not typed: worked out from your hours and your hourly wage. <button type="button" class="linkbtn" onClick={() => go('settings/wages')}>Set your hourly wage</button></p>
-      <Facts items={[{ label: 'Total income', value: money(total) }]} />
+      <Facts items={[{ label: 'Total', value: money(total) }]} />
     </div>
   );
 }
@@ -219,7 +219,7 @@ export function OtherPage({ c }: { c: Ctx }) {
       </div>
       {legacy ? <p class={styles.hint}>Earlier entry: {money(legacy)} other income. It still counts toward the total.</p> : null}
       <div><button type="button" class="btn" onClick={() => setForm(f => f && { ...f, lines: [...f.lines, newLine()] })}><Icon name="plus" /> Add other income</button></div>
-      <Facts items={[{ label: 'Other income', value: money(lineSum + legacy) }, { label: 'Total income', value: money(total) }]} />
+      <Facts items={[{ label: 'Other income', value: money(lineSum + legacy) }, { label: 'Total', value: money(total) }]} />
     </div>
   );
 }

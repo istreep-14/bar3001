@@ -4,8 +4,8 @@ import { scopedViews } from '../../data/scope.ts';
 import { liveViews, personById, ready } from '../../data/store.ts';
 import { applyFilters, facet } from '../../lib/filters.ts';
 import type { Field, Filters } from '../../lib/filters.ts';
-import { DASH, clockParts, dec1, dollars, money, weekdayShort } from '../../lib/format.ts';
-import { shiftStatus } from '../../lib/groups.ts';
+import { DASH, WEEKDAY_SHORT, clockParts, dec1, dollars, money, weekdayShort } from '../../lib/format.ts';
+import { STATUS_LABEL, shiftStatus } from '../../lib/groups.ts';
 import type { ShiftStatus } from '../../lib/groups.ts';
 import { lean, scaleColor, standing } from '../../lib/meters.ts';
 import { summarize } from '../../lib/stats.ts';
@@ -33,7 +33,7 @@ import styles from './ShiftTable.module.css';
  * filters leave (not only this page of them). That row is the page's summary, so there's no side panel.
  *   Columns: Date (04 Sep 26, the year a weight lighter; under it the weekday and the type side by side, each led by a
  *   glyph, the type's word coloured by how the shift went, red through plain to green by where its tip rate stands) · Time & hours (start over end,
- *   colons lined up, beside a small start/end rail, then the hours) · Tips · Tip rate (a bar, a share of the best rate
+ *   colons lined up, beside a small start/end rail, then the hours) · Tips · Rate (a bar, a share of the best rate
  *   listed, then the figure) · Crew (faces and the bar's hours; hovering lists each person with their hours) · Status · Note.
  *   Everything is Poppins; figures use even-width digits so they line up. One-value columns read a size up from the
  *   two-line cells.
@@ -43,7 +43,6 @@ import styles from './ShiftTable.module.css';
 const query = signal('');
 const filters = signal<Filters>({});
 
-const STATUS: Record<ShiftStatus, string> = { done: 'Done', worked: 'Awaiting tips', scheduled: 'Upcoming' };
 const crewNames = (v: ShiftView) => v.crew.map(c => personById(c.staff_id)?.name ?? c.name).filter((n): n is string => !!n);
 
 /** What the table can be filtered by. Values are what's stored; `labels` says how a value reads. */
@@ -51,7 +50,7 @@ const FIELDS: Record<string, { label: string; get: Field<ShiftView>; labels?: Re
   type: { label: 'Type', get: v => v.shift.shift_type, labels: { day: 'Day', night: 'Night' } },
   weekday: { label: 'Weekday', get: v => weekdayShort(v.shift.date) },
   party: { label: 'Party', get: v => (v.shift.party ? 'yes' : 'no'), labels: { yes: 'Party', no: 'No party' } },
-  status: { label: 'Status', get: shiftStatus, labels: STATUS },
+  status: { label: 'Status', get: shiftStatus, labels: STATUS_LABEL },
   crew: { label: 'Crew', get: crewNames }
 };
 
@@ -66,7 +65,7 @@ export function ShiftTable() {
     key, label: f.label, options: facet(searched, f.get).map(o => ({ ...o, label: f.labels?.[o.value] }))
   }));
   // Weekdays list Monday first in the menu, not by count.
-  facets.find(f => f.key === 'weekday')?.options.sort((a, b) => WEEK.indexOf(a.value) - WEEK.indexOf(b.value));
+  facets.find(f => f.key === 'weekday')?.options.sort((a, b) => WEEKDAY_SHORT.indexOf(a.value) - WEEKDAY_SHORT.indexOf(b.value));
 
   const nil = <span class="nil">{DASH}</span>;
   const done = (v: ShiftView) => shiftStatus(v) === 'done';
@@ -78,7 +77,7 @@ export function ShiftTable() {
       cell: v => <DateCell v={v} at={done(v) && v.tph != null ? standing(rates, v.tph) : null} /> },
     { key: 'time', head: 'Time & hours', hint: 'Sorts by start', weight: 1.5, sort: v => v.shift.start, cell: v => <TimeCell v={v} /> },
     { key: 'tips', head: 'Tips', groupStart: true, weight: 0.8, className: 'r', sort: v => v.shift.tips, cell: v => (v.shift.tips == null ? nil : <span class={`fig fig-key ${styles.one}`}>{dollars(v.shift.tips)}</span>) },
-    { key: 'rate', head: 'Tip rate', hint: 'Tips per hour. The bar is a share of the best rate listed.', weight: 1.45, className: 'r', sort: v => (done(v) ? v.tph : null),
+    { key: 'rate', head: 'Rate', hint: 'Tips per hour. The bar is a share of the best rate listed.', weight: 1.45, className: 'r', sort: v => (done(v) ? v.tph : null),
       cell: v => (done(v) && v.tph != null ? <span class={styles.rate}><span class={styles.rateBar}><RankBar at={best ? v.tph / best : 0} color="var(--accent)" /></span><span class={`fig ${styles.one} ${styles.rateFig}`}>{money(v.tph)}<span class="fig-unit">/hr</span></span></span> : nil) },
     { key: 'crew', head: 'Crew', weight: 2.6, className: styles.crewTd, sort: v => v.crewHours || null, cell: v => <CrewCell v={v} /> },
     { key: 'status', head: 'Status', weight: 1.15, sort: v => ['scheduled', 'worked', 'done'].indexOf(shiftStatus(v)), cell: v => <Status s={shiftStatus(v)} /> },
@@ -88,7 +87,7 @@ export function ShiftTable() {
   const PHONE: Record<string, number> = { date: 0.95, time: 1.55, tips: 0.75 };
   const shown = isDesktop.value ? columns : columns.filter(c => c.key in PHONE).map(c => ({ ...c, weight: PHONE[c.key], groupStart: false }));
 
-  // Totals of every done shift shown (all pages), under their columns. Tip rate is tips over hours across the shifts that have both.
+  // Totals of every done shift shown (all pages), under their columns. Rate is tips over hours across the shifts that have both.
   const counted = rows.filter(done);
   const sum = (f: (v: ShiftView) => number | null | undefined) => counted.reduce((a, v) => a + (f(v) ?? 0), 0);
   const worked = sum(v => v.hours), tips = sum(v => v.shift.tips), bar = sum(v => v.crewHours);
@@ -133,7 +132,7 @@ export function ShiftTable() {
 function DateCell({ v, at }: { v: ShiftView; at: number | null }) {
   const date = v.shift.date, t = v.shift.shift_type;
   const month = new Date(date + 'T12:00').toLocaleDateString('en-US', { month: 'short' });
-  const says = at == null ? undefined : `Tip rate better than ${Math.round(at * 100)}% of the shifts here`;
+  const says = at == null ? undefined : `Rate better than ${Math.round(at * 100)}% of the shifts here`;
   return (
     <span class={styles.day}>
       <span class={`fig ${styles.date}`}>{date.slice(8, 10)} {month} <span class={styles.yy}>{date.slice(2, 4)}</span></span>
@@ -172,7 +171,7 @@ function TimeCell({ v }: { v: ShiftView }) {
 
 /** Where a shift stands, as a soft pill with a dot: green when it's done, amber while it waits on its tips, grey ahead. */
 function Status({ s }: { s: ShiftStatus }) {
-  return <span class={styles.status} data-s={s}><i aria-hidden="true" />{STATUS[s]}</span>;
+  return <span class={styles.status} data-s={s}><i aria-hidden="true" />{STATUS_LABEL[s]}</span>;
 }
 
 const CREW_SHOWN = 6;
@@ -206,5 +205,3 @@ function CrewCell({ v }: { v: ShiftView }) {
   );
 }
 
-/** The short weekday names Monday to Sunday, as this device writes them (2024-01-01 was a Monday). */
-const WEEK = Array.from({ length: 7 }, (_, i) => weekdayShort(`2024-01-0${i + 1}`));

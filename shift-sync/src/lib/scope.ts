@@ -1,6 +1,6 @@
 import { addDays, parts, ymd } from './dates.ts';
 
-/* One scope model for every data screen (Log, Earnings, Rate).
+/* One scope model for every page that shows a period (Log, Table, Totals, the Hub lists).
  *   last     the most recent N days / weeks / months / years, or the N most recent shifts
  *   range    custom from/to dates
  *   all      everything */

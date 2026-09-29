@@ -1,13 +1,11 @@
 import { useState } from 'preact/hooks';
 import { byDate, monthGrid, rateScale } from '../../lib/calendar.ts';
 import { today as todayText } from '../../lib/dates.ts';
-import { moneyWhole, perHour } from '../../lib/format.ts';
+import { MONTH_NAMES, WEEKDAY_LETTERS, moneyWhole, perHour } from '../../lib/format.ts';
 import { summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { Icon } from '../../ui/Icon.tsx';
-import { MONTH_NAMES, RateKey } from '../../ui/MonthCalendar.tsx';
-
-const LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+import { RateKey } from '../../ui/MonthCalendar.tsx';
 
 /* The month at a glance, shaded the way the Calendar is: a day with a shift leans on the primary colour when its tips per
  * hour beat the month's typical shift and on amber when they fall short, deeper the further out; a day still waiting on its
@@ -30,7 +28,7 @@ export function MiniCalendar({ views, onOpen }: { views: ShiftView[]; onOpen: (i
         </span>
       </figcaption>
       <div class="mini" role="group" aria-label={`${MONTH_NAMES[view.m]} ${view.y}`}>
-        {LETTERS.map((l, i) => <span class="dow" key={i} aria-hidden="true">{l}</span>)}
+        {WEEKDAY_LETTERS.map((l, i) => <span class="dow" key={i} aria-hidden="true">{l}</span>)}
         {cells.map(c => {
           const list = days.get(c.date) ?? [], n = +c.date.slice(8);
           const cls = 'md' + (c.inMonth ? '' : ' out') + (list.length && c.inMonth ? ' has' : '') + (c.date === today ? ' today' : '');

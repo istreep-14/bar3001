@@ -2,7 +2,7 @@ import { addDays, weekStart } from './dates.ts';
 import { isPending } from './groups.ts';
 import { rankable, summarize } from './stats.ts';
 import type { ShiftView, Summary } from './stats.ts';
-import { pctChange } from './trends.ts';
+import { inDates, pctChange } from './trends.ts';
 
 /* What the Dashboard shows, worked out in one place. Weeks are the app's one week (Monday to Sunday, `WEEK_START`),
  * the same weeks the Log groups by, so a number here always matches a band there. Pure: pass today in. */
@@ -20,16 +20,13 @@ export interface WeekCompare {
   days: Day[];
 }
 
-const inRange = (views: ShiftView[], from: string, to: string) =>
-  views.filter(v => v.shift.date >= from && v.shift.date <= to && !isPending(v));
-
 /** `offset` 0 = this week, -1 = last week. A finished week is compared with the whole week before it; the running week
  *  only with the same days of last week (Monday to today's weekday), or Monday would always read as a big drop. */
 export function weekCompare(views: ShiftView[], today: string, offset = 0): WeekCompare {
   const start = addDays(weekStart(today), offset * 7), end = addDays(start, 6);
   const partial = today >= start && today < end;
   const cut = partial ? today : end;
-  const cur = inRange(views, start, cut), prev = inRange(views, addDays(start, -7), addDays(cut, -7));
+  const cur = inDates(views, start, cut), prev = inDates(views, addDays(start, -7), addDays(cut, -7));   // summarize drops pending shifts
   const now = summarize(cur), before = summarize(prev);
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(start, i), vs = views.filter(v => v.shift.date === date), counted = vs.filter(v => !isPending(v));

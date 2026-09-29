@@ -15,13 +15,14 @@ import { ShiftDrawer } from './features/shift/ShiftDrawer.tsx';
 import { ShiftForm } from './features/shift/ShiftForm.tsx';
 import { SummaryScreen } from './features/summary/SummaryScreen.tsx';
 import { ShiftTable } from './features/table/ShiftTable.tsx';
-import { drawerAsk, form, go, justNavigated, openForm, person, screen, sheet } from './router.ts';
+import { drawerAsk, form, go, justNavigated, openForm, person, screen, sheet, sheetDate } from './router.ts';
 import type { Screen } from './router.ts';
 import { Icon } from './ui/Icon.tsx';
 import type { IconName } from './ui/Icon.tsx';
 import { SyncPill } from './parts/SyncPill.tsx';
 import { Toaster } from './ui/toast.tsx';
 import { isDesktop } from './ui/viewport.ts';
+import styles from './app.module.css';
 
 /* Shell = grey canvas, one rail of text links grouped by section, then main.
  * The rail does not paint a bar; the content panel's left edge is what marks it. The drawer floats over the page's right edge while a
@@ -144,6 +145,4 @@ export function App() {
 }
 
 /* `new` with a different pre-filled date is a different form: remount when the date changes. */
-import { sheetDate } from './router.ts';
-import styles from './app.module.css';
 const sheetDateKey = () => sheetDate.value ?? '';

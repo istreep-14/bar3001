@@ -22,6 +22,9 @@ export function shiftStatus(v: ShiftView): ShiftStatus {
   return 'done';
 }
 
+/** Where a shift stands, in the words every page uses. */
+export const STATUS_LABEL: Record<ShiftStatus, string> = { done: 'Done', worked: 'Awaiting tips', scheduled: 'Upcoming' };
+
 /** A shift not yet counted toward totals: scheduled or worked but still waiting on its money. */
 export const isPending = (v: ShiftView): boolean => shiftStatus(v) !== 'done';
 

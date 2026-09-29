@@ -23,6 +23,7 @@ test('lean: -1 at the bottom, 0 in the middle, 1 at the top', () => {
 test('span: a shift ending at or before its start runs past midnight', () => {
   assert.deepEqual(span(h(17), h(23)), [h(17), h(23)]);
   assert.deepEqual(span(h(18), h(2)), [h(18), h(26)]);
+  assert.deepEqual(span(h(18), h(18)), [h(18), h(18)]);   // no time, as hoursWorked counts it: not a full day
 });
 
 test('clockArc: start on a 12-hour face, sweep by hours, a full turn at most', () => {

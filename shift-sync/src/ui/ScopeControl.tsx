@@ -4,7 +4,7 @@ import { PRESETS, UNITS, clampN, sameScope, startOf } from '../lib/scope.ts';
 import type { Unit } from '../lib/scope.ts';
 import styles from './ScopeControl.module.css';
 
-/** The one period control, shared by Log, Earnings and Rate: quick presets, plus any length you like
+/** The one period control, shared by every page that shows a period: quick presets, plus any length you like
  *  (N days / weeks / months / years, or the last N shifts) or a custom date range. */
 export function ScopeControl() {
   const s = scope.value;

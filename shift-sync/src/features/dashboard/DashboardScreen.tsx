@@ -3,7 +3,7 @@ import { signal } from '@preact/signals';
 import { liveViews, personById, ready } from '../../data/store.ts';
 import { addDays, today } from '../../lib/dates.ts';
 import { bestShifts, waiting, weekCompare } from '../../lib/dashboard.ts';
-import { isPending } from '../../lib/groups.ts';
+import { STATUS_LABEL, isPending, shiftStatus } from '../../lib/groups.ts';
 import { RANK_MIN_HOURS } from '../../lib/stats.ts';
 import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { go, openForm, openSheet, sheet } from '../../router.ts';
@@ -51,7 +51,7 @@ export function DashboardScreen() {
 
   const kpis = [
     { label: 'Tips', value: dollars(w.now.tips), pct: w.delta.tips },
-    { label: 'Tips / hr', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph },
+    { label: 'Rate', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph },
     { label: 'Hours', value: hours(w.now.hours), pct: w.delta.hours, neutral: true },
     { label: 'Shifts', value: String(w.now.shifts), pct: null },
     { label: 'Other income', value: dollars(w.now.extra), pct: w.delta.extra },
@@ -102,7 +102,7 @@ export function DashboardScreen() {
             <div class={styles.days} role="group" aria-label={offset === 0 ? 'Hours each day this week' : 'Hours each day last week'}>
               {w.days.map(d => {
                 const first = d.views.find(v => !isPending(v)) ?? d.views[0], sel = !!first && d.views.some(v => v.shift.id === open);
-                const status = !first ? 'no shift' : d.views.every(isPending) ? 'scheduled, no tips yet' : `${hours(d.hours)}, ${dollars(d.tips)}`;
+                const status = !first ? 'no shift' : d.views.every(isPending) ? STATUS_LABEL[shiftStatus(d.views[0]!)].toLowerCase() : `${hours(d.hours)}, ${dollars(d.tips)}`;
                 const label = `${weekdayShort(d.date)} ${shortDate(d.date)}: ${status}`;
                 return (
                   <button type="button" key={d.date} class={styles.day} aria-label={first ? `${label}. Open` : `${label}. New shift`} aria-pressed={sel}
@@ -135,11 +135,11 @@ export function DashboardScreen() {
           </Card>
 
           {todo.length > 0 && (
-            <Card title="Waiting on tips" to="log" link="Open the log">
+            <Card title="Awaiting tips" to="log" link="Open the log">
               <ul class={styles.todo}>
                 {todo.slice(0, 4).map(v => (
                   <li key={v.shift.id}>
-                    <span><b>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</b><span class="chip" data-kind="pending">No tips yet</span></span>
+                    <span><b>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</b><span class="chip" data-kind="pending">{STATUS_LABEL[shiftStatus(v)]}</span></span>
                     <button type="button" class="btn" onClick={() => openForm(v.shift.id)}>Fill in tips</button>
                   </li>
                 ))}

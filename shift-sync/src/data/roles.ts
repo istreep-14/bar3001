@@ -1,7 +1,12 @@
 import { liveRoles, liveStaff } from './store.ts';
 
-/** Suggested roles until Settings has its own list. Free text is allowed, and any role already on someone stays in the list. */
-export const DEFAULT_ROLES = ['Bartender', 'Head Bartender', 'Server', 'Barback', 'Host', 'Manager'];
+/** The usual roles, top rank first, each with a colour and an icon to start from: what Settings' "Add the usual roles" sets
+ *  up, and the suggestions until Settings has its own list. Free text is allowed, and any role already on someone stays. */
+export const USUAL_ROLES: Record<string, { color: string; icon: string }> = {
+  'Head Bartender': { color: 'gold', icon: 'star' }, Bartender: { color: 'teal', icon: 'cocktail' }, Server: { color: 'blue', icon: 'bell' },
+  Barback: { color: 'orange', icon: 'box' }, Host: { color: 'violet', icon: 'door' }, Manager: { color: 'rose', icon: 'shield' }
+};
+export const DEFAULT_ROLES = Object.keys(USUAL_ROLES);
 
 /** The roles to offer: Settings' list in rank order first, then any other role someone has (or the suggestions while the list
  *  is empty), A to Z. One entry per name, whatever its case. */

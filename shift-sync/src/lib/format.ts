@@ -52,6 +52,17 @@ export const int = (n: number | null | undefined): string =>
   n == null ? DASH : Math.round(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
 const at = (d: string) => new Date(d + 'T12:00:00');
+
+/* Month and weekday names in this device's language, like every date around them. Weekdays run Monday first: the order of
+ * `weekdayIndex` and of the app's weeks (`WEEK_START`). Every list, key and calendar head that names them reads these. */
+const names = (dates: string[], o: Intl.DateTimeFormatOptions) => dates.map(d => at(d).toLocaleDateString(undefined, o));
+const months = Array.from({ length: 12 }, (_, m) => `2024-${String(m + 1).padStart(2, '0')}-15`);
+const week = Array.from({ length: 7 }, (_, i) => addDays('2024-01-01', i));   // 2024-01-01 was a Monday
+export const MONTH_NAMES = names(months, { month: 'long' });
+export const MONTH_SHORT = names(months, { month: 'short' });
+export const WEEKDAY_NAMES = names(week, { weekday: 'long' });
+export const WEEKDAY_SHORT = names(week, { weekday: 'short' });
+export const WEEKDAY_LETTERS = names(week, { weekday: 'narrow' });
 export const dayLabel = (d: string): { weekday: string; day: string; month: string } => ({
   weekday: at(d).toLocaleDateString(undefined, { weekday: 'long' }),
   day: at(d).toLocaleDateString(undefined, { day: 'numeric' }),

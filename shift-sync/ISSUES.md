@@ -2,45 +2,19 @@
 
 An audit of the codebase as it stands, ranked by how likely it is to cost you time.
 Every item cites where it lives. Nothing here is a blocker — the app builds, typechecks and
-passes 146 tests — these are the places where the code, the docs and the stated rules have
+passes 153 tests — these are the places where the code, the docs and the stated rules have
 drifted apart, or where a safe change today becomes a nasty one later.
 
 ## Tier 1 — fix before they bite
 
-### 1. `core/core.d.ts` is hand-maintained and already 13 exports behind
-`scripts/sync-core.mjs` copies it verbatim to `src/core/core.generated.d.ts`; nothing checks
-it against `core/core.js`. Comparing the two right now:
+### 1. (fixed) `core/core.d.ts` was hand-maintained and 13 exports behind
+Every export is declared now, and `scripts/sync-core.mjs` compares the declarations with `core.js`'s exports and exits
+non-zero on any difference, so `dev`, `build`, `typecheck` and `test` all stop on drift. Generating the declarations from
+JSDoc would make it one file instead of two; not needed while the check holds.
 
-```
-exported by core/core.js (40)   declared by core/core.d.ts (27 runtime + 9 types)
-```
-
-The 13 missing are every sheet serializer plus one merge helper:
-`rowToSheet`, `sheetToRow`, `incomeToSheet`, `sheetToIncome`, `crewToSheet`, `sheetToCrew`,
-`wageToSheet`, `sheetToWage`, `staffToSheet`, `sheetToStaff`, `roleToSheet`, `sheetToRole`, `mergeInto`.
-
-This is invisible today because `src/` only uses the 24 that *are* declared. The first time
-you import one of the other 13 into the app — a CSV export, say — you get a confusing
-"no exported member" error pointing at a file you did not write. Worse, it fails *silently
-in the other direction*: adding an export to `core.js` that nobody imports produces no error
-at all, so the declaration can rot indefinitely.
-
-**Fix:** have `sync-core.mjs` compare `Object.keys(require(core/core.js))` against the names
-in `core.d.ts` and exit non-zero on a mismatch. Cheap, and it makes the drift impossible.
-Longer term, generate the declarations from JSDoc in `core.js` so there is one file, not two.
-
-### 2. Two different `inRange` functions, one name, different behaviour
-- `lib/dashboard.ts:23` — private, **filters out pending shifts**.
-- `lib/trends.ts:24` — exported, **does not filter** (it does so one level down, inside
-  `summarize`).
-
-Both are imported by feature code (`OverviewScreen.tsx:65,72`, `StackView.tsx:33,39,101`).
-The trap is that calling the wrong one does not crash — it silently counts half-logged
-shifts, which is precisely the bug the `isPending` rule exists to prevent.
-
-**Fix:** rename to say what they do (`pendingOnly` / `inWindow`), or export one and delete
-the other. `trends.inRange` is a pure date filter, so `datedInRange` would read cleanly
-next to `dashboard`'s.
+### 2. (fixed) Two `inRange` functions, one name, different behaviour
+There is one date filter now, `trends.inDates`; the Dashboard's private copy (which also dropped pending shifts, which
+`summarize` does anyway) is gone.
 
 ### 3. (fixed) `importBundle` asked for a sync only when it added shifts, people or wages
 It now counts income and crew too. In practice this never bit: `planImport` only adds income and
@@ -99,12 +73,9 @@ exactly why #1 has gone unnoticed.
 
 ## Tier 3 — know it, no action needed today
 
-### 10. `lib/dates.ts` is UTC except `today()`
-Every function in that file is `Date.UTC` in, ISO slice out, so no timezone or DST change
-can move a shift to a different day. `today()` at `dates.ts:7` is
-`new Date().toLocaleDateString('en-CA')` — deliberately *local*, because "today" should be
-the user's today. This is correct but undocumented, and it reads like a bug. The comment at
-`dates.ts:1-2` states the UTC contract; it should mention the exception.
+### 10. (fixed) `lib/dates.ts` is UTC except `today()`
+The file's comment now says `today()` is the one local read, and `today()` builds the date from its parts instead of
+relying on the `en-CA` locale format.
 
 ### 11. Magic runaway-loop guards
 `lib/periods.ts:37` (`guard < 2000`) and `lib/trends.ts:46` (`guard < 1200`). They stop a

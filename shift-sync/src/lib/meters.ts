@@ -19,9 +19,10 @@ export function lean(at: number): number {
   return Math.max(-1, Math.min(1, (at - 0.5) * 2));
 }
 
-/** A shift's span in minutes from the midnight it started after; one that ends at or before its start runs past midnight. */
+/** A shift's span in minutes from the midnight it started after; one that ends before its start runs past midnight. An end
+ *  equal to the start is no time at all, the way core's hoursWorked counts it (0h), not a full day. */
 export function span(start: number, end: number): [number, number] {
-  return [start, end > start ? end : end + DAY];
+  return [start, end >= start ? end : end + DAY];
 }
 
 /** Where a shift sits on a 12-hour clock face, in degrees clockwise from 12: where it starts, and how far round it runs

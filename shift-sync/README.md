@@ -9,7 +9,7 @@ problems and drift hazards: [ISSUES.md](ISSUES.md). The look follows Bar2.000's 
 
 Stack: Vite 8 + Preact 10 + `@preact/signals` + TypeScript, installable PWA
 (vite-plugin-pwa). No backend beyond Apps Script. ~6,600 lines of `.ts`/`.tsx`/`.css` in
-`src/`, 146 tests, no test framework dependency (`node --test` only).
+`src/`, 153 tests, no test framework dependency (`node --test` only).
 
 One more runtime dependency, loaded only when a person's photo is picked: `@mediapipe/tasks-vision`
 (Apache-2.0) takes the background out of the photo on the device (`features/people/cutout.ts`, with the
@@ -42,7 +42,7 @@ tests/                node:test, run with Node's own type stripping
 ```
 npm install
 npm run dev        # sync:core then vite -> http://localhost:5173
-npm test           # 146 tests
+npm test           # 153 tests
 npm run typecheck  # sync:core then tsc --noEmit
 npm run build      # sync:core, typecheck, then vite build into dist/
 ```
@@ -169,7 +169,7 @@ is a figure, not a rank. Both are null rather than zero when they cannot be comp
 
 ## Screens
 
-`router.ts` defines 13 routes; `app.tsx` dispatches them. Rail groups and page anatomy are
+`router.ts` defines 15 routes; `app.tsx` dispatches them. Rail groups and page anatomy are
 in [DESIGN.md](DESIGN.md#rail-groups-and-pages).
 
 | Route | Screen | File |
@@ -184,7 +184,7 @@ in [DESIGN.md](DESIGN.md#rail-groups-and-pages).
 | `#/hub/crew` | Crew → Every shift | `features/hub/HubCrew.tsx` |
 | `#/hub/income` | Other income | `features/hub/HubIncome.tsx` |
 | `#/people` | People | `features/people/PeopleScreen.tsx` |
-| `#/settings/{look,wages,sync,data}` | Settings (one page, four areas) | `features/settings/SettingsScreen.tsx` |
+| `#/settings/{wages,roles,sync,look,data}` | Settings (one page, five areas) | `features/settings/SettingsScreen.tsx` |
 
 Overlays ride on top of any screen, as query params rather than routes: `?shift=<id>` (the
 drawer), `?form=<id|new>&date=` (the form), `?person=<id|new>`. On desktop the Log and the
