@@ -251,7 +251,7 @@ before the main role existed reads its first role as main until it is saved (`ro
   as WebP (or PNG), stepping the size down to fit the cell; an opaque photo is a JPEG. `ui/Avatar.tsx` draws it from props; `parts/PersonAvatar.tsx` looks the person up.
 
 ## Rules that keep it from drifting
-- No raw colour or size in a component: tokens only.
+- No raw colour, weight or size in a component: tokens only (colours and weights are tested; font sizes are not yet, ISSUES.md #19).
 - One of each: table, calendar, drawer, form, empty state, toast.
 - A new page is a folder in `features/`, an entry in `router.ts` and in `app.tsx`'s groups, and a panel.
 - **Where a part lives says what it may touch** (`tests/layers.test.ts` checks it): `ui/` is generic and driven by props (it may

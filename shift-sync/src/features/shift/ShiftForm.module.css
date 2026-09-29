@@ -76,7 +76,7 @@
 .foot :global(.btn-primary) { min-width: 7.5rem; }
 .spacer { flex: 1; }
 
-@media (max-width: 720px) {
+@media (max-width: 45rem) {
   .modal { width: 100vw; height: 100dvh; border-radius: 0; border: 0; }
   .head { padding: var(--s-3); }
   .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }

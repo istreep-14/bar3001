@@ -15,4 +15,4 @@
 .empty { margin: var(--s-2) 0 0; font-size: var(--fs-meta); color: var(--ink-2); }
 .notes { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
 
-@media (max-width: 56rem) { .details[data-layout='columns'] .lists { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); } }
+@media (max-width: 55.99rem) {   /* not at 56rem itself, where the desktop layout (ui/viewport.ts) begins */ .details[data-layout='columns'] .lists { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); } }

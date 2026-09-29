@@ -84,6 +84,9 @@
   --shadow-panel: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 28px rgb(15 23 42 / 0.06);
   --shadow: 0 24px 60px rgb(10 25 24 / 0.28), 0 4px 12px rgb(10 25 24 / 0.12);
   --shadow-sm: 0 1px 2px rgb(15 31 30 / 0.06);
+  /* the colour picker's own marks, the same in both modes: a swatch's hairline ring, and "any colour" as a rainbow */
+  --swatch-ring: rgb(0 0 0 / 0.12);
+  --any-colour: conic-gradient(#e11d48, #f59e0b, #16a34a, #0ea5e9, #6366f1, #e11d48);
   color-scheme: light;
 }
 

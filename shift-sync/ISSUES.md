@@ -105,22 +105,16 @@ resolve under Vite 8 yet. Revisit on the next Vite bump.
 the comment explains the `>=22.18` floor from `package.json` — but it means CI can change
 under you. `22.18` exactly would make a type-stripping regression reproducible.
 
-## Repo state (not code, but it will confuse a first pass)
+### 19. About 35 font sizes are still literal
+Colours and weights are tokens now, and `tests/tokens.test.ts` keeps them that way. Font sizes are not: `charts.css` sets
+its labels in px (10, 11, 13, 22, 30) and a dozen module rules use one-off rems (0.5625rem to 1.375rem). Snapping them to
+the `--fs-*` scale changes what they look like, and that scale itself gets denser for a mouse, so each needs a look
+rather than a find-and-replace.
 
-- **Uncommitted work in 15 files** — a log redesign touching `LogScreen`, `ShiftCard`,
-  `ShiftLog`, `PersonEditor`, five `lib/` files, `tokens.css` and three tests. Commit it or
-  stash it.
-- **`log-redesign`** is live WIP: 8 commits ahead, 29 behind `main`. Its diff deletes 8 test
-  files (`weeks`, `time12`, `tokens`, `ruler`, `persisted`, `shiftForm`, `layers`, `groups`,
-  `dashboard`) and touches `tsconfig.json`. It will need a rebase, and the test deletions are
-  worth deciding on deliberately — several of them (`layers`, `tokens`, `weeks`) enforce
-  architecture rather than behaviour.
-- **`cursor/canvas-table-retool-3ba9`** is fully merged (0 ahead, 27 behind). Safe to delete.
-- **`rail/single-sidebar`** is 1 commit ahead and *not* in `main` (`git cherry` reports `+`),
-  yet `main` already has the grouped sidebar it introduces. It is a parallel implementation
-  of a change that landed another way — superseded, safe to delete.
-- **`shift-sync/dist/`** is build output on disk. Git-ignored, but delete it if you want the
-  tree to look clean.
+## Repo state
+The review's work is on `main` (merged from `review-fixes`). `shift-sync/dist/` is build output on disk, git-ignored. The
+`log-redesign`, `cursor/canvas-table-retool-3ba9` and `rail/single-sidebar` branches predate it; the last two are
+superseded and safe to delete.
 
 ## Already handled well
 

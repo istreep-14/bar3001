@@ -1,7 +1,7 @@
 .host { position: fixed; left: 0; right: 0; bottom: calc(4.5rem + env(safe-area-inset-bottom)); display: flex; justify-content: center; padding: 0 var(--s-4); z-index: var(--z-toast); pointer-events: none; }
 .toast { pointer-events: auto; display: flex; align-items: center; gap: var(--s-4); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); min-height: var(--ctl-h);
-  background: var(--ink); color: var(--bg); border-radius: var(--r-md); box-shadow: var(--shadow); font-size: var(--fs-body); font-weight: 500;
+  background: var(--ink); color: var(--bg); border-radius: var(--r-md); box-shadow: var(--shadow); font-size: var(--fs-body); font-weight: var(--fw-med);
   animation: in var(--dur) var(--ease); }
-.action { min-height: 2.25rem; padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: inherit; font-weight: 700; text-decoration: underline; }
+.action { min-height: 2.25rem; padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: inherit; font-weight: var(--fw-bold); text-decoration: underline; }
 @keyframes in { from { opacity: 0; transform: translateY(0.5rem); } }
 @media (min-width: 56rem) { .host { bottom: var(--s-5); } }

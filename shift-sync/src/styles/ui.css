@@ -254,7 +254,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .avatars .avatar + .avatar { margin-left: calc(-1 * var(--av-overlap, 0.5rem)); }   /* a stack sets --av-overlap to its own tuck */
 /* in a stack each circle is cut back where the next one tucks over it, a sliver of whatever is behind, so faces of one fill still read apart */
 .avatars > .avatar:has(+ .avatar) {
-  --cut: radial-gradient(50% 50% at calc(150% - var(--av-overlap, 0.5rem)) 50%, #0000 calc(100% + 2px), #000 calc(100% + 2.5px));   /* the next circle, 2px wider (a calc radius itself doesn't render) */
+  --cut: radial-gradient(50% 50% at calc(150% - var(--av-overlap, 0.5rem)) 50%, transparent calc(100% + 2px), black calc(100% + 2.5px));   /* the next circle, 2px wider (a calc radius itself doesn't render) */
   -webkit-mask: var(--cut); mask: var(--cut);
 }
 .avatar-more { background: var(--surface-3); color: var(--ink-2); }
