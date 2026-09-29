@@ -32,12 +32,8 @@
 .total:global(.figure) :global(.figure-under) { top: calc(50% + 0.75em); }   /* under the figure, inside the block's height */
 .quiet { color: var(--ink-3); font-weight: var(--fw-med); }
 /* Rate, Hours and Total stand the same height (--fig-h, the clock ring's), so the row's figures line up as blocks.
-   Rate: the figure in a full-height pill, styled like Total but tinted with --tone (the red-to-green scale colour, set
-   inline); then its slim rank bar stood on end, the same height. */
+   Rate is ui/RateFigure, which reads --fig-h. */
 .log { --fig-h: 2.25rem; }
-.rate { position: relative; display: flex; align-items: stretch; justify-content: flex-end; gap: 5px; height: var(--fig-h); }
-.ratePill { display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 13%, var(--surface)); color: var(--tone); font-weight: var(--fw-semi); }
-.rate :global(.rankbar[data-up]) { width: 3px; height: auto; }
 /* Hours: the figure in its clock ring, styled like Total */
 .hours { display: flex; align-items: center; justify-content: flex-end; height: var(--fig-h); color: var(--ink-2); font-weight: var(--fw-semi); }
 .hours :global(.dial) { width: var(--fig-h); height: var(--fig-h); }

@@ -14,6 +14,5 @@
 .note { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 100%; }
 .figures { display: grid; justify-items: end; gap: 2px; }
 .total { font-size: var(--fs-title); font-weight: var(--fw-semi); }
-.figures :global(.rate) { font-size: var(--fs-meta); }
 .pending { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--accent); }
 .head :global(.badge) { font-size: var(--fs-meta); }

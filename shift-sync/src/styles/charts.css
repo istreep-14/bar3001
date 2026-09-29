@@ -232,7 +232,10 @@
 .chartcard p.muted { margin: var(--s-2) 0 0; font-size: var(--fs-meta); }
 .mini .md { display: grid; place-items: center; aspect-ratio: 1; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-2); font: inherit; font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
 .mini .md.out { opacity: 0.35; }
-.mini .md.has { background: color-mix(in srgb, var(--accent) calc(18% + var(--heat, 0) * 62%), var(--surface-2)); color: var(--ink); font-weight: var(--fw-semi); cursor: pointer; }
+.mini .md.has { background: var(--surface-2); color: var(--ink); font-weight: var(--fw-semi); cursor: pointer; }
+/* shaded like the Calendar's days: above the typical rate leans on the primary colour, below on amber */
+.mini .md.has[data-side='hi'] { background: color-mix(in srgb, var(--accent) calc(12% + var(--heat, 0) * 40%), var(--surface)); }
+.mini .md.has[data-side='lo'] { background: color-mix(in srgb, var(--warn) calc(12% + var(--heat, 0) * 36%), var(--surface)); }
 .mini .md.has:hover { outline: 2px solid var(--accent); }
 .mini .md.today { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); }
 .viz-cap:has(.minink) { align-items: center; }

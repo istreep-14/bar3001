@@ -5,7 +5,7 @@ import { sheetProblems, state, syncMessage } from '../../data/sync.ts';
 import { DASH, dollars } from '../../lib/format.ts';
 import { GROUP_BYS, groupShifts } from '../../lib/groups.ts';
 import type { GroupBy } from '../../lib/groups.ts';
-import { summarize } from '../../lib/stats.ts';
+import { rateContext, summarize } from '../../lib/stats.ts';
 import { sheet } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
@@ -35,6 +35,7 @@ export function LogScreen() {
   const problems = sheetProblems.value;
   const selected = sheet.value;
   const desktop = isDesktop.value;
+  const ctx = rateContext(views);
 
   const alerts = <>
     {state.value === 'failed' && (
@@ -81,7 +82,7 @@ export function LogScreen() {
                 <h2 class={styles.bandName}>{g.label}</h2>
                 <span class="num">{g.done ? dollars(g.total) : DASH}</span>
               </div>
-              <ul class={styles.list}>{g.views.map(v => <ShiftCard key={v.shift.id} v={v} avg={s.tph} selected={selected === v.shift.id} />)}</ul>
+              <ul class={styles.list}>{g.views.map(v => <ShiftCard key={v.shift.id} v={v} ctx={ctx} selected={selected === v.shift.id} />)}</ul>
             </section>
           ))}
         </div>

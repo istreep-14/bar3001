@@ -77,9 +77,6 @@
   --danger: var(--bad); --danger-soft: #fdeeee; --danger-line: #f1cccc;
   --warning-soft: #fdf0d8;
 
-  /* rate: a diverging pair */
-  --rate-good: var(--good); --rate-bad: var(--bad);
-
   /* The rail sits on the canvas. These match the page ink so a tile is readable before the theme script runs. */
   --rail-bg: transparent; --rail-ink: var(--ink-2); --rail-ink-hi: var(--ink);
 

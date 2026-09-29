@@ -2,7 +2,7 @@ import { byDate, monthGrid, rateScale } from '../../lib/calendar.ts';
 import type { RateScale } from '../../lib/calendar.ts';
 import { addDays, today, ymd, weekStart } from '../../lib/dates.ts';
 import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
-import { summarize } from '../../lib/stats.ts';
+import { RANK_MIN_HOURS, rankable, summarize } from '../../lib/stats.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { summaryRows } from '../../lib/summary.ts';
 import type { SumRow } from '../../lib/summary.ts';
@@ -129,10 +129,10 @@ function Weekly({ all, from, to }: { all: ShiftView[]; from: string; to: string 
 }
 
 function RankList({ title, views, dir }: { title: string; views: ShiftView[]; dir: 'best' | 'worst' }) {
-  const list = views.filter(v => v.tph != null && (v.hours ?? 0) >= 2).sort((a, b) => (dir === 'best' ? b.tph! - a.tph! : a.tph! - b.tph!)).slice(0, 5);
+  const list = views.filter(rankable).sort((a, b) => (dir === 'best' ? b.tph! - a.tph! : a.tph! - b.tph!)).slice(0, 5);
   return (
     <figure class="viz">
-      <figcaption class="viz-cap"><h4>{title}</h4><span class="muted">shifts of 2h or more</span></figcaption>
+      <figcaption class="viz-cap"><h4>{title}</h4><span class="muted">shifts of {RANK_MIN_HOURS}h or more</span></figcaption>
       {list.length === 0 ? <p class="muted">Nothing to rank yet.</p> : (
         <ol class={styles.rank}>
           {list.map(v => (

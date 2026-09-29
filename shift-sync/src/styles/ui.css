@@ -64,12 +64,6 @@ select.input { appearance: none; padding-right: var(--s-6);
 .badge[data-kind='Tips'] { --c: var(--cat-tips); }
 .badge[data-kind='Wage'] { --c: var(--cat-wage); }
 
-/* ── rate: plain figure; good/bad gets an arrow and a color, never color alone ── */
-.rate { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
-.rate .icon { width: 0.85em; height: 0.85em; stroke-width: 2.5; }
-.rate[data-tone='good'] { color: var(--rate-good); }
-.rate[data-tone='bad'] { color: var(--rate-bad); }
-
 /* ── table: one component for every list of records. Columns size to their text and stay on one or two
    lines; a long note ellipsizes instead of stretching the row. The sheet is --surface, the lightest grey and
    one step up from the panel around it, so the data itself is the most prominent thing on the page. ── */

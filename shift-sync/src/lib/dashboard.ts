@@ -1,6 +1,6 @@
 import { addDays, weekStart } from './dates.ts';
 import { isPending } from './groups.ts';
-import { summarize } from './stats.ts';
+import { rankable, summarize } from './stats.ts';
 import type { ShiftView, Summary } from './stats.ts';
 import { pctChange } from './trends.ts';
 
@@ -44,10 +44,10 @@ export function weekCompare(views: ShiftView[], today: string, offset = 0): Week
   };
 }
 
-/** Your best shifts by tips per hour over the last `weeks` weeks, best first. */
+/** Your best shifts by tips per hour over the last `weeks` weeks, best first; only shifts long enough to rank (`rankable`). */
 export const bestShifts = (views: ShiftView[], today: string, n = 4, weeks = 12): ShiftView[] => {
   const from = addDays(today, -weeks * 7);
-  return views.filter(v => v.tph != null && v.shift.date >= from && v.shift.date <= today)
+  return views.filter(v => rankable(v) && v.shift.date >= from && v.shift.date <= today)
     .sort((a, b) => b.tph! - a.tph! || b.shift.date.localeCompare(a.shift.date)).slice(0, n);
 };
 

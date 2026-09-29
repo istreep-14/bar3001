@@ -1,16 +1,18 @@
 import { personById, removeShift, undoRemove } from '../data/store.ts';
 import type { ComponentChildren } from 'preact';
-import { DASH, clockTight, dollars, fullDate, hours, hoursBare, money, perHour } from '../lib/format.ts';
+import { DASH, clockTight, dollars, fullDate, hours, hoursBare } from '../lib/format.ts';
 import { groupShifts, shiftStatus } from '../lib/groups.ts';
-import { clockArc, lean, scaleColor, standing } from '../lib/meters.ts';
+import { clockArc } from '../lib/meters.ts';
 import type { GroupBy } from '../lib/groups.ts';
-import type { ShiftView } from '../lib/stats.ts';
+import { rateContext } from '../lib/stats.ts';
+import type { RateContext, ShiftView } from '../lib/stats.ts';
 import { closeSheet, openForm, openSheet } from '../router.ts';
 import { PartyIcon } from '../ui/Badges.tsx';
 import { ColumnMenu } from '../ui/ColumnMenu.tsx';
 import { DayCell } from '../ui/DayCell.tsx';
 import { Icon } from '../ui/Icon.tsx';
-import { ClockDial, RankBar, StackBar } from '../ui/Meters.tsx';
+import { ClockDial, StackBar } from '../ui/Meters.tsx';
+import { RateFigure } from '../ui/RateFigure.tsx';
 import { toast } from '../ui/toast.tsx';
 import { CrewPhotos } from './CrewPhotos.tsx';
 import { ShiftDetails } from './ShiftDetails.tsx';
@@ -52,9 +54,7 @@ export const LOG_COLUMNS: { key: LogCol; head: string; width: string; align?: 'r
 export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidden }: { views: ShiftView[]; by: GroupBy; openId: string | null; inline?: boolean; hidden?: LogCol[]; onHidden?: (h: LogCol[]) => void }) {
   const groups = groupShifts(views, by);
   const grouped = by !== 'none';
-  const done = views.filter(v => shiftStatus(v) === 'done' && v.tph != null && v.hours);
-  const worked = done.reduce((n, v) => n + v.hours!, 0);
-  const ctx: Context = { rates: done.map(v => v.tph), avg: worked ? done.reduce((n, v) => n + (v.shift.tips ?? 0), 0) / worked : null };
+  const ctx = rateContext(views);
   const cols = LOG_COLUMNS.filter(c => !hidden.includes(c.key));
   // Grid lines: the day is column 1, then the visible columns, then the chevron. The group heading's figures sit in theirs.
   const at = (k: LogCol) => { const i = cols.findIndex(c => c.key === k); return i < 0 ? null : i + 2; };
@@ -88,11 +88,7 @@ export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidd
   );
 }
 
-/** What a row's rate is measured against: the listed shifts' rates, and their average (all their tips over all their hours,
- *  the same figure as the side panel's Rate). */
-interface Context { rates: (number | null)[]; avg: number | null }
-
-function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; selected: boolean; ctx: Context; cols: typeof LOG_COLUMNS }) {
+function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; selected: boolean; ctx: RateContext; cols: typeof LOG_COLUMNS }) {
   const sh = v.shift, id = sh.id;
   const status = shiftStatus(v);
   const done = status === 'done';
@@ -111,7 +107,7 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
     party: () => sh.party && <PartyIcon />,
     hours: () => <Hours v={v} />,
     tips: () => <span class={`num ${done ? styles.tips : ''}`}>{done ? dollars(sh.tips) : DASH}</span>,
-    rate: () => (done && v.tph != null ? <Rate tph={v.tph} ctx={ctx} /> : DASH),
+    rate: () => (done && v.tph != null ? <RateFigure tph={v.tph} ctx={ctx} /> : DASH),
     wage: () => <span class={`num ${styles.quiet}`}>{done && v.wage != null ? dollars(v.wage) : ''}</span>,
     other: () => <span class={`num ${styles.quiet}`}>{done && v.extra ? dollars(v.extra) : ''}</span>,
     total: () => (done ? <Total v={v} /> : <span class="num">{DASH}</span>),
@@ -138,24 +134,6 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
         </div>
       )}
     </div>
-  );
-}
-
-/** Tips per hour in a pill tinted off the red-to-green scale, then a slim bar stood on end that fills 0-100% as far as the
- *  rate ranks among the listed shifts. Hovering says it in words: the share it beat, and how far from your average. */
-function Rate({ tph, ctx }: { tph: number; ctx: Context }) {
-  const at = standing(ctx.rates, tph);
-  const l = at == null ? 0 : lean(at);
-  const tone = scaleColor(l, 'var(--ink-2)', 75);
-  const diff = ctx.avg == null ? null : tph - ctx.avg;
-  const says = at == null || diff == null || ctx.avg == null ? undefined
-    : `Better than ${Math.round(at * 100)}% of the shifts here\n${Math.abs(diff) < 0.005 ? 'Right on' : `${perHour(Math.abs(diff))} ${diff > 0 ? 'above' : 'below'}`} your average ${perHour(ctx.avg)}`;
-  return (
-    <span class={`${styles.rate} ${says ? 'tip' : ''}`} data-tip={says} style={{ '--tone': tone }}>
-      <span class={`num ${styles.ratePill}`}>{money(tph)}</span>
-      {at != null && <RankBar up at={at} color={scaleColor(l, 'var(--ink-4)', 80)} />}
-      {says && <span class="sr-only">{says.replace('\n', '. ')}</span>}
-    </span>
   );
 }
 

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Income, Shift } from '../src/core/core.generated.js';
 import { addDays, daysBetween, weekStart } from '../src/lib/dates.ts';
-import { groupByWeek, rateTone, summarize, toView } from '../src/lib/stats.ts';
+import { groupByWeek, rankable, rateContext, summarize, toView } from '../src/lib/stats.ts';
 import { addMonths, applyScope, clampN, labelOf, sameScope, startOf } from '../src/lib/scope.ts';
 import type { Scope } from '../src/lib/scope.ts';
 
@@ -38,11 +38,19 @@ test('summary only counts fully logged shifts: money without hours and hours wit
   assert.equal(summarize([]).tph, null);
 });
 
-test('rate tone is relative to the scope average, neutral within 20%', () => {
-  assert.equal(rateTone(40, 30), 'good');
-  assert.equal(rateTone(20, 30), 'bad');
-  assert.equal(rateTone(35, 30), null);
-  assert.equal(rateTone(null, 30), null);
+test('rate context: the listed rates and their Rate, the same figure summarize gives', () => {
+  const views = [toView(shift({ id: 'a', tips: 240 }), []), toView(shift({ id: 'b', tips: 400 }), []), toView(shift({ id: 'c', tips: null }), [])];
+  const ctx = rateContext(views);
+  assert.deepEqual(ctx.rates, [30, 50]);
+  assert.equal(ctx.avg, summarize(views).tph);
+  assert.equal(ctx.avg, 40);
+  assert.deepEqual(rateContext([]), { rates: [], avg: null });
+});
+
+test('a shift ranks by rate only when it ran 2 hours or more', () => {
+  assert.equal(rankable(toView(shift({ start: 1080, end: 1200, tips: 50 }), [])), true);    // 2h
+  assert.equal(rankable(toView(shift({ start: 1080, end: 1110, tips: 50 }), [])), false);   // 30 minutes
+  assert.equal(rankable(toView(shift({ tips: null }), [])), false);
 });
 
 const at = (id: string, date: string) => toView(shift({ id, date }), []);
@@ -133,7 +141,7 @@ test('total per hour: everything earned over hours; tips per hour is untouched b
 
 /* ── Overview and calendar helpers ── */
 import { groupBy, niceScale, periods, scopeBounds, weekdayIndex } from '../src/lib/periods.ts';
-import { heat, monthGrid } from '../src/lib/calendar.ts';
+import { monthGrid } from '../src/lib/calendar.ts';
 
 test('weeks run Monday to Sunday', () => {
   assert.equal(weekStart('2026-09-25'), '2026-09-21');   // Fri
@@ -185,6 +193,4 @@ test('month grid: whole Monday-first weeks, neighbours marked as outside the mon
   assert.equal(g.at(-1)!.date, '2026-10-04');
   assert.equal(monthGrid(2026, 1).filter(c => c.inMonth).length, 28);
   assert.equal(monthGrid(2026, 11).filter(c => c.inMonth).length, 31);   // December rolls the year for its length
-  assert.equal(heat(50, 200), 0.25);
-  assert.equal(heat(5, 0), 0);
 });

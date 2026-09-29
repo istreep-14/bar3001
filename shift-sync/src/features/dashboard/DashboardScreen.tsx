@@ -4,6 +4,7 @@ import { liveViews, personById, ready } from '../../data/store.ts';
 import { addDays, today } from '../../lib/dates.ts';
 import { bestShifts, waiting, weekCompare } from '../../lib/dashboard.ts';
 import { isPending } from '../../lib/groups.ts';
+import { RANK_MIN_HOURS } from '../../lib/stats.ts';
 import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
@@ -119,7 +120,7 @@ export function DashboardScreen() {
             </dl>
           </Card>
 
-          <Card title="Best nights" sub="Tips per hour, last 12 weeks" to="overview" link="Open insights">
+          <Card title="Best nights" sub={`Tips per hour, last 12 weeks, shifts of ${RANK_MIN_HOURS}h or more`} to="overview" link="Open insights">
             {best.length === 0 ? <p class="muted side-note">Nothing in the last 12 weeks yet.</p> : (
               <div class={styles.best}>
                 {best.map((v, i) => (

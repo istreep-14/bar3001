@@ -76,9 +76,16 @@ export function summarize(views: ShiftView[]): Summary {
   };
 }
 
-/** good / bad relative to the scope's own average; within 20% is neutral. */
-export const rateTone = (tph: number | null, avg: number | null): 'good' | 'bad' | null =>
-  tph == null || avg == null || avg === 0 ? null : tph >= avg * 1.2 ? 'good' : tph <= avg * 0.8 ? 'bad' : null;
+/** What a listed shift's rate is measured against: the rates of the shifts listed that have one, and their Rate (tips over
+ *  hours, the side panel's figure). The Log's rows and the phone's cards both read it, so they judge a shift one way. */
+export interface RateContext { rates: number[]; avg: number | null }
+export const rateContext = (views: ShiftView[]): RateContext =>
+  ({ rates: views.map(v => v.tph).filter((r): r is number => r != null), avg: summarize(views).tph });
+
+/** A shift goes on a best or slowest list only when it ran long enough for its rate to mean something: half an hour with
+ *  $40 in tips isn't an $80/hr night. Every ranked list uses this. */
+export const RANK_MIN_HOURS = 2;
+export const rankable = (v: ShiftView): boolean => v.tph != null && (v.hours ?? 0) >= RANK_MIN_HOURS;
 
 export interface Week { start: string; views: ShiftView[]; summary: Summary }
 /** Groups newest-first views into calendar weeks (Monday to Sunday, `WEEK_START`). */

@@ -1,13 +1,17 @@
-import { clockPlain, dayLabel, dec1, hours, money, yearTag } from '../../lib/format.ts';
-import { rateTone } from '../../lib/stats.ts';
-import type { ShiftView } from '../../lib/stats.ts';
+import { DASH, clockPlain, dayLabel, dec1, hours, money, yearTag } from '../../lib/format.ts';
+import { shiftStatus } from '../../lib/groups.ts';
+import type { RateContext, ShiftView } from '../../lib/stats.ts';
 import { openSheet } from '../../router.ts';
-import { PartyBadge, RatePill, SourceBadge, TypeBadge } from '../../ui/Badges.tsx';
+import { PartyBadge, SourceBadge, TypeBadge } from '../../ui/Badges.tsx';
+import { RateFigure } from '../../ui/RateFigure.tsx';
 import styles from './ShiftCard.module.css';
 
-/** Card view of a shift. Fires the same openSheet as a table row; selection is an accent border. */
-export function ShiftCard({ v, avg, selected }: { v: ShiftView; avg: number | null; selected: boolean }) {
+/** Card view of a shift. Fires the same openSheet as a table row; selection is an accent border. Its figures read like the
+ *  desktop Log's: a shift still short of its money shows a dash, not a partial total, and the rate is judged against the
+ *  listed shifts (`ctx`) on the same scale. */
+export function ShiftCard({ v, ctx, selected }: { v: ShiftView; ctx: RateContext; selected: boolean }) {
   const { shift: s } = v, d = dayLabel(s.date), year = yearTag(s.date);
+  const done = shiftStatus(v) === 'done';
   const time = s.start != null && s.end != null ? `${clockPlain(s.start)} – ${clockPlain(s.end)}` : '';
   const sources = [...new Set(v.income.map(i => i.category))];
   return (
@@ -31,8 +35,8 @@ export function ShiftCard({ v, avg, selected }: { v: ShiftView; avg: number | nu
           )}
         </span>
         <span class={styles.figures}>
-          <span class={`${styles.total} num`}>{money(v.total)}</span>
-          <RatePill tph={v.tph} tone={rateTone(v.tph, avg)} />
+          <span class={`${styles.total} num`}>{done ? money(v.total) : DASH}</span>
+          {done && v.tph != null ? <RateFigure tph={v.tph} ctx={ctx} card /> : <span class="muted">{DASH}</span>}
         </span>
       </button>
     </li>

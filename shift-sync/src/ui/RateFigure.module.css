@@ -1,0 +1,6 @@
+/* The rate pill, tinted with --tone (the red-to-green scale colour, set inline), then its slim rank bar stood on end, the
+   same height. In a Log row it stands --fig-h tall like the row's other figures; on a card it is as tall as its text. */
+.rate { position: relative; display: flex; align-items: stretch; justify-content: flex-end; gap: 5px; height: var(--fig-h, auto); }
+.pill { display: inline-flex; align-items: center; padding: 0 10px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--tone) 13%, var(--surface)); color: var(--tone); font-weight: var(--fw-semi); }
+.rate[data-card] .pill { padding: 1px var(--s-2); font-size: var(--fs-meta); }
+.rate :global(.rankbar[data-up]) { width: 3px; height: auto; }

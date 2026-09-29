@@ -107,7 +107,8 @@ The landing page (`#/dashboard`, and anything unknown): one week at a glance and
 has a shift with money in, else last week, and a switch picks either. Across the top, six figures (tips, tips/hr, hours, shifts, other,
 total) against the week before (weeks run Monday to Sunday everywhere, `WEEK_START` in `lib/dates.ts`); a running week is compared with the same days of last week (`lib/dashboard.ts`, tested). Under them, that
 week and the one before as the Log's own grouped list (rows open the drawer here). Beside them: day capsules (height = hours, outlined = no
-shift, accent outline = waiting on tips), best nights by tips/hr over 12 weeks, shifts waiting on tips with Fill in tips, and the crew with
+shift, accent outline = waiting on tips), best nights by tips/hr over 12 weeks (shifts of 2h or more, `rankable` in `lib/stats.ts`, the
+same floor as the Calendar's best and slowest), shifts waiting on tips with Fill in tips, and the crew with
 hours only. Each card is the part its full page uses and ends in a link to that page.
 
 ## Insights (was Overview)
@@ -117,7 +118,7 @@ total per hour, hours) each with a `DeltaPill` (arrow + %, never colour alone; h
 of the same weekday and type); **tips and rate by week** (bars on the left axis, the rate as dots plus a smoothed 4-week line on its own
 right axis: the one chart allowed two measures); **hours per week** against a 40-hour line (hours are always a 7-day span; spans of two weeks
 or more are averaged per week); **how rates are spread** (histogram, median and mean marked); **tips per hour by weekday**; then the month
-in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of it is `lib/trends.ts`, pure and tested.
+in small (`MiniCalendar`, shaded by rate the way the Calendar is, with the same key) beside the 8 latest shifts (the same `Table`). All of it is `lib/trends.ts`, pure and tested.
 
 ## Money and rates
 - **Tips per hour** is tips ÷ hours and nothing else. It is the only ranking metric. Wage and other income never enter it.
@@ -145,8 +146,10 @@ in small (`MiniCalendar`) beside the 8 latest shifts (the same `Table`). All of 
   hour alone, set like Total (same size and weight) in a full-height **pill** tinted off one continuous scale from red at the
   bottom, through plain ink in the middle, to green at the top (`color-mix`, so every step shows, not a few bins). After it a
   slim **rank bar** stood on end fills from the bottom as far as the rate ranks among the shifts listed (`lib/meters.ts`
-  `standing`). Hovering says it in words: the share of shifts it beat, and the dollars above or below your average (all the
-  listed shifts' tips over all their hours, the side panel's Rate).
+  `standing`). Hovering says it in words: the share of shifts it beat, and the dollars above or below your average (the
+  listed shifts' Rate). It is `ui/RateFigure.tsx` fed by `rateContext` in `lib/stats.ts`, and the phone's Log cards use the
+  same part, so a shift reads as good or slow the same way on either (a card's pill carries its '/hr'; a shift short of
+  its money shows a dash for its total and rate, as the row does).
 - **Hours** sit in a faint **clock ring**, set like Total, with no unit (the head says hours): the shift's stretch drawn round
   the figure as a thin, half-strength arc on an unseen 12-hour clock, in its day or night colour (6p to 2a runs from the 6
   round to the 2; twelve hours or more closes the ring), so the figure leads. Hovering gives the times. Wage and Other are
