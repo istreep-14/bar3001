@@ -36,7 +36,7 @@ function initial(id: string): Form | null {
     type: s.shift_type ?? '', party: !!s.party,   // a type left unset stays unset: the start-time guess is for new shifts only
     tips: s.tips == null ? '' : String(s.tips), notes: s.notes ?? '',
     lines: v.income.map(i => newLine({ id: i.id, category: i.category, amount: String(i.amount), note: i.note ?? '' })),
-    crew: v.crew.map(c => newMember({ id: c.id, staff_id: c.staff_id, name: personById(c.staff_id)?.name ?? c.name ?? 'Unknown', start: toHHMM(c.start), end: toHHMM(c.end), follow: false }))
+    crew: v.crew.map(c => newMember({ id: c.id, staff_id: c.staff_id, name: personById(c.staff_id)?.name ?? c.name ?? 'Unknown', start: toHHMM(c.start), end: toHHMM(c.end), location: c.location ?? '', follow: false }))
   };
 }
 

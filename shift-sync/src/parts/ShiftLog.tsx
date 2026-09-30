@@ -1,8 +1,7 @@
 import { personById, removeShift, undoRemove } from '../data/store.ts';
 import type { ComponentChildren } from 'preact';
-import { DASH, clockTight, dollars, fullDate, hours, hoursBare } from '../lib/format.ts';
+import { DASH, clockTight, dollars, fullDate, hoursBare } from '../lib/format.ts';
 import { STATUS_LABEL, groupShifts, shiftStatus } from '../lib/groups.ts';
-import { clockArc } from '../lib/meters.ts';
 import type { GroupBy } from '../lib/groups.ts';
 import { rateContext } from '../lib/stats.ts';
 import type { RateContext, ShiftView } from '../lib/stats.ts';
@@ -11,42 +10,30 @@ import { PartyIcon } from '../ui/Badges.tsx';
 import { ColumnMenu } from '../ui/ColumnMenu.tsx';
 import { DayCell } from '../ui/DayCell.tsx';
 import { Icon } from '../ui/Icon.tsx';
-import { ClockDial, StackBar } from '../ui/Meters.tsx';
 import { RateFigure } from '../ui/RateFigure.tsx';
 import { toast } from '../ui/toast.tsx';
 import { CrewPhotos } from './CrewPhotos.tsx';
 import { ShiftDetails } from './ShiftDetails.tsx';
 import styles from './ShiftLog.module.css';
 
-/* The desktop Log. Rows are grouped by month or week: a heading names the group once (with a count, and the group's tips and
- * total lined up in their columns), and the rows under it only say the day. Opening a row turns it into a card in place
- * (?shift=<id>, so it is still a link and Back closes it), with the income mix bar and the same stacked lists as the drawer.
- * The drawer does not also open on this page.
- *   Tips lead. They are the figure that says how a shift went, so they are the strongest number in the row, and Rate is tips
- *   per hour alone, in a pill tinted off one scale from red through plain to green, with a slim bar stood on end after it
- *   that fills as far as it ranks among the shifts listed. Hours sit in a faint ring: the shift's stretch drawn round the
- *   figure as a thin arc on a 12-hour clock. Rate, Hours and Total all stand the same height.
- *   Wage (a flat rate times hours) and Other (usually nothing, and not about the shift) are quiet columns with no rate of
- *   their own; Total adds them up, a step quieter than Tips.
- *   The day leads with a calendar chip and carries the shift's times under it, small and quiet; its type and party are their
- *   own narrow icon columns.
- *   Every column but the day can be hidden (`hidden`; the Log's Columns menu, the Dashboard's narrower card).
- * A shift short of its numbers (not yet worked, or worked but not yet paid) reads muted (no separate layout), so the eye can
- * still scan straight down the columns. */
+/* The desktop Log, in the same one-line sheet as the Shift table. A band names the month or week once; the row says the
+ * day, then the time on that same line. Tips, wage and other sit together and add up to Total; Rate follows, tips per hour
+ * only. Opening a row turns it into the shift's lists in place (?shift=<id>, so Back closes it). The drawer stays shut here.
+ * Every column but the day can be hidden. A shift short of its money reads muted, so the columns stay in line. */
 const CREW_SHOWN = 6;   // up to six people standing in the row as one group picture, then +N; hovering names everyone
 
 export type LogCol = 'type' | 'party' | 'hours' | 'tips' | 'rate' | 'wage' | 'other' | 'total' | 'crew';
 /** The Log's columns after the day, in order, with their widths. */
 export const LOG_COLUMNS: { key: LogCol; head: string; width: string; align?: 'r' | 'c' }[] = [
-  { key: 'type', head: 'Type', width: '2.5rem', align: 'c' },
-  { key: 'party', head: 'Party', width: '2.75rem', align: 'c' },
-  { key: 'hours', head: 'Hours', width: '3.75rem', align: 'r' },
-  { key: 'tips', head: 'Tips', width: '4.5rem', align: 'r' },
-  { key: 'rate', head: 'Rate', width: '6.5rem', align: 'r' },
+  { key: 'type', head: 'Type', width: '2.25rem', align: 'c' },
+  { key: 'party', head: 'Party', width: '2.5rem', align: 'c' },
+  { key: 'hours', head: 'Hours', width: '3.25rem', align: 'r' },
+  { key: 'tips', head: 'Tips', width: '4.25rem', align: 'r' },
   { key: 'wage', head: 'Wage', width: '4rem', align: 'r' },
   { key: 'other', head: 'Other', width: '4rem', align: 'r' },
   { key: 'total', head: 'Total', width: '4.5rem', align: 'r' },
-  { key: 'crew', head: 'Crew', width: 'minmax(17rem, 1fr)' }
+  { key: 'rate', head: 'Rate', width: '5.75rem', align: 'r' },
+  { key: 'crew', head: 'Crew', width: 'minmax(8rem, 1fr)' }
 ];
 
 /** `inline` = rows open into a card in place (the Log). Off, a row opens the drawer instead (the Dashboard's short list). */
@@ -59,9 +46,12 @@ export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidd
   // Grid lines: the day is column 1, then the visible columns, then the chevron. The group heading's figures sit in theirs.
   const at = (k: LogCol) => { const i = cols.findIndex(c => c.key === k); return i < 0 ? null : i + 2; };
   const tipsAt = at('tips'), totalAt = at('total');
-  const grid = { '--log-cols': `minmax(10rem, 1.4fr) ${cols.map(c => c.width).join(' ')} 2rem` };
+  const grid = { '--log-cols': `minmax(11rem, 1.4fr) ${cols.map(c => c.width).join(' ')} 1.5rem` };
   return (
     <div class={styles.log} style={grid} onKeyDown={moveFocus}>
+      <div class={`${styles.grid} ${styles.groups}`} aria-hidden="true">
+        {columnBands(cols).map(b => <span key={b.label || 'end'} style={{ gridColumn: `span ${b.span}` }}>{b.label}</span>)}
+      </div>
       <div class={`${styles.grid} ${styles.head}`}>
         <span aria-hidden="true">{grouped ? 'Day' : 'Shift'}</span>
         {cols.map(c => <span key={c.key} class={c.align} aria-hidden="true">{c.head}</span>)}
@@ -108,7 +98,7 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
   const cell: Record<LogCol, () => ComponentChildren> = {
     type: () => sh.shift_type && <span class={styles.type} data-kind={sh.shift_type}><Icon name={sh.shift_type === 'day' ? 'sun' : 'moon'} label={sh.shift_type === 'day' ? 'Day shift' : 'Night shift'} /></span>,
     party: () => sh.party && <PartyIcon />,
-    hours: () => <Hours v={v} />,
+    hours: () => <span class={`num ${styles.hours} ${time ? 'tip' : ''}`} data-tip={time ? `${time}${v.hours != null ? ` · ${hoursBare(v.hours)}h worked` : ''}` : undefined}>{named('Hours', hoursBare(v.hours))}</span>,
     tips: () => <span class={`num ${done ? styles.tips : ''}`}>{done ? named('Tips', dollars(sh.tips)) : DASH}</span>,
     rate: () => (done && v.tph != null ? named('Rate', <RateFigure tph={v.tph} ctx={ctx} />) : DASH),
     wage: () => <span class={`num ${styles.quiet}`}>{done && v.wage != null ? named('Wage', dollars(v.wage)) : ''}</span>,
@@ -119,7 +109,11 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
   return (
     <div class={styles.item} data-open={open ? '' : undefined} data-selected={selected && !open ? '' : undefined} data-status={status} role="listitem">
       <button type="button" class={`${styles.grid} ${styles.row}`} data-row aria-expanded={open} onClick={() => openSheet(id)} title={fullDate(sh.date)}>
-        <DayCell date={sh.date} chip sub={time || !done ? <>{time && <span class={styles.times}>{time}</span>}{!done && <span class="sr-only">, {STATUS_LABEL[status].toLowerCase()}</span>}</> : undefined} />
+        <span class={styles.when}>
+          <DayCell date={sh.date} />
+          {time && <span class={styles.times}>{time}</span>}
+          {!done && <span class="sr-only">, {STATUS_LABEL[status].toLowerCase()}</span>}
+        </span>
         {cols.map(c => c.key === 'crew'
           ? <span key={c.key} class={`${styles.crew} ${crewSays ? 'tip' : ''}`} data-tip={crewSays}>{cell.crew()}</span>
           : <span key={c.key} class={c.align === 'c' ? styles.icon : c.align}>{cell[c.key]()}</span>)}
@@ -140,39 +134,40 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
   );
 }
 
-/** The total, and under it (exactly its width) what it's made of: tips, wage and other side by side in their own colours,
- *  the same colours as the opened shift's mix bar. Hovering names the amounts. */
+/** Tips, wage and other, named on hover. The opened row draws the mix; the closed row is the number. */
 function Total({ v }: { v: ShiftView }) {
   const parts = [
-    { key: 'tips', label: 'Tips', amount: v.shift.tips ?? 0, color: 'var(--cat-tips)' },
-    { key: 'wage', label: 'Wage', amount: v.wage ?? 0, color: 'var(--cat-wage)' },
-    { key: 'other', label: 'Other', amount: v.extra ?? 0, color: 'var(--cat-other)' }
+    { label: 'Tips', amount: v.shift.tips ?? 0 },
+    { label: 'Wage', amount: v.wage ?? 0 },
+    { label: 'Other', amount: v.extra ?? 0 }
   ];
   const says = parts.filter(p => p.amount > 0).map(p => `${p.label} ${dollars(p.amount)}`).join('\n');
   return (
-    <span class={`figure num ${styles.total} ${says ? 'tip' : ''}`} data-tip={says || undefined}>
+    <span class={`num ${styles.total} ${says ? 'tip' : ''}`} data-tip={says || undefined}>
       {dollars(v.total)}
-      <span class="figure-under"><StackBar parts={parts} /></span>
       {says && <span class="sr-only">{says.replace(/\n/g, ', ')}</span>}
     </span>
   );
 }
 
-const TYPE_INK = { day: 'var(--day-ink)', night: 'var(--night)' } as const;
-
-/** Hours worked, in a ring: the shift's stretch drawn round the figure as an arc on a 12-hour clock (6p to 2a runs from
- *  the 6 round to the 2), in its day or night colour. No unit; the column says hours. Without both times, just the figure. */
-function Hours({ v }: { v: ShiftView }) {
-  const { start, end, shift_type } = v.shift;
-  const arc = start != null && end != null ? clockArc(start, end) : null;
-  const says = arc ? `${clockTight(start)} → ${clockTight(end)}${v.hours != null ? ` · ${hours(v.hours)} worked` : ''}` : undefined;
-  const figure = <span class="num">{hoursBare(v.hours)}</span>;
-  return (
-    <span class={`${styles.hours} ${says ? 'tip' : ''}`} data-tip={says}>
-      {arc ? <ClockDial from={arc.from} sweep={arc.sweep} color={shift_type ? TYPE_INK[shift_type] : undefined}>{figure}</ClockDial> : figure}
-      {says && <span class="sr-only">{says}</span>}
-    </span>
-  );
+/** Category strip over the columns that are showing. Day is always first; the chevron is always last. */
+function columnBands(cols: typeof LOG_COLUMNS): { label: string; span: number }[] {
+  const groupOf = (k: string) => {
+    if (k === 'day' || k === 'type' || k === 'party') return 'Shift';
+    if (k === 'hours') return 'Time';
+    if (k === 'tips' || k === 'wage' || k === 'other' || k === 'total') return 'Pay';
+    if (k === 'rate') return 'Rate';
+    if (k === 'crew') return 'Crew';
+    return '';
+  };
+  const runs: { label: string; span: number }[] = [];
+  for (const k of ['day', ...cols.map(c => c.key), 'chev']) {
+    const label = groupOf(k);
+    const last = runs[runs.length - 1];
+    if (last && last.label === label) last.span++;
+    else runs.push({ label, span: 1 });
+  }
+  return runs;
 }
 
 /** Up and Down walk the rows (buttons carrying data-row), across groups. */

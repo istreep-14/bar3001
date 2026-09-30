@@ -203,13 +203,18 @@ test('crew: validate, sheet round-trip (times as HH:MM), hours summed across mid
   const m = { id: 'c1', shift_id: 's', staff_id: 'p1', name: ' Abby ', start: 1080, end: 120, updated_at: 5, deleted: false };
   const v = c.validateCrew(m);
   assert.equal(v.name, 'Abby');
-  assert.deepEqual(c.crewToSheet(v), ['c1', 's', 'p1', 'Abby', '18:00', '02:00', 5, false, 8]);   // last column: derived hours
+  assert.equal(v.location, null);
+  assert.deepEqual(c.crewToSheet(v), ['c1', 's', 'p1', 'Abby', '18:00', '02:00', 5, false, '', 8]);   // location, then derived hours
   assert.deepEqual(c.sheetToCrew(c.crewToSheet(v)), v);
+  assert.equal(c.validateCrew({ ...m, location: 'deck' }).location, 'Deck');
+  assert.equal(c.validateCrew({ ...m, location: '' }).location, null);
+  assert.equal(c.sheetToCrew(['c1', 's', 'p1', 'Abby', '18:00', '02:00', 5, false, 8]).location, null);   // old hours cell, not a station
   assert.equal(c.validateCrew({ ...m, start: undefined, end: null, name: '' }).start, null);
   assert.equal(c.crewHours([v, { start: 600, end: 960 }, { start: null, end: null }]), 8 + 6);
   assert.equal(c.crewHours([]), 0);
   assert.throws(() => c.validateCrew({ ...m, staff_id: '' }), /Missing staff_id/);
   assert.throws(() => c.validateCrew({ ...m, start: 1440 }), /Bad start/);
+  assert.throws(() => c.validateCrew({ ...m, location: 'Patio' }), /location/);
 });
 
 test('wage: the rate in effect is the latest one starting on or before the date', () => {

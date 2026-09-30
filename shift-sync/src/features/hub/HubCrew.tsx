@@ -25,8 +25,7 @@ import styles from './Hub.module.css';
 interface Row { v: ShiftView; c: Crew; name: string; me: boolean }
 const who = signal('');
 
-const span = (c: Crew) => c.start != null && c.end != null ? `${clockShort(c.start)} → ${clockShort(c.end)}`
-  : c.start != null ? `${clockShort(c.start)} →` : c.end != null ? `→ ${clockShort(c.end)}` : DASH;
+const clock = (t: number | null) => (t == null ? <span class="nil">{DASH}</span> : clockShort(t));
 
 export function HubCrew() {
   const all = liveViews.value, views = scopedViews(all);
@@ -39,13 +38,15 @@ export function HubCrew() {
   const shifts = new Set(rows.map(r => r.v.shift.id)).size;
 
   const columns: Column<Row>[] = [
-    { key: 'date', head: 'Shift', once: true, sort: r => r.v.shift.date + (r.v.shift.start ?? 0).toString().padStart(4, '0'),
+    { key: 'date', group: 'Shift', head: 'Shift', once: true, sort: r => r.v.shift.date + (r.v.shift.start ?? 0).toString().padStart(4, '0'),
       cell: r => <DayCell date={r.v.shift.date} type={r.v.shift.shift_type} party={r.v.shift.party} /> },
-    { key: 'name', head: 'Bartender', sort: r => r.name, cell: r => (
-      <span class="who"><PersonAvatar id={r.c.staff_id} fallback={r.c.name} size="md" /><span class="who-name">{r.name}</span>{r.me && <MeBadge />}</span>
+    { key: 'name', group: 'Who', groupStart: true, head: 'Bartender', sort: r => r.name, cell: r => (
+      <span class="who"><PersonAvatar id={r.c.staff_id} fallback={r.c.name} size="sm" /><span class="who-name">{r.name}</span>{r.me && <MeBadge />}</span>
     ) },
-    { key: 'time', head: 'Time', className: 'soft num', sort: r => r.c.start, cell: r => span(r.c) },
-    { key: 'hours', head: 'Hours', className: 'r fit strong num', sort: h, cell: r => hours(h(r)) },
+    { key: 'start', group: 'Time', groupStart: true, head: 'Start', className: 'r fit', sort: r => r.c.start, cell: r => clock(r.c.start) },
+    { key: 'end', group: 'Time', head: 'End', className: 'r fit', sort: r => r.c.end, cell: r => clock(r.c.end) },
+    { key: 'hours', group: 'Time', head: 'Hours', className: 'r fit', sort: h, cell: r => <span class="fig">{hours(h(r))}</span> },
+    { key: 'station', group: 'Station', groupStart: true, head: 'Station', sort: r => r.c.location, cell: r => (r.c.location ? <span class="spot" data-spot={r.c.location}>{r.c.location}</span> : <span class="nil">{DASH}</span>) },
     { key: 'go', head: '', className: 'chev when', once: true, cell: () => <Icon name="chevron" /> }
   ];
 
@@ -68,7 +69,7 @@ export function HubCrew() {
         <ScopeControl />
       </PanelHead>
       <div class="split">
-        <div class={`panel-body flush ${styles.body}`}>{table}</div>
+        <div class={`panel-body flush data-sheet ${styles.body}`}>{table}</div>
         <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Shifts', value: shifts || DASH }, { label: 'Hours', value: dec1(hoursSum), hint: 'Each bartender’s hours, added up' }]} />
       </div>
     </section>

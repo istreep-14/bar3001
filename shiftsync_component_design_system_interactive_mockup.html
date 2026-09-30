@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShiftSync // Bar3001 Component Showcase & System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Poppins & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- React 18 & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel Standalone for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            },
+            surface: {
+              dark: '#0a0c10',
+              panel: '#10131b',
+              card: '#151924',
+              cardHover: '#1a1f2e',
+              border: '#23293b',
+              borderLight: '#2e364e',
+              input: '#0e1017',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07090e;
+      color: #e2e8f0;
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+    }
+    /* Sleek custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0c10;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #23293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38425d;
+    }
+    .glass-panel {
+      background: rgba(16, 19, 27, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-card {
+      background: rgba(21, 25, 36, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(249, 115, 22, 0.35);
+      transform: translateY(-1px);
+    }
+    .sheet-table th {
+      position: sticky;
+      top: 0;
+      background: #0f121a;
+      z-index: 10;
+    }
+    .sheet-table tr:hover td {
+      background-color: rgba(249, 115, 22, 0.04);
+    }
+    .sheet-cell-border {
+      border-right: 1px solid #1a202c;
+      border-bottom: 1px solid #1a202c;
+    }
+    .timeline-grid {
+      background-size: 40px 100%;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    }
+    .glow-orange {
+      box-shadow: 0 0 25px -4px rgba(249, 115, 22, 0.3);
+    }
+    /* Compact mixbar for earnings composition */
+    .mix-bar {
+      display: flex;
+      height: 6px;
+      border-radius: 9999px;
+      overflow: hidden;
+      background: #1e2433;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    const INITIAL_ROLES = [
+      { id: 'lead', name: 'Lead Bartender', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)', text: '#fb923c', baseRate: 25.00 },
+      { id: 'bartender', name: 'Mixologist / Bar', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)', text: '#7dd3fc', baseRate: 21.00 },
+      { id: 'barback', name: 'Barback', color: '#a855f7', bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', baseRate: 17.50 },
+      { id: 'floor', name: 'Floor Supervisor', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', text: '#34d399', baseRate: 23.00 },
+    ];
+
+    const INITIAL_CREW = [
+      { id: 'usr-1', name: 'Alex Vance', roleId: 'lead', initials: 'AV', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', isSelf: true, hourly: 25.00, tipRate: 1.2 },
+      { id: 'usr-2', name: 'Marcus Sterling', roleId: 'bartender', initials: 'MS', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', isSelf: false, hourly: 21.00, tipRate: 1.0 },
+      { id: 'usr-3', name: 'Elena Rostova', roleId: 'bartender', initials: 'ER', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', isSelf: false, hourly: 21.00, tipRate: 1.0 },
+      { id: 'usr-4', name: 'Devon Miller', roleId: 'barback', initials: 'DM', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', isSelf: false, hourly: 17.50, tipRate: 0.6 },
+      { id: 'usr-5', name: 'Sofia Chen', roleId: 'floor', initials: 'SC', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80', isSelf: false, hourly: 23.00, tipRate: 0.9 },
+    ];
+
+    const INITIAL_SHIFTS = [
+      {
+        id: 'sh-101',
+        sheetRow: 2,
+        date: '2026-09-29',
+        dayLabel: 'Today (Tue)',
+        start: '16:00',
+        end: '01:00',
+        hours: 9.0,
+        unpaidBreak: 0.5,
+        roleId: 'lead',
+        crewIds: ['usr-1', 'usr-2'],
+        primaryCrewId: 'usr-1',
+        venue: 'Main Lounge & Speakeasy',
+        hourlyRate: 25.0,
+        creditCardTips: 210.0,
+        cashTips: 65.0,
+        notes: 'VIP reservation lounge table at 9:30 PM. Full inventory count post-close.',
+        status: 'live',
+        synced: true,
+      },
+      {
+        id: 'sh-102',
+        sheetRow: 3,
+        date: '2026-09-29',
+        dayLabel: 'Today (Tue)',
+        start: '18:00',
+        end: '02:30',
+        hours: 8.5,
+        unpaidBreak: 0.5,
+        roleId: 'bartender',
+        crewIds: ['usr-3'],
+        primaryCrewId: 'usr-3',
+        venue: 'Main Lounge & Speakeasy',
+        hourlyRate: 21.0,
+        creditCardTips: 185.0,
+        cashTips: 40.0,
+        notes: 'Covering terrace service window if weather permits.',
+        status: 'live',
+        synced: true,
+      },
+      {
+        id: 'sh-103',
+        sheetRow: 4,
+        date: '2026-09-29',
+        dayLabel: 'Today (Tue)',
+        start: '17:00',
+        end: '01:30',
+        hours: 8.5,
+        unpaidBreak: 0.5,
+        roleId: 'barback',
+        crewIds: ['usr-4'],
+        primaryCrewId: 'usr-4',
+        venue: 'Service Bar & Cellar',
+        hourlyRate: 17.5,
+        creditCardTips: 95.0,
+        cashTips: 30.0,
+        notes: 'Keg swap for draft lines 3 & 4 before 7 PM rush.',
+        status: 'live',
+        synced: false,
+      },
+      {
+        id: 'sh-104',
+        sheetRow: 5,
+        date: '2026-09-30',
+        dayLabel: 'Tomorrow (Wed)',
+        start: '17:30',
+        end: '02:00',
+        hours: 8.5,
+        unpaidBreak: 0.5,
+        roleId: 'lead',
+        crewIds: ['usr-1', 'usr-5'],
+        primaryCrewId: 'usr-1',
+        venue: 'Main Lounge',
+        hourlyRate: 25.0,
+        creditCardTips: 190.0,
+        cashTips: 50.0,
+        notes: 'Staff wine tasting at 5:00 PM before doors open.',
+        status: 'upcoming',
+        synced: true,
+      },
+      {
+        id: 'sh-105',
+        sheetRow: 6,
+        date: '2026-10-02',
+        dayLabel: 'Fri, Oct 2',
+        start: '15:00',
+        end: '02:30',
+        hours: 11.5,
+        unpaidBreak: 1.0,
+        roleId: 'lead',
+        crewIds: ['usr-1', 'usr-2', 'usr-4'],
+        primaryCrewId: 'usr-1',
+        venue: 'Full Venue Bar Service',
+        hourlyRate: 25.0,
+        creditCardTips: 340.0,
+        cashTips: 120.0,
+        notes: 'Live Jazz Night. Expect max capacity 8 PM - Midnight.',
+        status: 'upcoming',
+        synced: true,
+      },
+      {
+        id: 'sh-106',
+        sheetRow: 7,
+        date: '2026-10-03',
+        dayLabel: 'Sat, Oct 3',
+        start: '17:00',
+        end: '03:00',
+        hours: 10.0,
+        unpaidBreak: 0.5,
+        roleId: 'bartender',
+        crewIds: ['usr-2', 'usr-3'],
+        primaryCrewId: 'usr-2',
+        venue: 'Main Lounge & Terrace',
+        hourlyRate: 21.0,
+        creditCardTips: 380.0,
+        cashTips: 110.0,
+        notes: 'Saturday rush. Full backup batching completed.',
+        status: 'upcoming',
+        synced: true,
+      }
+    ];
+
+    function LucideIcon({ name, size = 16, className = "" }) {
+      useEffect(() => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      }, [name]);
+      return <i data-lucide={name} style={{ width: size, height: size }} className={`inline-flex items-center justify-center ${className}`}></i>;
+    }
+
+    function SyncPill({ state, onForceSync }) {
+      const config = {
+        synced: { text: 'Google Sheet Synced', bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: 'check-circle-2', dot: 'bg-emerald-500' },
+        syncing: { text: 'Syncing to Sheets...', bg: 'bg-amber-500/10 text-amber-400 border-amber-500/30', icon: 'refresh-cw', dot: 'bg-amber-500 animate-spin' },
+        pending: { text: 'Changes Pending Sync', bg: 'bg-blue-500/10 text-blue-400 border-blue-500/30', icon: 'clock', dot: 'bg-blue-500' },
+        error: { text: 'Apps Script Disconnected', bg: 'bg-rose-500/10 text-rose-400 border-rose-500/30', icon: 'alert-triangle', dot: 'bg-rose-500' }
+      }[state] || { text: 'Synced', bg: 'bg-gray-800 text-gray-400 border-gray-700', icon: 'check', dot: 'bg-gray-400' };
+
+      return (
+        <button 
+          onClick={onForceSync}
+          title="Click to run 2-way Google Apps Script synchronization"
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border flex items-center gap-2 transition hover:opacity-90 active:scale-95 ${config.bg}`}
+        >
+          <span className={`w-2 h-2 rounded-full ${config.dot}`}></span>
+          <span>{config.text}</span>
+          <LucideIcon name={config.icon} size={13} className={state === 'syncing' ? 'animate-spin' : ''} />
+        </button>
+      );
+    }
+
+    function ScopeControl({ scope, setScope, userCount = 5 }) {
+      return (
+        <div className="bg-surface-input p-1 rounded-xl border border-surface-border inline-flex items-center text-xs font-medium">
+          <button
+            onClick={() => setScope('me')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              scope === 'me'
+                ? 'bg-brand-500 text-white font-semibold shadow-md shadow-brand-500/20'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <LucideIcon name="user" size={13} />
+            <span>My Shifts</span>
+          </button>
+          <button
+            onClick={() => setScope('crew')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              scope === 'crew'
+                ? 'bg-brand-500 text-white font-semibold shadow-md shadow-brand-500/20'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <LucideIcon name="users" size={13} />
+            <span>Full Team & Crew</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${scope === 'crew' ? 'bg-black/30 text-white' : 'bg-surface-border text-gray-400'}`}>
+              {userCount}
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    function RoleBadge({ role }) {
+      if (!role) return null;
+      return (
+        <span 
+          style={{ backgroundColor: role.bg, color: role.text, borderColor: role.color + '45' }} 
+          className="px-2.5 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1.5 shrink-0"
+        >
+          <span style={{ backgroundColor: role.color }} className="w-1.5 h-1.5 rounded-full"></span>
+          {role.name}
+        </span>
+      );
+    }
+
+    function PersonAvatar({ person, size = 'md', showRing = false }) {
+      const sizeClasses = {
+        sm: 'w-6 h-6 text-[10px]',
+        md: 'w-8 h-8 text-xs',
+        lg: 'w-10 h-10 text-sm',
+        xl: 'w-14 h-14 text-base'
+      }[size];
+
+      return (
+        <div className="relative group shrink-0" title={`${person?.name} (${person?.hourly ? '$' + person.hourly + '/hr' : ''})`}>
+          {person?.avatar ? (
+            <img 
+              src={person.avatar} 
+              alt={person.name} 
+              className={`${sizeClasses} rounded-full object-cover border ${showRing ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-surface-border'}`}
+            />
+          ) : (
+            <div className={`${sizeClasses} rounded-full bg-slate-800 text-slate-200 font-semibold border border-surface-border flex items-center justify-center`}>
+              {person?.initials || 'U'}
+            </div>
+          )}
+          {person?.isSelf && (
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-brand-500 border-2 border-surface-card rounded-full" title="You"></span>
+          )}
+        </div>
+      );
+    }
+
+    // Mini visual bar illustrating Base Wage vs CC Tips vs Cash Tips composition
+    function EarningsMixBar({ base, ccTips, cashTips }) {
+      const total = base + ccTips + cashTips;
+      if (total <= 0) return <div className="mix-bar w-full bg-gray-800"></div>;
+
+      const basePct = ((base / total) * 100).toFixed(1);
+      const ccPct = ((ccTips / total) * 100).toFixed(1);
+      const cashPct = ((cashTips / total) * 100).toFixed(1);
+
+      return (
+        <div className="w-full space-y-1">
+          <div className="mix-bar w-full" title={`Base Wage: ${basePct}%, CC Tips: ${ccPct}%, Cash: ${cashPct}%`}>
+            <div style={{ width: `${basePct}%` }} className="bg-sky-500 hover:opacity-90 transition-all" />
+            <div style={{ width: `${ccPct}%` }} className="bg-emerald-400 hover:opacity-90 transition-all" />
+            <div style={{ width: `${cashPct}%` }} className="bg-amber-400 hover:opacity-90 transition-all" />
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono">
+            <span className="text-sky-400">{basePct}% base</span>
+            <span className="text-emerald-400">{ccPct}% cc</span>
+            <span className="text-amber-400">{cashPct}% cash</span>
+          </div>
+        </div>
+      );
+    }
+
+    function MetricKpiCard({ title, value, subtext, icon, trend, colorClass = "text-brand-400" }) {
+      return (
+        <div className="glass-card p-4 rounded-2xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-gray-400 mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{title}</span>
+            <div className="p-2 rounded-xl bg-surface-dark border border-surface-border text-gray-300">
+              <LucideIcon name={icon} size={15} />
+            </div>
+          </div>
+          <div>
+            <div className={`text-2xl font-bold font-mono tracking-tight ${colorClass}`}>{value}</div>
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400">
+              {trend && (
+                <span className="text-emerald-400 flex items-center font-medium">
+                  <LucideIcon name="trending-up" size={12} className="mr-0.5" />
+                  {trend}
+                </span>
+              )}
+              <span>{subtext}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ShiftCard({ shift, roles, crewList, onEdit, onDelete }) {
+      const [expanded, setExpanded] = useState(false);
+      const role = roles.find(r => r.id === shift.roleId);
+      const assignedCrew = crewList.filter(c => shift.crewIds.includes(c.id));
+      
+      const grossWages = (shift.hours * shift.hourlyRate);
+      const totalTips = (shift.creditCardTips || 0) + (shift.cashTips || 0);
+      const estimatedTotal = grossWages + totalTips;
+      const effectiveHourly = (estimatedTotal / shift.hours).toFixed(2);
+
+      return (
+        <div className={`glass-card rounded-2xl border transition-all ${expanded ? 'border-brand-500/40 bg-surface-card' : 'hover:border-surface-border'}`}>
+          <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-surface-dark border border-surface-border flex flex-col items-center justify-center shrink-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400">
+                  {shift.date.split('-')[1]}/{shift.date.split('-')[2]}
+                </span>
+                <span className="text-xs font-semibold text-gray-300">
+                  {new Date(shift.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                </span>
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="font-semibold text-white text-base">{shift.dayLabel}</span>
+                  <RoleBadge role={role} />
+                  {shift.status === 'live' && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Live Shift
+                    </span>
+                  )}
+                  {shift.synced ? (
+                    <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <LucideIcon name="cloud-check" size={11} /> Sheet Row #{shift.sheetRow}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-400 flex items-center gap-1 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                      <LucideIcon name="cloud-off" size={11} /> Unsynced
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                  <span className="flex items-center gap-1 text-gray-300 font-mono">
+                    <LucideIcon name="clock" size={13} className="text-brand-400" />
+                    {shift.start} - {shift.end} ({shift.hours}h)
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <LucideIcon name="map-pin" size={13} className="text-gray-500" />
+                    {shift.venue}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-surface-border">
+              <div className="text-right">
+                <div className="text-sm font-semibold font-mono text-emerald-400">
+                  ${estimatedTotal.toFixed(2)}
+                </div>
+                <div className="text-[11px] text-gray-400 font-mono">
+                  ${effectiveHourly}/hr blended
+                </div>
+              </div>
+
+              <div className="flex -space-x-2 overflow-hidden items-center pl-2">
+                {assignedCrew.map(person => (
+                  <PersonAvatar key={person.id} person={person} size="md" />
+                ))}
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="p-2 rounded-lg bg-surface-dark border border-surface-border text-gray-400 hover:text-white hover:bg-surface-border transition"
+                  title="Expand breakdown"
+                >
+                  <LucideIcon name={expanded ? "chevron-up" : "chevron-down"} size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {expanded && (
+            <div className="px-5 pb-5 pt-2 border-t border-surface-border/60 bg-black/20 rounded-b-2xl space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="p-3 rounded-xl bg-surface-dark/80 border border-surface-border">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Base Wages</span>
+                  <span className="font-mono text-sm font-semibold text-gray-200">
+                    ${grossWages.toFixed(2)} <span className="text-xs text-gray-500">(@ ${shift.hourlyRate}/h)</span>
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-dark/80 border border-surface-border">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">CC Tips</span>
+                  <span className="font-mono text-sm font-semibold text-emerald-400">${shift.creditCardTips.toFixed(2)}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-dark/80 border border-surface-border">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Cash In Hand</span>
+                  <span className="font-mono text-sm font-semibold text-amber-400">${shift.cashTips.toFixed(2)}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-dark/80 border border-surface-border">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Unpaid Break</span>
+                  <span className="font-mono text-sm font-semibold text-gray-300">{shift.unpaidBreak * 60} mins</span>
+                </div>
+              </div>
+
+              {shift.notes && (
+                <div className="p-3 rounded-xl bg-brand-500/5 border border-brand-500/20 text-xs text-amber-200/90 flex items-start gap-2.5">
+                  <LucideIcon name="message-square" size={14} className="text-brand-400 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="font-semibold text-brand-300 block mb-0.5">Shift Log / Handover Notes:</span>
+                    {shift.notes}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Team on Duty:</span>
+                  <div className="flex items-center gap-1.5">
+                    {assignedCrew.map(c => (
+                      <span key={c.id} className="text-xs bg-surface-dark px-2 py-0.5 rounded border border-surface-border text-gray-300">
+                        {c.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => onEdit(shift)} 
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-dark border border-surface-border text-gray-200 hover:text-white hover:border-gray-500 flex items-center gap-1.5 transition"
+                  >
+                    <LucideIcon name="edit-2" size={13} />
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => onDelete(shift.id)} 
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 flex items-center gap-1.5 transition"
+                  >
+                    <LucideIcon name="trash-2" size={13} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ShiftTableSheetView({ shifts, roles, crewList, onEdit, onDelete, onQuickSyncAll, notify }) {
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedRoleId, setSelectedRoleId] = useState('all');
+      const [sortBy, setSortBy] = useState('date');
+      const [sortDir, setSortDir] = useState('desc');
+      const [selectedRows, setSelectedRows] = useState([]);
+      const [layoutMode, setLayoutMode] = useState('blocks'); // 'blocks' or 'table'
+      const [expandedRowId, setExpandedRowId] = useState(null);
+      const [showColumnsMenu, setShowColumnsMenu] = useState(false);
+      const [visibleColumns, setVisibleColumns] = useState({
+        row: true,
+        date: true,
+        crew: true,
+        role: true,
+        times: true,
+        hours: true,
+        baseWage: true,
+        tips: true,
+        mix: true,
+        gross: true,
+        effectiveRate: true,
+        syncStatus: true,
+        actions: true,
+      });
+
+      // Filter and Sort Table Rows
+      const processedShifts = useMemo(() => {
+        let result = [...shifts];
+
+        if (selectedRoleId !== 'all') {
+          result = result.filter(s => s.roleId === selectedRoleId);
+        }
+
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          result = result.filter(s => {
+            const role = roles.find(r => r.id === s.roleId)?.name.toLowerCase() || '';
+            const crewNames = crewList.filter(c => s.crewIds.includes(c.id)).map(c => c.name.toLowerCase()).join(' ');
+            return s.venue.toLowerCase().includes(q) ||
+                   s.date.includes(q) ||
+                   role.includes(q) ||
+                   crewNames.includes(q);
+          });
+        }
+
+        result.sort((a, b) => {
+          let valA = a[sortBy];
+          let valB = b[sortBy];
+
+          if (sortBy === 'gross') {
+            valA = (a.hours * a.hourlyRate) + (a.creditCardTips || 0) + (a.cashTips || 0);
+            valB = (b.hours * b.hourlyRate) + (b.creditCardTips || 0) + (b.cashTips || 0);
+          } else if (sortBy === 'tips') {
+            valA = (a.creditCardTips || 0) + (a.cashTips || 0);
+            valB = (b.creditCardTips || 0) + (b.cashTips || 0);
+          } else if (sortBy === 'effectiveRate') {
+            const grossA = (a.hours * a.hourlyRate) + (a.creditCardTips || 0) + (a.cashTips || 0);
+            const grossB = (b.hours * b.hourlyRate) + (b.creditCardTips || 0) + (b.cashTips || 0);
+            valA = grossA / a.hours;
+            valB = grossB / b.hours;
+          }
+
+          if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+          if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+          return 0;
+        });
+
+        return result;
+      }, [shifts, selectedRoleId, searchQuery, sortBy, sortDir, roles, crewList]);
+
+      // Totals calculation
+      const totals = useMemo(() => {
+        const totalHours = processedShifts.reduce((acc, s) => acc + s.hours, 0);
+        const totalBase = processedShifts.reduce((acc, s) => acc + (s.hours * s.hourlyRate), 0);
+        const totalCcTips = processedShifts.reduce((acc, s) => acc + (s.creditCardTips || 0), 0);
+        const totalCashTips = processedShifts.reduce((acc, s) => acc + (s.cashTips || 0), 0);
+        const totalTips = totalCcTips + totalCashTips;
+        const totalGross = totalBase + totalTips;
+        const avgEff = totalHours > 0 ? (totalGross / totalHours).toFixed(2) : '0.00';
+
+        return { totalHours, totalBase, totalCcTips, totalCashTips, totalTips, totalGross, avgEff };
+      }, [processedShifts]);
+
+      const toggleSort = (field) => {
+        if (sortBy === field) {
+          setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+        } else {
+          setSortBy(field);
+          setSortDir('desc');
+        }
+      };
+
+      const handleSelectAll = (e) => {
+        if (e.target.checked) {
+          setSelectedRows(processedShifts.map(s => s.id));
+        } else {
+          setSelectedRows([]);
+        }
+      };
+
+      const handleToggleRow = (id) => {
+        setSelectedRows(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      };
+
+      const handleExportCsv = () => {
+        const headers = ["Row", "Date", "Start", "End", "Hours", "Break", "Role", "Venue", "HourlyRate", "CCTips", "CashTips", "TotalGross", "Synced"];
+        const rows = processedShifts.map(s => {
+          const gross = (s.hours * s.hourlyRate) + (s.creditCardTips || 0) + (s.cashTips || 0);
+          return [
+            s.sheetRow || '',
+            s.date,
+            s.start,
+            s.end,
+            s.hours,
+            s.unpaidBreak,
+            roles.find(r => r.id === s.roleId)?.name || s.roleId,
+            `"${s.venue}"`,
+            s.hourlyRate,
+            s.creditCardTips || 0,
+            s.cashTips || 0,
+            gross.toFixed(2),
+            s.synced ? "TRUE" : "FALSE"
+          ].join(',');
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `shift_sync_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        notify("Exported shift data to CSV", "success");
+      };
+
+      return (
+        <div className="glass-panel p-5 rounded-2xl border border-surface-border space-y-4">
+          {/* Header toolbar & presentation switch */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-brand-500/10 border border-brand-500/30 text-brand-400">
+                  <LucideIcon name="table-2" size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base flex items-center gap-2">
+                    Shift Data Ledger & Compensation Matrix
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-dark border border-surface-border text-emerald-400">
+                      Google Sheet Live Connected
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-400">Direct tabular spreadsheet view mapped to Google Apps Script row indexes.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Layout switch & actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Layout Mode Toggle */}
+              <div className="bg-surface-input p-1 rounded-xl border border-surface-border inline-flex items-center text-xs">
+                <button
+                  onClick={() => setLayoutMode('blocks')}
+                  className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition ${
+                    layoutMode === 'blocks'
+                      ? 'bg-brand-500 text-white font-semibold shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Structured Block Ledger View"
+                >
+                  <LucideIcon name="layout-grid" size={13} />
+                  <span>Ledger Blocks</span>
+                </button>
+                <button
+                  onClick={() => setLayoutMode('table')}
+                  className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition ${
+                    layoutMode === 'table'
+                      ? 'bg-brand-500 text-white font-semibold shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Spreadsheet Table View"
+                >
+                  <LucideIcon name="sheet" size={13} />
+                  <span>Sheet Grid</span>
+                </button>
+              </div>
+
+              <button 
+                onClick={onQuickSyncAll}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 flex items-center gap-1.5 transition"
+              >
+                <LucideIcon name="refresh-cw" size={13} />
+                Sync Sheet
+              </button>
+
+              <button 
+                onClick={handleExportCsv}
+                className="px-3 py-1.5 rounded-xl bg-surface-dark border border-surface-border text-gray-300 text-xs font-medium hover:text-white flex items-center gap-1.5 transition"
+              >
+                <LucideIcon name="download" size={13} />
+                CSV
+              </button>
+
+              {/* Column Visibility Selector (Table Mode Only) */}
+              {layoutMode === 'table' && (
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowColumnsMenu(!showColumnsMenu)}
+                    className="px-3 py-1.5 rounded-xl bg-surface-dark border border-surface-border text-gray-300 text-xs font-medium hover:text-white flex items-center gap-1.5"
+                  >
+                    <LucideIcon name="columns" size={13} />
+                    Cols
+                  </button>
+
+                  {showColumnsMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-surface-card border border-surface-border rounded-xl shadow-2xl p-2 z-30 space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-gray-400 px-2 py-1 block">Toggle Columns</span>
+                      {Object.keys(visibleColumns).map(col => (
+                        <label key={col} className="flex items-center gap-2 px-2 py-1 text-xs text-gray-300 hover:bg-surface-dark rounded cursor-pointer capitalize">
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[col]}
+                            onChange={() => setVisibleColumns(prev => ({ ...prev, [col]: !prev[col] }))}
+                            className="rounded text-brand-500 focus:ring-0 bg-surface-dark border-surface-border"
+                          />
+                          {col.replace(/([A-Z])/g, ' $1')}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Search bar & filter toolbar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-72">
+                <LucideIcon name="search" size={14} className="absolute left-3 top-2.5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search crew, venue, date, or role..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full bg-surface-input border border-surface-border rounded-xl pl-8 pr-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-brand-500 font-sans"
+                />
+              </div>
+
+              <select
+                value={selectedRoleId}
+                onChange={e => setSelectedRoleId(e.target.value)}
+                className="bg-surface-input border border-surface-border rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-brand-500"
+              >
+                <option value="all">All Hospitality Roles</option>
+                {roles.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="text-xs text-gray-400 flex items-center gap-3">
+              <span>Showing <strong>{processedShifts.length}</strong> shifts</span>
+              {selectedRows.length > 0 && (
+                <span className="px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30 font-medium font-mono">
+                  {selectedRows.length} checked
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* MODE 1: STRUCTURED LEDGER BLOCKS (Clean, High-Readability Component View) */}
+          {/* ========================================================================= */}
+          {layoutMode === 'blocks' && (
+            <div className="space-y-3">
+              {processedShifts.length === 0 ? (
+                <div className="p-10 text-center text-gray-500 font-sans border border-surface-border/50 rounded-2xl bg-surface-dark/30">
+                  No shift records found matching your filter criteria.
+                </div>
+              ) : (
+                processedShifts.map((shift) => {
+                  const role = roles.find(r => r.id === shift.roleId);
+                  const assigned = crewList.filter(c => shift.crewIds.includes(c.id));
+                  const baseWages = shift.hours * shift.hourlyRate;
+                  const ccTips = shift.creditCardTips || 0;
+                  const cashTips = shift.cashTips || 0;
+                  const totalTips = ccTips + cashTips;
+                  const gross = baseWages + totalTips;
+                  const eff = (gross / shift.hours).toFixed(2);
+                  const isExpanded = expandedRowId === shift.id;
+                  const isSelected = selectedRows.includes(shift.id);
+
+                  return (
+                    <div 
+                      key={shift.id} 
+                      className={`glass-card rounded-2xl border transition-all overflow-hidden ${
+                        isSelected 
+                          ? 'border-brand-500/60 bg-[#161a26]' 
+                          : isExpanded 
+                            ? 'border-brand-500/40 bg-surface-card' 
+                            : 'border-surface-border hover:border-surface-borderLight'
+                      }`}
+                    >
+                      {/* Main block bar */}
+                      <div className="p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                        {/* Section 1: Checkbox & Shift Identity */}
+                        <div className="flex items-start sm:items-center gap-3 min-w-[240px]">
+                          <input 
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleRow(shift.id)}
+                            className="mt-1 sm:mt-0 rounded bg-surface-dark border-surface-border text-brand-500 focus:ring-0"
+                          />
+                          <div className="w-12 h-12 rounded-xl bg-surface-dark border border-surface-border flex flex-col items-center justify-center shrink-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400">
+                              {shift.date.split('-')[1]}/{shift.date.split('-')[2]}
+                            </span>
+                            <span className="text-xs font-semibold text-gray-300">
+                              {new Date(shift.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="font-bold text-white text-sm">{shift.dayLabel}</span>
+                              <span className="text-[10px] font-mono text-gray-500 bg-surface-dark px-1.5 py-0.5 rounded border border-surface-border">
+                                Row #{shift.sheetRow || '-'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                              <LucideIcon name="map-pin" size={12} className="text-gray-500" />
+                              <span className="truncate max-w-[170px]">{shift.venue}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section 2: Role & Crew Assignment */}
+                        <div className="flex items-center gap-3 min-w-[200px]">
+                          <RoleBadge role={role} />
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex -space-x-2 overflow-hidden">
+                              {assigned.map(c => (
+                                <PersonAvatar key={c.id} person={c} size="md" />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-300 font-medium">
+                              {assigned.map(c => c.name.split(' ')[0]).join(', ')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Section 3: Time & Hours Block */}
+                        <div className="flex items-center gap-3 min-w-[160px] bg-surface-dark/60 px-3 py-1.5 rounded-xl border border-surface-border/60">
+                          <div>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-mono">Shift Span</span>
+                            <span className="text-xs font-mono font-medium text-gray-200">{shift.start} - {shift.end}</span>
+                          </div>
+                          <div className="border-l border-surface-border/60 pl-3">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-mono">Paid</span>
+                            <span className="text-xs font-mono font-bold text-brand-400">{shift.hours.toFixed(1)} hrs</span>
+                          </div>
+                        </div>
+
+                        {/* Section 4: Wage Mix Indicator */}
+                        <div className="hidden lg:block w-36">
+                          <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1 font-mono">Earnings Mix</span>
+                          <EarningsMixBar base={baseWages} ccTips={ccTips} cashTips={cashTips} />
+                        </div>
+
+                        {/* Section 5: Take-Home & Blended $/hr */}
+                        <div className="flex items-center justify-between xl:justify-end gap-5">
+                          <div className="text-right">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-mono">Total Take-Home</span>
+                            <div className="text-base font-bold font-mono text-emerald-400">
+                              ${gross.toFixed(2)}
+                            </div>
+                          </div>
+
+                          <div className="px-2.5 py-1.5 rounded-xl bg-brand-500/10 border border-brand-500/30 text-right">
+                            <span className="text-[9px] uppercase font-bold text-brand-300 block font-mono">Pace Rate</span>
+                            <span className="text-xs font-bold font-mono text-brand-400">${eff}/hr</span>
+                          </div>
+
+                          {/* Quick action buttons */}
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setExpandedRowId(isExpanded ? null : shift.id)}
+                              className="p-2 rounded-xl bg-surface-dark border border-surface-border text-gray-400 hover:text-white transition"
+                              title={isExpanded ? "Collapse Math Breakdown" : "Inspect Compensation Math"}
+                            >
+                              <LucideIcon name={isExpanded ? "chevron-up" : "chevron-down"} size={15} />
+                            </button>
+                            <button 
+                              onClick={() => onEdit(shift)}
+                              className="p-2 rounded-xl bg-surface-dark border border-surface-border text-gray-400 hover:text-white transition"
+                              title="Edit Shift"
+                            >
+                              <LucideIcon name="pencil" size={14} />
+                            </button>
+                            <button 
+                              onClick={() => onDelete(shift.id)}
+                              className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition"
+                              title="Delete Shift"
+                            >
+                              <LucideIcon name="trash-2" size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expandable Deep Inspection Block */}
+                      {isExpanded && (
+                        <div className="px-5 py-4 bg-[#0a0d14] border-t border-surface-border/70 space-y-4">
+                          <div className="flex items-center justify-between text-xs pb-2 border-b border-surface-border/50">
+                            <span className="font-semibold text-gray-200 flex items-center gap-2">
+                              <LucideIcon name="calculator" size={15} className="text-brand-400" />
+                              Hospitality Compensation Math & Gratuity Allocation Breakdown
+                            </span>
+                            <span className="font-mono text-[11px] text-gray-400">
+                              Formula: (Hours × Base) + CC Tips + Cash Tips
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="p-3 rounded-xl bg-surface-dark border border-surface-border">
+                              <span className="text-[10px] text-sky-400 uppercase tracking-wider block mb-0.5 font-mono">1. Base Wage</span>
+                              <div className="font-mono text-sm font-bold text-gray-200">${baseWages.toFixed(2)}</div>
+                              <span className="text-[10px] text-gray-500">{shift.hours}h × ${shift.hourlyRate}/hr</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-surface-dark border border-surface-border">
+                              <span className="text-[10px] text-emerald-400 uppercase tracking-wider block mb-0.5 font-mono">2. Credit Card Tips</span>
+                              <div className="font-mono text-sm font-bold text-emerald-400">${ccTips.toFixed(2)}</div>
+                              <span className="text-[10px] text-gray-500">POS batch gratuity</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-surface-dark border border-surface-border">
+                              <span className="text-[10px] text-amber-400 uppercase tracking-wider block mb-0.5 font-mono">3. Cash Gratuity</span>
+                              <div className="font-mono text-sm font-bold text-amber-400">${cashTips.toFixed(2)}</div>
+                              <span className="text-[10px] text-gray-500">Cash in envelope</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-surface-dark border border-surface-border">
+                              <span className="text-[10px] text-brand-400 uppercase tracking-wider block mb-0.5 font-mono">4. Blended Pace</span>
+                              <div className="font-mono text-sm font-bold text-brand-400">${eff}/hr</div>
+                              <span className="text-[10px] text-gray-500">${gross.toFixed(2)} ÷ {shift.hours} hrs</span>
+                            </div>
+                          </div>
+
+                          {/* Crew Multiplier Pool Allocation */}
+                          <div className="p-3 rounded-xl bg-[#0e121b] border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400 font-medium">Crew Tip Multipliers on Duty:</span>
+                              <div className="flex flex-wrap items-center gap-2">
+                                {assigned.map(c => (
+                                  <span key={c.id} className="px-2 py-0.5 rounded-lg bg-surface-dark border border-surface-border text-gray-300 font-mono text-[11px] flex items-center gap-1">
+                                    <span>{c.name}:</span>
+                                    <strong className="text-amber-400">{c.tipRate}x</strong>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-[11px] font-mono text-gray-400">
+                              Unpaid Break: <strong className="text-gray-200">{shift.unpaidBreak * 60}m</strong>
+                            </div>
+                          </div>
+
+                          {shift.notes && (
+                            <div className="p-3 rounded-xl bg-brand-500/5 border border-brand-500/20 text-xs text-amber-200/90 flex items-start gap-2.5">
+                              <LucideIcon name="message-square" size={14} className="text-brand-400 mt-0.5 shrink-0" />
+                              <div>
+                                <span className="font-semibold text-brand-300 block mb-0.5">Shift Log / Handover Notes:</span>
+                                {shift.notes}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODE 2: COMPACT SHEET GRID (Classic High-Density Spreadsheet View)        */}
+          {/* ========================================================================= */}
+          {layoutMode === 'table' && (
+            <div className="overflow-x-auto rounded-xl border border-surface-border bg-[#0d1017]">
+              <table className="w-full text-left text-xs border-collapse sheet-table">
+                <thead>
+                  {/* Category Super Header */}
+                  <tr className="bg-[#0b0d14] text-[10px] uppercase font-mono tracking-wider text-gray-500 border-b border-surface-border">
+                    <th colSpan={visibleColumns.row ? 3 : 2} className="p-2 pl-3 sheet-cell-border">Shift Identification</th>
+                    <th colSpan={(visibleColumns.crew ? 1 : 0) + (visibleColumns.role ? 1 : 0)} className="p-2 pl-3 sheet-cell-border">Roster & Station</th>
+                    <th colSpan={(visibleColumns.times ? 1 : 0) + (visibleColumns.hours ? 1 : 0)} className="p-2 pl-3 sheet-cell-border">Schedule</th>
+                    <th colSpan={(visibleColumns.baseWage ? 1 : 0) + (visibleColumns.tips ? 1 : 0) + (visibleColumns.mix ? 1 : 0)} className="p-2 pl-3 sheet-cell-border text-center">Wages & Gratuities</th>
+                    <th colSpan={(visibleColumns.gross ? 1 : 0) + (visibleColumns.effectiveRate ? 1 : 0)} className="p-2 pl-3 sheet-cell-border text-center">Net Take-Home</th>
+                    <th colSpan={(visibleColumns.syncStatus ? 1 : 0) + (visibleColumns.actions ? 1 : 0)} className="p-2 text-center">Sync & Actions</th>
+                  </tr>
+                  
+                  {/* Column Header Row */}
+                  <tr className="border-b border-surface-border text-gray-400 font-mono text-[11px] uppercase tracking-wider">
+                    <th className="p-3 w-10 text-center sheet-cell-border">
+                      <input 
+                        type="checkbox"
+                        onChange={handleSelectAll}
+                        checked={selectedRows.length > 0 && selectedRows.length === processedShifts.length}
+                        className="rounded bg-surface-dark border-surface-border text-brand-500 focus:ring-0"
+                      />
+                    </th>
+                    {visibleColumns.row && <th className="p-3 w-14 sheet-cell-border text-center">Row</th>}
+                    {visibleColumns.date && (
+                      <th className="p-3 sheet-cell-border cursor-pointer hover:text-white" onClick={() => toggleSort('date')}>
+                        <div className="flex items-center gap-1">Date <LucideIcon name="arrow-up-down" size={11} /></div>
+                      </th>
+                    )}
+                    {visibleColumns.crew && <th className="p-3 sheet-cell-border">Crew Members</th>}
+                    {visibleColumns.role && <th className="p-3 sheet-cell-border">Role Station</th>}
+                    {visibleColumns.times && <th className="p-3 sheet-cell-border">Shift Span</th>}
+                    {visibleColumns.hours && (
+                      <th className="p-3 sheet-cell-border cursor-pointer hover:text-white text-right" onClick={() => toggleSort('hours')}>
+                        <div className="flex items-center justify-end gap-1">Paid Hrs <LucideIcon name="arrow-up-down" size={11} /></div>
+                      </th>
+                    )}
+                    {visibleColumns.baseWage && <th className="p-3 sheet-cell-border text-right">Base Wage</th>}
+                    {visibleColumns.tips && (
+                      <th className="p-3 sheet-cell-border cursor-pointer hover:text-white text-right" onClick={() => toggleSort('tips')}>
+                        <div className="flex items-center justify-end gap-1">CC + Cash Tips <LucideIcon name="arrow-up-down" size={11} /></div>
+                      </th>
+                    )}
+                    {visibleColumns.mix && <th className="p-3 sheet-cell-border text-center w-28">Wage Mix</th>}
+                    {visibleColumns.gross && (
+                      <th className="p-3 sheet-cell-border cursor-pointer hover:text-white text-right" onClick={() => toggleSort('gross')}>
+                        <div className="flex items-center justify-end gap-1">Total Gross <LucideIcon name="arrow-up-down" size={11} /></div>
+                      </th>
+                    )}
+                    {visibleColumns.effectiveRate && (
+                      <th className="p-3 sheet-cell-border cursor-pointer hover:text-white text-right" onClick={() => toggleSort('effectiveRate')}>
+                        <div className="flex items-center justify-end gap-1">Blended $/h <LucideIcon name="arrow-up-down" size={11} /></div>
+                      </th>
+                    )}
+                    {visibleColumns.syncStatus && <th className="p-3 sheet-cell-border text-center">Sync</th>}
+                    {visibleColumns.actions && <th className="p-3 text-center">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border/60 font-mono text-gray-300">
+                  {processedShifts.length === 0 ? (
+                    <tr>
+                      <td colSpan="14" className="p-8 text-center text-gray-500 font-sans">
+                        No shift records found matching query.
+                      </td>
+                    </tr>
+                  ) : (
+                    processedShifts.map((shift) => {
+                      const role = roles.find(r => r.id === shift.roleId);
+                      const assigned = crewList.filter(c => shift.crewIds.includes(c.id));
+                      const baseWages = shift.hours * shift.hourlyRate;
+                      const ccTips = shift.creditCardTips || 0;
+                      const cashTips = shift.cashTips || 0;
+                      const tips = ccTips + cashTips;
+                      const gross = baseWages + tips;
+                      const eff = (gross / shift.hours).toFixed(2);
+                      const isSelected = selectedRows.includes(shift.id);
+
+                      return (
+                        <tr key={shift.id} className={`transition ${isSelected ? 'bg-brand-500/10' : ''}`}>
+                          <td className="p-3 text-center sheet-cell-border">
+                            <input 
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleRow(shift.id)}
+                              className="rounded bg-surface-dark border-surface-border text-brand-500 focus:ring-0"
+                            />
+                          </td>
+                          {visibleColumns.row && (
+                            <td className="p-3 sheet-cell-border text-center text-gray-500 text-[11px]">
+                              {shift.sheetRow || '-'}
+                            </td>
+                          )}
+                          {visibleColumns.date && (
+                            <td className="p-3 sheet-cell-border whitespace-nowrap font-medium text-white">
+                              <div>{shift.date}</div>
+                              <span className="text-[10px] text-gray-500 font-sans">{shift.dayLabel}</span>
+                            </td>
+                          )}
+                          {visibleColumns.crew && (
+                            <td className="p-3 sheet-cell-border font-sans">
+                              <div className="flex items-center gap-1.5">
+                                {assigned.map(c => (
+                                  <PersonAvatar key={c.id} person={c} size="sm" />
+                                ))}
+                                <span className="text-gray-300 text-xs ml-1">
+                                  {assigned.map(c => c.name.split(' ')[0]).join(', ')}
+                                </span>
+                              </div>
+                            </td>
+                          )}
+                          {visibleColumns.role && (
+                            <td className="p-3 sheet-cell-border font-sans">
+                              <RoleBadge role={role} />
+                            </td>
+                          )}
+                          {visibleColumns.times && (
+                            <td className="p-3 sheet-cell-border whitespace-nowrap text-gray-400">
+                              {shift.start} - {shift.end}
+                            </td>
+                          )}
+                          {visibleColumns.hours && (
+                            <td className="p-3 sheet-cell-border text-right font-bold text-gray-200">
+                              {shift.hours.toFixed(1)}h
+                            </td>
+                          )}
+                          {visibleColumns.baseWage && (
+                            <td className="p-3 sheet-cell-border text-right text-gray-300">
+                              ${baseWages.toFixed(2)}
+                            </td>
+                          )}
+                          {visibleColumns.tips && (
+                            <td className="p-3 sheet-cell-border text-right text-emerald-400 font-semibold">
+                              ${tips.toFixed(2)}
+                            </td>
+                          )}
+                          {visibleColumns.mix && (
+                            <td className="p-2.5 sheet-cell-border">
+                              <div className="w-24 mx-auto">
+                                <EarningsMixBar base={baseWages} ccTips={ccTips} cashTips={cashTips} />
+                              </div>
+                            </td>
+                          )}
+                          {visibleColumns.gross && (
+                            <td className="p-3 sheet-cell-border text-right font-bold text-emerald-400">
+                              ${gross.toFixed(2)}
+                            </td>
+                          )}
+                          {visibleColumns.effectiveRate && (
+                            <td className="p-3 sheet-cell-border text-right text-brand-400 font-bold">
+                              ${eff}/h
+                            </td>
+                          )}
+                          {visibleColumns.syncStatus && (
+                            <td className="p-3 sheet-cell-border text-center">
+                              {shift.synced ? (
+                                <span className="inline-flex p-1 rounded-full bg-emerald-500/10 text-emerald-400" title="Synced to Sheets">
+                                  <LucideIcon name="check" size={13} />
+                                </span>
+                              ) : (
+                                <span className="inline-flex p-1 rounded-full bg-amber-500/10 text-amber-400" title="Pending sync">
+                                  <LucideIcon name="clock" size={13} />
+                                </span>
+                              )}
+                            </td>
+                          )}
+                          {visibleColumns.actions && (
+                            <td className="p-3 text-center whitespace-nowrap">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button 
+                                  onClick={() => onEdit(shift)}
+                                  className="p-1.5 rounded-lg bg-surface-dark border border-surface-border text-gray-400 hover:text-white hover:bg-surface-border transition"
+                                  title="Edit Row"
+                                >
+                                  <LucideIcon name="pencil" size={12} />
+                                </button>
+                                <button 
+                                  onClick={() => onDelete(shift.id)}
+                                  className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition"
+                                  title="Delete Row"
+                                >
+                                  <LucideIcon name="trash-2" size={12} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+
+                {/* Aggregation Totals Footer */}
+                <tfoot>
+                  <tr className="bg-[#11141d] font-mono font-bold text-white border-t-2 border-surface-border text-xs">
+                    <td colSpan={visibleColumns.row ? 3 : 2} className="p-3.5 sheet-cell-border text-right uppercase tracking-wider text-gray-400 font-sans">
+                      Summary Totals:
+                    </td>
+                    {visibleColumns.crew && <td className="p-3 sheet-cell-border"></td>}
+                    {visibleColumns.role && <td className="p-3 sheet-cell-border"></td>}
+                    {visibleColumns.times && <td className="p-3 sheet-cell-border"></td>}
+                    {visibleColumns.hours && <td className="p-3.5 sheet-cell-border text-right text-brand-400">{totals.totalHours.toFixed(1)}h</td>}
+                    {visibleColumns.baseWage && <td className="p-3.5 sheet-cell-border text-right text-gray-300">${totals.totalBase.toFixed(2)}</td>}
+                    {visibleColumns.tips && <td className="p-3.5 sheet-cell-border text-right text-emerald-400">${totals.totalTips.toFixed(2)}</td>}
+                    {visibleColumns.mix && <td className="p-3 sheet-cell-border"></td>}
+                    {visibleColumns.gross && <td className="p-3.5 sheet-cell-border text-right text-emerald-400 text-sm font-bold">${totals.totalGross.toFixed(2)}</td>}
+                    {visibleColumns.effectiveRate && <td className="p-3.5 sheet-cell-border text-right text-brand-400">${totals.avgEff}/h</td>}
+                    {visibleColumns.syncStatus && <td className="p-3 sheet-cell-border"></td>}
+                    {visibleColumns.actions && <td className="p-3"></td>}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+
+          {/* Quick instructions & Google Sheets integration tip */}
+          <div className="p-3 rounded-xl bg-surface-dark border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-400">
+            <span className="flex items-center gap-2">
+              <LucideIcon name="info" size={14} className="text-brand-400 shrink-0" />
+              Toggle between <strong>Ledger Blocks</strong> (best for mobile & crew overview) and <strong>Sheet Grid</strong> (best for desktop data entry).
+            </span>
+            <span className="font-mono text-[11px] text-gray-500 shrink-0">Live Row Mapping • Apps Script Active</span>
+          </div>
+        </div>
+      );
+    }
+
+    function CrewTimeline({ shifts, roles, crewList }) {
+      const hours = [15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3];
+      
+      const formatHour = (h) => {
+        if (h === 0) return '12 AM';
+        if (h < 12) return `${h} AM`;
+        if (h === 12) return '12 PM';
+        return `${h - 12} PM`;
+      };
+
+      const getPositionPercent = (timeStr) => {
+        const [hh, mm] = timeStr.split(':').map(Number);
+        let normalized = hh < 12 ? hh + 24 : hh;
+        let diffMinutes = (normalized - 15) * 60 + mm;
+        const totalMinutes = 12 * 60;
+        return Math.max(0, Math.min(100, (diffMinutes / totalMinutes) * 100));
+      };
+
+      const getWidthPercent = (start, end) => {
+        const startP = getPositionPercent(start);
+        const endP = getPositionPercent(end);
+        return Math.max(4, endP - startP);
+      };
+
+      return (
+        <div className="glass-panel p-5 rounded-2xl border border-surface-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-2 border-b border-surface-border">
+            <div>
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                <LucideIcon name="align-left" size={17} className="text-brand-400" />
+                Tonight's Floor Coverage & Overlap Timeline
+              </h3>
+              <p className="text-xs text-gray-400">Peak rush expected 20:00 - 23:30. 4 active bartenders, 1 cellar support.</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-dark border border-surface-border rounded-lg text-emerald-400 font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Now: 19:40 EDT
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <div className="min-w-[700px]">
+              <div className="flex items-center pl-36 pr-4 mb-2">
+                {hours.map((h) => (
+                  <div key={h} className="flex-1 text-[11px] font-mono text-gray-500 text-left border-l border-surface-border pl-1">
+                    {formatHour(h)}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3.5 pt-1 timeline-grid">
+                {crewList.map(person => {
+                  const role = roles.find(r => r.id === person.roleId);
+                  const memberShifts = shifts.filter(s => s.crewIds.includes(person.id) && s.date === '2026-09-29');
+
+                  return (
+                    <div key={person.id} className="flex items-center group">
+                      <div className="w-36 flex items-center gap-2.5 pr-2 shrink-0">
+                        <PersonAvatar person={person} size="sm" />
+                        <div className="truncate">
+                          <div className="text-xs font-medium text-gray-200 truncate">{person.name}</div>
+                          <div className="text-[10px] text-gray-500 truncate">{role?.name}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 relative h-9 bg-surface-dark/90 rounded-xl border border-surface-border overflow-hidden">
+                        <div 
+                          style={{ left: `${getPositionPercent('19:40')}%` }} 
+                          className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-10 shadow-[0_0_8px_#34d399]"
+                        ></div>
+
+                        {memberShifts.length === 0 ? (
+                          <div className="h-full flex items-center pl-3 text-[11px] text-gray-600 italic">Off duty</div>
+                        ) : (
+                          memberShifts.map(s => {
+                            const left = getPositionPercent(s.start);
+                            const width = getWidthPercent(s.start, s.end);
+                            return (
+                              <div
+                                key={s.id}
+                                style={{
+                                  left: `${left}%`,
+                                  width: `${width}%`,
+                                  backgroundColor: role ? role.bg : '#334155',
+                                  borderColor: role ? role.color : '#64748b'
+                                }}
+                                className="absolute top-1 bottom-1 rounded-lg border px-2.5 flex items-center justify-between text-xs font-medium text-white shadow-sm overflow-hidden transition group/block hover:brightness-125 cursor-pointer"
+                                title={`${s.start} - ${s.end} (${s.venue})`}
+                              >
+                                <span className="truncate text-[11px] font-mono font-semibold" style={{ color: role?.text }}>
+                                  {s.start} - {s.end}
+                                </span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-75 hidden sm:inline" style={{ color: role?.color }}>
+                                  {s.hours}h
+                                </span>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ShiftDrawer({ isOpen, onClose, onSave, roles, crewList, initialData }) {
+      const [formData, setFormData] = useState({
+        date: '2026-09-30',
+        start: '16:00',
+        end: '00:30',
+        roleId: 'lead',
+        crewIds: ['usr-1'],
+        venue: 'Main Lounge & Speakeasy',
+        hourlyRate: 25.0,
+        unpaidBreak: 0.5,
+        creditCardTips: 180,
+        cashTips: 50,
+        notes: ''
+      });
+
+      useEffect(() => {
+        if (initialData) {
+          setFormData(initialData);
+        } else {
+          setFormData({
+            date: new Date().toISOString().split('T')[0],
+            start: '17:00',
+            end: '01:30',
+            roleId: 'lead',
+            crewIds: ['usr-1'],
+            venue: 'Main Lounge & Speakeasy',
+            hourlyRate: 25.0,
+            unpaidBreak: 0.5,
+            creditCardTips: 0,
+            cashTips: 0,
+            notes: ''
+          });
+        }
+      }, [initialData, isOpen]);
+
+      if (!isOpen) return null;
+
+      const computeHours = () => {
+        const [sh, sm] = formData.start.split(':').map(Number);
+        const [eh, em] = formData.end.split(':').map(Number);
+        let startMin = sh * 60 + sm;
+        let endMin = eh * 60 + em;
+        if (endMin <= startMin) endMin += 24 * 60;
+        const total = (endMin - startMin) / 60 - (Number(formData.unpaidBreak) || 0);
+        return Math.max(0, total).toFixed(1);
+      };
+
+      const toggleCrew = (id) => {
+        setFormData(prev => {
+          const exists = prev.crewIds.includes(id);
+          return {
+            ...prev,
+            crewIds: exists ? prev.crewIds.filter(x => x !== id) : [...prev.crewIds, id]
+          };
+        });
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+          ...formData,
+          id: initialData?.id || `sh-${Date.now()}`,
+          hours: parseFloat(computeHours()),
+          hourlyRate: parseFloat(formData.hourlyRate),
+          creditCardTips: parseFloat(formData.creditCardTips) || 0,
+          cashTips: parseFloat(formData.cashTips) || 0,
+          unpaidBreak: parseFloat(formData.unpaidBreak) || 0,
+          dayLabel: formData.date === '2026-09-29' ? 'Today (Tue)' : 'Scheduled',
+          status: 'upcoming',
+          synced: false,
+        });
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/75 backdrop-blur-sm flex justify-end">
+          <div className="w-full max-w-lg bg-surface-card border-l border-surface-border h-full flex flex-col shadow-2xl">
+            <div className="p-5 border-b border-surface-border flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <LucideIcon name="calendar-plus" size={20} className="text-brand-500" />
+                  {initialData ? 'Edit Shift Schedule' : 'Schedule New Shift'}
+                </h2>
+                <p className="text-xs text-gray-400">Syncs directly with Google Sheets roster & wage log.</p>
+              </div>
+              <button 
+                onClick={onClose}
+                className="p-2 rounded-lg bg-surface-dark border border-surface-border text-gray-400 hover:text-white"
+              >
+                <LucideIcon name="x" size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-300 block mb-1.5">Shift Date</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={e => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-300 block mb-1.5">Bar Station / Venue</label>
+                  <select
+                    value={formData.venue}
+                    onChange={e => setFormData({ ...formData, venue: e.target.value })}
+                    className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"
+                  >
+                    <option value="Main Lounge & Speakeasy">Main Lounge & Speakeasy</option>
+                    <option value="Terrace Garden Bar">Terrace Garden Bar</option>
+                    <option value="Service Bar & Cellar">Service Bar & Cellar</option>
+                    <option value="Private Mezzanine">Private Mezzanine</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-surface-dark border border-surface-border space-y-3">
+                <div className="grid grid-cols-3 gap-2 items-center">
+                  <div>
+                    <label className="text-[11px] text-gray-400 block mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={formData.start}
+                      onChange={e => setFormData({ ...formData, start: e.target.value })}
+                      className="w-full bg-[#0b0d13] border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:border-brand-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-400 block mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={formData.end}
+                      onChange={e => setFormData({ ...formData, end: e.target.value })}
+                      className="w-full bg-[#0b0d13] border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:border-brand-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-400 block mb-1">Break (hrs)</label>
+                    <select
+                      value={formData.unpaidBreak}
+                      onChange={e => setFormData({ ...formData, unpaidBreak: parseFloat(e.target.value) })}
+                      className="w-full bg-[#0b0d13] border border-surface-border rounded-lg px-2 py-1.5 text-xs text-white focus:border-brand-500"
+                    >
+                      <option value="0">0 min</option>
+                      <option value="0.25">15 min</option>
+                      <option value="0.5">30 min</option>
+                      <option value="0.75">45 min</option>
+                      <option value="1.0">60 min</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-surface-border/50 text-xs">
+                  <span className="text-gray-400">Billable Paid Duration:</span>
+                  <span className="font-mono font-bold text-brand-400 text-sm">{computeHours()} hours</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-300 block mb-1.5">Hospitality Role</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {roles.map(r => (
+                    <button
+                      type="button"
+                      key={r.id}
+                      onClick={() => setFormData({ ...formData, roleId: r.id, hourlyRate: r.baseRate })}
+                      className={`p-2.5 rounded-xl border text-left text-xs font-medium transition flex items-center justify-between ${
+                        formData.roleId === r.id
+                          ? 'border-brand-500 bg-brand-500/10 text-white'
+                          : 'border-surface-border bg-surface-dark text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span style={{ backgroundColor: r.color }} className="w-2.5 h-2.5 rounded-full"></span>
+                        <span>{r.name}</span>
+                      </div>
+                      <span className="font-mono text-[10px] text-gray-500">${r.baseRate}/h</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-medium text-gray-300">Assign Crew Members ({formData.crewIds.length})</label>
+                  <span className="text-[11px] text-gray-500">Multi-select enabled</span>
+                </div>
+                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                  {crewList.map(person => {
+                    const isSelected = formData.crewIds.includes(person.id);
+                    return (
+                      <div
+                        key={person.id}
+                        onClick={() => toggleCrew(person.id)}
+                        className={`p-2 rounded-xl border cursor-pointer flex items-center justify-between transition ${
+                          isSelected
+                            ? 'bg-surface-dark border-brand-500/80 shadow-sm'
+                            : 'bg-surface-dark/50 border-surface-border opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <PersonAvatar person={person} size="sm" />
+                          <div>
+                            <span className="text-xs font-medium text-gray-200 block">{person.name}</span>
+                            <span className="text-[10px] text-gray-500 font-mono">${person.hourly}/hr base</span>
+                          </div>
+                        </div>
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center border text-xs ${
+                          isSelected ? 'bg-brand-500 border-brand-500 text-white' : 'border-surface-border'
+                        }`}>
+                          {isSelected && <LucideIcon name="check" size={13} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[11px] text-gray-400 block mb-1">Base Wage $/hr</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={formData.hourlyRate}
+                    onChange={e => setFormData({ ...formData, hourlyRate: e.target.value })}
+                    className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-gray-400 block mb-1">CC Tips ($)</label>
+                  <input
+                    type="number"
+                    value={formData.creditCardTips}
+                    onChange={e => setFormData({ ...formData, creditCardTips: e.target.value })}
+                    className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-gray-400 block mb-1">Cash Tips ($)</label>
+                  <input
+                    type="number"
+                    value={formData.cashTips}
+                    onChange={e => setFormData({ ...formData, cashTips: e.target.value })}
+                    className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-amber-400 font-mono focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-300 block mb-1.5">Shift Notes / Opening Checklists</label>
+                <textarea
+                  rows="2"
+                  value={formData.notes}
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="e.g. VIP guest arrival, bar stock count, line cleaning..."
+                  className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"
+                ></textarea>
+              </div>
+
+              <div className="pt-3 border-t border-surface-border flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-gray-400 hover:text-white bg-surface-dark border border-surface-border"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-500 hover:bg-brand-600 shadow-lg shadow-brand-500/25 flex items-center gap-1.5 active:scale-95 transition"
+                >
+                  <LucideIcon name="save" size={15} />
+                  Save Shift to Sync
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    function CalendarStackView({ shifts, roles, onSelectShift }) {
+      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const calendarDays = [
+        { date: '2026-09-27', dayNum: 27, isCurrentMonth: true, isToday: false },
+        { date: '2026-09-28', dayNum: 28, isCurrentMonth: true, isToday: false },
+        { date: '2026-09-29', dayNum: 29, isCurrentMonth: true, isToday: true },
+        { date: '2026-09-30', dayNum: 30, isCurrentMonth: true, isToday: false },
+        { date: '2026-10-01', dayNum: 1, isCurrentMonth: false, isToday: false },
+        { date: '2026-10-02', dayNum: 2, isCurrentMonth: false, isToday: false },
+        { date: '2026-10-03', dayNum: 3, isCurrentMonth: false, isToday: false },
+      ];
+
+      return (
+        <div className="glass-panel p-5 rounded-2xl border border-surface-border">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                <LucideIcon name="calendar" size={17} className="text-brand-400" />
+                Calendar Stack View
+              </h3>
+              <p className="text-xs text-gray-400">Week 40 • September - October 2026</p>
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              <button className="p-1.5 rounded-lg bg-surface-dark border border-surface-border text-gray-300 hover:text-white">
+                <LucideIcon name="chevron-left" size={14} />
+              </button>
+              <span className="font-mono text-gray-300 px-2 font-medium">This Week</span>
+              <button className="p-1.5 rounded-lg bg-surface-dark border border-surface-border text-gray-300 hover:text-white">
+                <LucideIcon name="chevron-right" size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {calendarDays.map((d, index) => {
+              const dayShifts = shifts.filter(s => s.date === d.date);
+              const totalDayHours = dayShifts.reduce((acc, curr) => acc + curr.hours, 0);
+
+              return (
+                <div 
+                  key={d.date} 
+                  className={`min-h-[140px] p-2.5 rounded-xl border flex flex-col justify-between transition ${
+                    d.isToday 
+                      ? 'bg-brand-500/5 border-brand-500/40 ring-1 ring-brand-500/20' 
+                      : 'bg-surface-dark/70 border-surface-border hover:border-gray-600'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">{daysOfWeek[index]}</span>
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-semibold ${
+                        d.isToday ? 'bg-brand-500 text-white font-bold' : 'text-gray-300'
+                      }`}>
+                        {d.dayNum}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      {dayShifts.map(s => {
+                        const role = roles.find(r => r.id === s.roleId);
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => onSelectShift(s)}
+                            style={{ borderLeftColor: role?.color || '#f97316' }}
+                            className="p-1.5 bg-surface-card hover:bg-surface-cardHover rounded border-l-2 border-y border-r border-surface-border text-[11px] cursor-pointer group transition"
+                          >
+                            <div className="flex items-center justify-between text-gray-200 font-medium">
+                              <span className="truncate">{s.start}</span>
+                              <span className="text-[9px] font-mono text-gray-400">{s.hours}h</span>
+                            </div>
+                            <div className="text-[10px] text-gray-400 truncate">{s.venue.split('&')[0]}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {totalDayHours > 0 && (
+                    <div className="pt-2 border-t border-surface-border/50 text-[10px] text-gray-400 flex items-center justify-between font-mono">
+                      <span>Total:</span>
+                      <span className="text-brand-300 font-semibold">{totalDayHours}h</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function SheetSyncSettingsPanel({ syncState, onTriggerSync, shifts, notify }) {
+      const [sheetId, setSheetId] = useState('1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms');
+      const [scriptUrl, setScriptUrl] = useState('https://script.google.com/macros/s/AKfycbz_bar3001_shiftsync_v2/exec');
+      const [autoSyncInterval, setAutoSyncInterval] = useState('5');
+      const [showJsonPayload, setShowJsonPayload] = useState(false);
+
+      const samplePayload = useMemo(() => {
+        return {
+          action: 'syncBatch',
+          timestamp: new Date().toISOString(),
+          spreadsheetId: sheetId,
+          tabName: 'SHIFTS_RAW',
+          payloadCount: shifts.length,
+          shifts: shifts.map(s => ({
+            id: s.id,
+            date: s.date,
+            start: s.start,
+            end: s.end,
+            hours: s.hours,
+            roleId: s.roleId,
+            crewIds: s.crewIds,
+            baseWageRate: s.hourlyRate,
+            ccTips: s.creditCardTips,
+            cashTips: s.cashTips
+          }))
+        };
+      }, [shifts, sheetId]);
+
+      return (
+        <div className="space-y-6">
+          <div className="glass-panel p-6 rounded-2xl border border-surface-border space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <LucideIcon name="cloud-cog" size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">Google Sheets & Apps Script Integration</h3>
+                  <p className="text-xs text-gray-400">Direct 2-way sync bridge using Apps Script Web App endpoints.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <SyncPill state={syncState} onForceSync={onTriggerSync} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="text-xs font-medium text-gray-300 block mb-1.5">Google Spreadsheet ID</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={sheetId}
+                    onChange={e => setSheetId(e.target.value)}
+                    className="flex-1 bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-brand-500"
+                  />
+                  <button 
+                    onClick={() => notify("Sheet ID updated successfully", "success")}
+                    className="px-3 py-2 bg-surface-card border border-surface-border rounded-xl text-xs text-gray-300 hover:text-white"
+                  >
+                    Save
+                  </button>
+                </div>
+                <span className="text-[11px] text-gray-500 mt-1 block">Extracted from your Google Sheet URL</span>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-300 block mb-1.5">Apps Script Web App Exec URL</label>
+                <input
+                  type="text"
+                  value={scriptUrl}
+                  onChange={e => setScriptUrl(e.target.value)}
+                  className="w-full bg-surface-dark border border-surface-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-brand-500"
+                />
+                <span className="text-[11px] text-gray-500 mt-1 block">Deploys from /apps-script/Code.gs</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-surface-dark border border-surface-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-3">
+                <LucideIcon name="timer" size={18} className="text-brand-400" />
+                <div>
+                  <span className="font-semibold text-white block">Background Sync Cadence</span>
+                  <span className="text-gray-400">Pushes shifts and gratuity logs automatically upon changes.</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={autoSyncInterval}
+                  onChange={e => {
+                    setAutoSyncInterval(e.target.value);
+                    notify(`Auto-sync interval set to ${e.target.value} minutes`, "info");
+                  }}
+                  className="bg-[#0b0d13] border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-gray-300"
+                >
+                  <option value="1">Every 1 minute</option>
+                  <option value="5">Every 5 minutes</option>
+                  <option value="15">Every 15 minutes</option>
+                  <option value="manual">Manual trigger only</option>
+                </select>
+                <button
+                  onClick={onTriggerSync}
+                  className="px-3 py-1.5 rounded-lg bg-brand-500 text-white font-semibold flex items-center gap-1 hover:bg-brand-600 shadow-md shadow-brand-500/20"
+                >
+                  <LucideIcon name="zap" size={13} /> Sync Now
+                </button>
+              </div>
+            </div>
+
+            {/* Live payload inspector */}
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                  <LucideIcon name="code" size={14} className="text-brand-400" />
+                  Live Sync Request JSON Payload
+                </span>
+                <button
+                  onClick={() => setShowJsonPayload(!showJsonPayload)}
+                  className="text-xs text-brand-400 hover:underline font-mono"
+                >
+                  {showJsonPayload ? 'Collapse JSON' : 'Inspect JSON Payload'}
+                </button>
+              </div>
+
+              {showJsonPayload && (
+                <pre className="p-4 rounded-xl bg-[#090b10] border border-surface-border text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-60">
+                  {JSON.stringify(samplePayload, null, 2)}
+                </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function PeopleScreen({ crewList, roles }) {
+      return (
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-white">Bar Crew & Cutout Avatars</h2>
+              <p className="text-xs text-gray-400">Manage bar staff rates, tip pool weighting, and selfie segmenter cutouts.</p>
+            </div>
+            <button className="px-4 py-2 bg-brand-500 text-white rounded-xl text-xs font-semibold hover:bg-brand-600 shadow-md shadow-brand-500/20 flex items-center gap-1.5 w-fit">
+              <LucideIcon name="user-plus" size={15} />
+              Add Crew Member
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {crewList.map(person => {
+              const role = roles.find(r => r.id === person.roleId);
+              return (
+                <div key={person.id} className="glass-card p-5 rounded-2xl border border-surface-border flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <PersonAvatar person={person} size="lg" showRing={person.isSelf} />
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-semibold text-white text-sm">{person.name}</h4>
+                            {person.isSelf && (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] bg-brand-500/20 text-brand-400 font-bold">YOU</span>
+                            )}
+                          </div>
+                          <div className="mt-1">
+                            <RoleBadge role={role} />
+                          </div>
+                        </div>
+                      </div>
+                      <button className="p-1.5 text-gray-500 hover:text-white rounded-lg hover:bg-surface-dark">
+                        <LucideIcon name="more-vertical" size={15} />
+                      </button>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-surface-border grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-surface-dark p-2.5 rounded-xl border border-surface-border/60">
+                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider mb-0.5">Base Rate</span>
+                        <span className="font-mono font-semibold text-gray-200">${person.hourly.toFixed(2)}/hr</span>
+                      </div>
+                      <div className="bg-surface-dark p-2.5 rounded-xl border border-surface-border/60">
+                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider mb-0.5">Tip Point Multiplier</span>
+                        <span className="font-mono font-semibold text-amber-400">{person.tipRate}x Pool</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-surface-border/40">
+                    <span className="flex items-center gap-1 text-[11px]">
+                      <LucideIcon name="image" size={12} className="text-gray-500" />
+                      Cutout Segmented
+                    </span>
+                    <button className="text-brand-400 hover:underline text-xs font-medium">Edit Profile</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function ComponentPlayground({ roles, crewList }) {
+      const [testSync, setTestSync] = useState('synced');
+      const [testScope, setTestScope] = useState('me');
+
+      return (
+        <div className="space-y-6">
+          <div className="p-4 rounded-2xl bg-brand-500/10 border border-brand-500/30 text-xs text-brand-300 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LucideIcon name="layers" size={18} className="text-brand-400 shrink-0" />
+              <span>
+                <strong>Component Design Gallery:</strong> This showcase isolates each UI component from <code className="font-mono text-white">bar3001/shift-sync/src/</code> so you can test states, badges, and responsive behaviors independently.
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="glass-panel p-5 rounded-2xl space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">1. SyncPill Component</h4>
+              <p className="text-xs text-gray-400">Simulate states for the Google Apps Script spreadsheet synchronization engine.</p>
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <SyncPill state="synced" />
+                <SyncPill state="syncing" />
+                <SyncPill state="pending" />
+                <SyncPill state="error" />
+              </div>
+            </div>
+
+            <div className="glass-panel p-5 rounded-2xl space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">2. ScopeControl Filter</h4>
+              <p className="text-xs text-gray-400">Toggles data stream between user shifts and full bar-team roster.</p>
+              <div className="pt-2">
+                <ScopeControl scope={testScope} setScope={setTestScope} userCount={crewList.length} />
+              </div>
+            </div>
+
+            <div className="glass-panel p-5 rounded-2xl space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">3. RoleBadges & Swatches</h4>
+              <p className="text-xs text-gray-400">Dynamic contrast tokens defined in <code className="font-mono text-gray-300">src/ui/RoleBadge.tsx</code>.</p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {roles.map(r => (
+                  <RoleBadge key={r.id} role={r} />
+                ))}
+              </div>
+            </div>
+
+            <div className="glass-panel p-5 rounded-2xl space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">4. PersonAvatar Sizes & Self Rings</h4>
+              <p className="text-xs text-gray-400">Renders segmented selfies or fallback initials with self-indicator dots.</p>
+              <div className="flex items-center gap-4 pt-1">
+                <PersonAvatar person={crewList[0]} size="sm" />
+                <PersonAvatar person={crewList[0]} size="md" />
+                <PersonAvatar person={crewList[0]} size="lg" showRing={true} />
+                <PersonAvatar person={crewList[0]} size="xl" showRing={true} />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('table'); // 'hub', 'table', 'calendar', 'people', 'sync', 'playground'
+      const [scope, setScope] = useState('crew');
+      const [syncState, setSyncState] = useState('synced');
+      const [shifts, setShifts] = useState(INITIAL_SHIFTS);
+      const [crew] = useState(INITIAL_CREW);
+      const [roles] = useState(INITIAL_ROLES);
+      const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+      const [editingShift, setEditingShift] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      const notify = (message, type = 'info') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3500);
+      };
+
+      const handleForceSync = () => {
+        setSyncState('syncing');
+        notify("Triggered two-way sync with Google Apps Script...", "info");
+        setTimeout(() => {
+          setSyncState('synced');
+          setShifts(prev => prev.map(s => ({ ...s, synced: true })));
+          notify("Google Sheet rows synchronized successfully!", "success");
+        }, 1200);
+      };
+
+      const filteredShifts = useMemo(() => {
+        if (scope === 'me') {
+          const selfUser = crew.find(c => c.isSelf);
+          return shifts.filter(s => s.crewIds.includes(selfUser?.id));
+        }
+        return shifts;
+      }, [shifts, scope, crew]);
+
+      const metrics = useMemo(() => {
+        const totalHours = filteredShifts.reduce((sum, s) => sum + s.hours, 0);
+        const totalTips = filteredShifts.reduce((sum, s) => sum + (s.creditCardTips || 0) + (s.cashTips || 0), 0);
+        const totalBaseWages = filteredShifts.reduce((sum, s) => sum + (s.hours * s.hourlyRate), 0);
+        const grossIncome = totalBaseWages + totalTips;
+        const avgHourly = totalHours > 0 ? (grossIncome / totalHours).toFixed(2) : '0.00';
+
+        return {
+          totalHours: totalHours.toFixed(1),
+          totalTips: `$${totalTips.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+          grossIncome: `$${grossIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          avgHourly: `$${avgHourly}`
+        };
+      }, [filteredShifts]);
+
+      const handleSaveShift = (newShift) => {
+        if (editingShift) {
+          setShifts(shifts.map(s => s.id === newShift.id ? newShift : s));
+          notify("Shift updated and queued for sync", "success");
+        } else {
+          const nextRow = shifts.length + 2;
+          setShifts([{ ...newShift, sheetRow: nextRow }, ...shifts]);
+          notify("New shift added to roster table", "success");
+        }
+        setSyncState('pending');
+      };
+
+      const handleDeleteShift = (shiftId) => {
+        setShifts(shifts.filter(s => s.id !== shiftId));
+        setSyncState('pending');
+        notify("Shift removed from local log", "info");
+      };
+
+      const handleOpenEdit = (shift) => {
+        setEditingShift(shift);
+        setIsDrawerOpen(true);
+      };
+
+      const handleCreateNew = () => {
+        setEditingShift(null);
+        setIsDrawerOpen(true);
+      };
+
+      return (
+        <div className="min-h-screen bg-[#07090e] text-gray-200 pb-20 selection:bg-brand-500 selection:text-white">
+          {/* Toast Notification Container */}
+          {toast && (
+            <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-surface-card border border-brand-500/50 shadow-2xl text-xs text-white glow-orange animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <LucideIcon 
+                name={toast.type === 'success' ? 'check-circle-2' : 'info'} 
+                size={16} 
+                className={toast.type === 'success' ? 'text-emerald-400' : 'text-brand-400'} 
+              />
+              <span>{toast.message}</span>
+            </div>
+          )}
+
+          {/* Top Global Navigation Bar */}
+          <header className="sticky top-0 z-40 border-b border-surface-border bg-[#0b0e14]/90 backdrop-blur-md">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white font-bold tracking-wider">
+                  B3
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-base tracking-tight">Bar3001</span>
+                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 font-semibold border border-brand-500/30">Shift-Sync</span>
+                  </div>
+                  <span className="text-[11px] text-gray-400 hidden sm:block">Automated Roster & Live Wage Intelligence</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <SyncPill state={syncState} onForceSync={handleForceSync} />
+
+                <div className="hidden md:block">
+                  <ScopeControl scope={scope} setScope={setScope} userCount={crew.length} />
+                </div>
+
+                <button
+                  onClick={handleCreateNew}
+                  className="px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold shadow-lg shadow-brand-500/25 flex items-center gap-1.5 transition active:scale-95"
+                >
+                  <LucideIcon name="plus" size={15} />
+                  <span className="hidden sm:inline">Add Shift</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Navigation Tabs Bar */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between py-2 border-t border-surface-border/50 text-xs overflow-x-auto">
+              <div className="flex items-center gap-1 shrink-0">
+                {[
+                  { id: 'table', label: 'Table & Sheet Sync', icon: 'sheet' },
+                  { id: 'hub', label: 'Floor Hub & Log', icon: 'activity' },
+                  { id: 'calendar', label: 'Calendar Stack', icon: 'calendar' },
+                  { id: 'sync', label: 'Apps Script & Sheets', icon: 'cloud-cog' },
+                  { id: 'people', label: 'Crew & Rates', icon: 'users' },
+                  { id: 'playground', label: 'Component Gallery', icon: 'layers' },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium transition ${
+                      activeTab === tab.id
+                        ? 'bg-surface-card text-brand-400 border border-surface-border shadow-sm'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <LucideIcon name={tab.icon} size={14} />
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="block md:hidden shrink-0 ml-2">
+                <ScopeControl scope={scope} setScope={setScope} userCount={crew.length} />
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content Workspace */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+            {/* Top Metric KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <MetricKpiCard
+                title={scope === 'me' ? "My Hours Logged" : "Total Shift Hours"}
+                value={metrics.totalHours}
+                subtext="recorded for this pay period"
+                icon="clock"
+                colorClass="text-brand-400"
+              />
+              <MetricKpiCard
+                title="Pooled Tips & Cash"
+                value={metrics.totalTips}
+                subtext="credit card + cash split"
+                icon="dollar-sign"
+                trend="+18%"
+                colorClass="text-emerald-400"
+              />
+              <MetricKpiCard
+                title="Effective Wage Pace"
+                value={`${metrics.avgHourly}/hr`}
+                subtext="blended hourly + gratuity"
+                icon="zap"
+                colorClass="text-sky-400"
+              />
+              <MetricKpiCard
+                title="Estimated Gross"
+                value={metrics.grossIncome}
+                subtext="synced with Apps Script"
+                icon="pie-chart"
+                colorClass="text-purple-400"
+              />
+            </div>
+
+            {/* TAB: Table & Sheet Sync View */}
+            {activeTab === 'table' && (
+              <ShiftTableSheetView
+                shifts={filteredShifts}
+                roles={roles}
+                crewList={crew}
+                onEdit={handleOpenEdit}
+                onDelete={handleDeleteShift}
+                onQuickSyncAll={handleForceSync}
+                notify={notify}
+              />
+            )}
+
+            {/* TAB: Floor Hub & Log */}
+            {activeTab === 'hub' && (
+              <div className="space-y-6">
+                <CrewTimeline shifts={shifts} roles={roles} crewList={crew} />
+
+                <div className="flex items-center justify-between pt-2">
+                  <div>
+                    <h3 className="font-semibold text-white text-base flex items-center gap-2">
+                      <LucideIcon name="file-text" size={17} className="text-brand-400" />
+                      Scheduled & Live Shifts ({filteredShifts.length})
+                    </h3>
+                    <p className="text-xs text-gray-400">Click any card to inspect base wages, tip breakdowns, or update notes.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleCreateNew}
+                      className="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1"
+                    >
+                      <LucideIcon name="plus-circle" size={14} /> Quick Add
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {filteredShifts.map(shift => (
+                    <ShiftCard
+                      key={shift.id}
+                      shift={shift}
+                      roles={roles}
+                      crewList={crew}
+                      onEdit={handleOpenEdit}
+                      onDelete={handleDeleteShift}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: Calendar Stack View */}
+            {activeTab === 'calendar' && (
+              <div className="space-y-6">
+                <CalendarStackView
+                  shifts={filteredShifts}
+                  roles={roles}
+                  onSelectShift={handleOpenEdit}
+                />
+              </div>
+            )}
+
+            {/* TAB: Sheet Sync & Apps Script Settings */}
+            {activeTab === 'sync' && (
+              <SheetSyncSettingsPanel
+                syncState={syncState}
+                onTriggerSync={handleForceSync}
+                shifts={shifts}
+                notify={notify}
+              />
+            )}
+
+            {/* TAB: Crew & People */}
+            {activeTab === 'people' && (
+              <PeopleScreen crewList={crew} roles={roles} />
+            )}
+
+            {/* TAB: Component Playground / Gallery */}
+            {activeTab === 'playground' && (
+              <ComponentPlayground roles={roles} crewList={crew} />
+            )}
+          </main>
+
+          {/* Interactive Create/Edit Shift Drawer */}
+          <ShiftDrawer
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            onSave={handleSaveShift}
+            roles={roles}
+            crewList={crew}
+            initialData={editingShift}
+          />
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

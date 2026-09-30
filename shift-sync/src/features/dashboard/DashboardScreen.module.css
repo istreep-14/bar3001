@@ -4,15 +4,11 @@
 @media (min-width: 64rem) { .grid { grid-template-columns: minmax(0, 1fr) 20rem; } }
 .main, .side { display: grid; gap: var(--shell-gap); min-width: 0; align-content: start; }
 
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); margin: 0; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
-.kpi { display: grid; gap: var(--s-1); padding: var(--s-3) var(--s-4); border-left: 1px solid var(--line-soft); }
-.kpi:first-child { border-left: 0; }
-.kpi dt { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink-2); }
-.kpi dd { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s-2); font-size: var(--fs-hero); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--s-2); margin: 0; }
 
 .card { display: grid; gap: var(--s-3); min-width: 0; }
 .cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
-.cardTitle { margin: 0; display: grid; font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); }
+.cardTitle { margin: 0; display: grid; font-size: var(--fs-body); font-weight: var(--fw-semi); color: var(--ink); }
 .cardSub { font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-2); }
 .card :global(.linkbtn) { white-space: nowrap; }
 
@@ -39,7 +35,7 @@
 .bestTile { display: grid; gap: 2px; justify-items: start; padding: var(--s-3); border: 0; border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .bestTile:hover { box-shadow: inset 0 0 0 1.5px var(--line-strong); }
 .bestTile[data-top] { background: var(--accent); color: var(--on-accent); }
-.bestRate { font-size: var(--fs-hero); font-weight: var(--fw-bold); }
+.bestRate { font-size: var(--fs-title); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
 .bestDate { font-size: var(--fs-meta); }
 
 .todo { display: grid; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }

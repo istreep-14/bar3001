@@ -23,6 +23,8 @@ export interface Income {
   updated_at: number;
   deleted: boolean;
 }
+/** Where a bartender worked that shift. The only stations. */
+export type Location = 'Main' | 'Deck' | 'Upper';
 export interface Crew {
   id: string;
   shift_id: string;
@@ -30,6 +32,7 @@ export interface Crew {
   name: string | null;          // roster name when logged; the Sheet shows this
   start: number | null;
   end: number | null;
+  location: Location | null;    // their station that shift; null when it was never logged
   updated_at: number;
   deleted: boolean;
 }
@@ -76,6 +79,7 @@ export const INCOME_COLS: string[];
 export const STAFF_COLS: string[];
 /** The longest a person's photo (a data URL) may be: it lives in one Sheet cell. */
 export const PHOTO_MAX: number;
+export const LOCATIONS: Location[];
 export const CREW_COLS: string[];
 export const WAGE_COLS: string[];
 export const ROLE_COLS: string[];

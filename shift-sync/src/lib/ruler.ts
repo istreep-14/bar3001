@@ -28,3 +28,11 @@ export function place(start: number | null, end: number | null, r: Ruler): { lef
 
 /** '12 PM', '3 AM': tick labels, 12-hour. */
 export const tickLabel = (m: number): string => { const h = Math.floor(m / 60) % 24; return `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`; };
+
+/** Where "now" sits on the ruler, in percent. Null when it is outside the span (a morning, or a week with no late hours). */
+export function nowOnRuler(r: Ruler, now = new Date()): number | null {
+  let m = now.getHours() * 60 + now.getMinutes();
+  if (m < r.origin) m += 1440;
+  if (m < r.origin || m > r.origin + r.length) return null;
+  return ((m - r.origin) / r.length) * 100;
+}

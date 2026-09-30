@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { place, rulerFor, tickLabel } from '../src/lib/ruler.ts';
+import { nowOnRuler, place, rulerFor, tickLabel } from '../src/lib/ruler.ts';
 
 test('evening shifts get a noon ruler long enough for the latest end', () => {
   const r = rulerFor([{ start: 18 * 60, end: 150 }, { start: 16 * 60, end: 150 }]);
@@ -21,4 +21,14 @@ test('bars line up by time of day and wrap past midnight', () => {
   assert.ok(Math.abs(a.left + a.width - (b.left + b.width)) < 1e-9);   // same end
   assert.equal(place(null, 150, r), null);
   assert.ok(a.left + a.width <= 100);
+});
+
+test('now sits on an evening ruler after midnight, and is gone in the morning', () => {
+  const r = rulerFor([{ start: 17 * 60, end: 150 }]);
+  const at = (h: number, m = 0) => new Date(2026, 8, 29, h, m);
+  const night = nowOnRuler(r, at(20))!;
+  const late = nowOnRuler(r, at(1))!;
+  assert.ok(night > 0 && night < 100);
+  assert.ok(late > night);
+  assert.equal(nowOnRuler(r, at(10)), null);
 });

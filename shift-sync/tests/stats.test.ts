@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { Income, Shift } from '../src/core/core.generated.js';
+import type { Crew, Income, Shift } from '../src/core/core.generated.js';
 import { addDays, daysBetween, weekStart } from '../src/lib/dates.ts';
 import { groupByWeek, rankable, rateContext, summarize, toView } from '../src/lib/stats.ts';
 import { addMonths, applyScope, clampN, labelOf, sameScope, startOf } from '../src/lib/scope.ts';
@@ -100,10 +100,10 @@ test('weeks group newest-first views and total each week', () => {
 });
 
 test('a shift view counts its bartenders and adds up their hours, blanks excluded from hours', () => {
-  const crew = [
-    { id: 'c1', shift_id: 'a', staff_id: 'me', name: 'Ian', start: 1080, end: 120, updated_at: 1, deleted: false },
-    { id: 'c2', shift_id: 'a', staff_id: 'p1', name: 'Abby', start: 1020, end: 60, updated_at: 1, deleted: false },
-    { id: 'c3', shift_id: 'a', staff_id: 'p2', name: 'Allen', start: null, end: null, updated_at: 1, deleted: false }
+  const crew: Crew[] = [
+    { id: 'c1', shift_id: 'a', staff_id: 'me', name: 'Ian', start: 1080, end: 120, location: 'Main', updated_at: 1, deleted: false },
+    { id: 'c2', shift_id: 'a', staff_id: 'p1', name: 'Abby', start: 1020, end: 60, location: 'Deck', updated_at: 1, deleted: false },
+    { id: 'c3', shift_id: 'a', staff_id: 'p2', name: 'Allen', start: null, end: null, location: null, updated_at: 1, deleted: false }
   ];
   const v = toView(shift(), [], crew);
   assert.equal(v.crewCount, 3);

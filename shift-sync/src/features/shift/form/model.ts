@@ -1,5 +1,5 @@
 import { CATEGORIES, toMin } from '../../../core/core.generated.js';
-import type { Category, ShiftType } from '../../../core/core.generated.js';
+import type { Category, Location, ShiftType } from '../../../core/core.generated.js';
 
 /* The shift form's model: its pages, the form object every page edits, and the check that runs before saving. Pure
  * (no store, no DOM), so it is tested on its own; ShiftForm.tsx holds the state and pages.tsx draws it. */
@@ -16,14 +16,14 @@ export const LABEL = Object.fromEntries(GROUPS.flatMap(g => g.pages.map(p => [p.
 
 export interface Line { key: string; id?: string; category: Category; amount: string; note: string }
 /** One bartender on the shift. `follow` = their times track the shift's own until they're edited by hand. */
-export interface Member { key: string; id?: string; staff_id: string; name: string; start: string; end: string; follow: boolean }
+export interface Member { key: string; id?: string; staff_id: string; name: string; start: string; end: string; follow: boolean; location: Location | '' }
 /** Everything typed, as typed ('HH:MM' times, amounts as strings), so nothing is lost moving between pages. */
 export interface Form { date: string; start: string; end: string; type: ShiftType | ''; party: boolean; tips: string; notes: string; lines: Line[]; crew: Member[] }
 export type Errors = Record<string, string>;
 
 let lineKey = 0, memberKey = 0;
 export const newLine = (over: Partial<Line> = {}): Line => ({ key: 'l' + ++lineKey, category: CATEGORIES[0]!, amount: '', note: '', ...over });
-export const newMember = (over: Pick<Member, 'staff_id' | 'name'> & Partial<Member>): Member => ({ key: 'm' + ++memberKey, start: '', end: '', follow: true, ...over });
+export const newMember = (over: Pick<Member, 'staff_id' | 'name'> & Partial<Member>): Member => ({ key: 'm' + ++memberKey, start: '', end: '', follow: true, location: '', ...over });
 
 /** '' is no value; anything else is a number (NaN when it isn't one, which check() reports). */
 export const num = (s: string): number | null => (s.trim() === '' ? null : Number(s));
@@ -36,7 +36,7 @@ export interface Checked {
   start: number | null;
   end: number | null;
   tips: number | null;
-  crew: { id?: string; staff_id: string; name: string; start: number | null; end: number | null }[];
+  crew: { id?: string; staff_id: string; name: string; start: number | null; end: number | null; location: Location | null }[];
 }
 
 /** Everything wrong with the form, keyed by field ('date', 'start', 'end', 'tips', 'line<key>', 'crew<key>'), plus the
@@ -54,7 +54,7 @@ export function check(f: Form, nameOf: (staffId: string) => string | undefined =
     let s: number | null = null, e: number | null = null;
     try { s = toMin(m.start); } catch { errors['crew' + m.key] = `Use times like 6:00 PM for ${m.name}.`; }
     try { e = toMin(m.end); } catch { errors['crew' + m.key] = `Use times like 2:00 AM for ${m.name}.`; }
-    return { id: m.id, staff_id: m.staff_id, name: nameOf(m.staff_id) ?? m.name, start: s, end: e };
+    return { id: m.id, staff_id: m.staff_id, name: nameOf(m.staff_id) ?? m.name, start: s, end: e, location: m.location || null };
   });
   return { errors, start, end, tips, crew };
 }

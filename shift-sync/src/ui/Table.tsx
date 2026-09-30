@@ -122,7 +122,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
       if (!has || i === last) { pieces.push({ key: columns[i]!.key, span: 1, content: has ? map[columns[i]!.key] : null, align: has && columns[i]!.className?.split(' ').includes('r') ? 'r' : undefined }); i++; continue; }
       let j = i + 1;
       while (j < columns.length && map[columns[j]!.key] == null) j++;
-      pieces.push({ key: columns[i]!.key, span: j - i, content: map[columns[i]!.key], align: undefined });
+      pieces.push({ key: columns[i]!.key, span: j - i, content: map[columns[i]!.key], align: j - i === 1 && columns[i]!.className?.split(' ').includes('r') ? 'r' : undefined });
       i = j;
     }
     return pieces;

@@ -1,5 +1,5 @@
 import type { MutableRef } from 'preact/hooks';
-import { CATEGORIES, defaultShiftType, wageRateFor } from '../../../core/core.generated.js';
+import { CATEGORIES, LOCATIONS, defaultShiftType, wageRateFor } from '../../../core/core.generated.js';
 import type { Category, ShiftType, Local, Staff } from '../../../core/core.generated.js';
 import { liveViews, liveWages, me, personById } from '../../../data/store.ts';
 import { dec1, hours, longDate, money, perHour, shortDate, weekdayShort } from '../../../lib/format.ts';
@@ -243,6 +243,14 @@ export function CrewPage({ c }: { c: Ctx }) {
               <TimeField label="Start" value={m.start} invalid={!!errors['crew' + m.key]} onChange={v => setMember(m.key, { start: v, follow: false })} />
               <TimeField label="End" value={m.end} invalid={!!errors['crew' + m.key]} pm={false} onChange={v => setMember(m.key, { end: v, follow: false })} />
               <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove ${m.name}`} onClick={() => setForm(f => f && { ...f, crew: f.crew.filter(x => x.key !== m.key) })}><Icon name="trash" /></button>
+              <div class={`seg ${styles.spot}`} role="radiogroup" aria-label={`Where ${m.name} worked`}>
+                {LOCATIONS.map(spot => (
+                  <label key={spot}>
+                    <input type="radio" name={`loc-${m.key}`} checked={m.location === spot} onChange={() => setMember(m.key, { location: spot })} />
+                    <span>{spot}</span>
+                  </label>
+                ))}
+              </div>
               {errors['crew' + m.key] && <span class="error">{errors['crew' + m.key]}</span>}
             </div>
           ))}

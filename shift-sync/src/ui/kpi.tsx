@@ -1,4 +1,6 @@
 import type { ComponentChildren } from 'preact';
+import { Icon } from './Icon.tsx';
+import type { IconName } from './Icon.tsx';
 
 /* Small KPI parts, the vocabulary the Overview tiles, the Calendar's month line and the side columns share:
  *   Spark      a few points of trend, no axes
@@ -40,6 +42,27 @@ export function StatList({ items }: { items: { label: string; value: ComponentCh
         <div key={it.label}><dt title={it.hint}>{it.label}</dt><dd>{it.value}</dd></div>
       ))}
     </dl>
+  );
+}
+
+/** One figure on a card: the label, a small icon, the number, and the change against last time. */
+export function KpiChip({ label, value, pct, hint, icon, neutral }: {
+  label: string; value: ComponentChildren; pct?: number | null; hint?: string; icon: IconName; neutral?: boolean;
+}) {
+  return (
+    <div class="kchip">
+      <div class="kchip-top">
+        <span class="kchip-label">{label}</span>
+        <span class="kchip-icon" aria-hidden="true"><Icon name={icon} /></span>
+      </div>
+      <span class="kchip-value num">{value}</span>
+      {(pct != null || hint) && (
+        <span class="kchip-hint">
+          {pct != null && <DeltaPill pct={pct} neutral={neutral} />}
+          {hint && <span>{hint}</span>}
+        </span>
+      )}
+    </div>
   );
 }
 
