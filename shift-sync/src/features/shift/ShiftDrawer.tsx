@@ -14,7 +14,7 @@ import styles from '../../ui/drawer.module.css';
 /* The shift drawer: a quick read-only look at one shift. Editing (and adding) is the shift form, a dialog:
  * the pencil hands off to it. Same content in both hosts (panel = desktop card, dialog = phone sheet). */
 /** The pencil opens the form on the page that matches where you are: the Crew page from the crew list, Other from Other income. */
-const EDIT_PAGE: Partial<Record<Screen, string>> = { 'hub/crew': 'crew', 'hub/week': 'crew', 'hub/income': 'misc' };
+const EDIT_PAGE: Partial<Record<Screen, string>> = { crew: 'crew', 'hub/week': 'crew', income: 'misc' };
 
 export function ShiftDrawer({ id, host }: { id: string; host: 'panel' | 'dialog' }) {
   const frame = useRef<FrameApi | null>(null);

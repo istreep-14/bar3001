@@ -1,17 +1,22 @@
 import { computed, signal } from '@preact/signals';
 
 /* Hash routing, so every state is a link and Back closes whatever opened, with no server rewrite rules.
- *   #/overview  #/calendar  #/log  #/table  #/summary  #/hub/{week,crew,income}  #/people  #/settings/{look,wages,roles,sync,data}   the screens
+ *   #/table  #/crew  #/income  #/people  #/settings/{look,wages,roles,sync,data}   the data pages
+ *   Helper screens (dashboard, log, calendar, …) still resolve for old links; they are not the landing.
  *   ?shift=<id>                          the shift drawer (a read-only look), over ANY screen
  *   ?form=<id|new>[&date=YYYY-MM-DD][&page=crew]   the shift form dialog (add or edit); `date` pre-fills a new shift,
  *                                        `page` opens it on one of its pages (crew, misc...) instead of Overview
  *   ?person=<id|new>                     the person drawer (one drawer at a time) */
-export type Screen = 'dashboard' | 'overview' | 'calendar' | 'log' | 'table' | 'summary' | 'hub/week' | 'hub/crew' | 'hub/income' | 'people'
+export type Screen = 'dashboard' | 'overview' | 'calendar' | 'log' | 'table' | 'summary' | 'crew' | 'income' | 'hub/week' | 'people'
   | 'settings/look' | 'settings/wages' | 'settings/roles' | 'settings/sync' | 'settings/data';
-export const SCREENS: Screen[] = ['dashboard', 'overview', 'calendar', 'log', 'table', 'summary', 'hub/week', 'hub/crew', 'hub/income', 'people',
+export const SCREENS: Screen[] = ['dashboard', 'overview', 'calendar', 'log', 'table', 'summary', 'crew', 'income', 'hub/week', 'people',
   'settings/look', 'settings/wages', 'settings/roles', 'settings/sync', 'settings/data'];
 /** Links from before a page moved still land somewhere sensible. */
-const LEGACY: Record<string, Screen> = { earnings: 'overview', rate: 'overview', settings: 'settings/sync', hub: 'hub/week', 'log/multi': 'log', journal: 'log' };
+const LEGACY: Record<string, Screen> = {
+  earnings: 'overview', rate: 'overview', settings: 'settings/sync',
+  hub: 'crew', 'hub/crew': 'crew', 'hub/income': 'income', 'hub/week': 'hub/week',
+  'log/multi': 'log', journal: 'log'
+};
 
 const read = () => location.hash.replace(/^#\/?/, '');
 const raw = signal(read());
@@ -34,7 +39,7 @@ const parsed = computed(() => {
 
 export const screen = computed<Screen>(() => {
   const p = parsed.value.path;
-  return SCREENS.includes(p as Screen) ? (p as Screen) : LEGACY[p] ?? 'dashboard';
+  return SCREENS.includes(p as Screen) ? (p as Screen) : LEGACY[p] ?? 'table';
 });
 /** A shift id, or null. */
 export const sheet = computed<string | null>(() => parsed.value.q.get('shift'));
