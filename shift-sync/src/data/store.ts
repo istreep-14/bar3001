@@ -1,7 +1,7 @@
 import { computed, signal } from '@preact/signals';
 import type { Signal } from '@preact/signals';
 import { stripLocal, validateCrew, validateIncome, validateRole, validateRow, validateStaff, validateWage } from '../core/core.generated.js';
-import type { Category, Crew, Income, Local, Role, Shift, Staff, Wage } from '../core/core.generated.js';
+import type { Category, Crew, Income, Local, Location, Role, Shift, Staff, Wage } from '../core/core.generated.js';
 import { uid } from '../lib/id.ts';
 import { planImport } from '../lib/bundle.ts';
 import type { Bundle, Plan } from '../lib/bundle.ts';
@@ -106,7 +106,7 @@ export async function boot() {
 }
 
 export interface IncomeDraft { id?: string; category: Category; amount: number; note: string | null }
-export interface CrewDraft { id?: string; staff_id: string; name: string | null; start: number | null; end: number | null }
+export interface CrewDraft { id?: string; staff_id: string; name: string | null; start: number | null; end: number | null; location: Location | null }
 export interface ShiftDraft extends Omit<Shift, 'id' | 'updated_at' | 'deleted' | 'other'> { id?: string }
 
 /** Create or update a shift and reconcile its income lines in one write. */
@@ -137,7 +137,7 @@ export async function saveShift(draft: ShiftDraft, lines: IncomeDraft[], crew: C
     if (old.shift_id === id && !old.deleted && !keepCrew.has(old.id)) crewTouched.push({ ...old, deleted: true, updated_at: now, _dirty: true });
   }
   for (const c of crew) {
-    crewTouched.push({ ...validateCrew({ id: c.id ?? uid(), shift_id: id, staff_id: c.staff_id, name: c.name, start: c.start, end: c.end, updated_at: now, deleted: false }), _dirty: true });
+    crewTouched.push({ ...validateCrew({ id: c.id ?? uid(), shift_id: id, staff_id: c.staff_id, name: c.name, start: c.start, end: c.end, location: c.location, updated_at: now, deleted: false }), _dirty: true });
   }
 
   await commit({ rows: [shift], income: touched, crew: crewTouched });
@@ -289,12 +289,13 @@ export async function importBundle(b: Bundle): Promise<Plan> {
 }
 
 /* ── one-line edits, for the Hub tables (a person's hours on a shift, an income line) ── */
-export interface CrewLine { id?: string; shift_id: string; staff_id: string; start: number | null; end: number | null }
-/** Adds a bartender to a shift or changes their times. A person is on a shift once, so an existing row is edited, not duplicated. */
+export interface CrewLine { id?: string; shift_id: string; staff_id: string; start: number | null; end: number | null; location?: Location | null }
+/** Adds a bartender to a shift or changes their times. A person is on a shift once, so an existing row is edited, not duplicated.
+ *  A line that doesn't say a station keeps the one already logged. */
 export async function saveCrewLine(l: CrewLine): Promise<string> {
   const now = Date.now();
   const existing = Object.values(crewRows.value).find(c => !c.deleted && c.shift_id === l.shift_id && (c.id === l.id || c.staff_id === l.staff_id));
-  const row: Local<Crew> = { ...validateCrew({ id: existing?.id ?? l.id ?? uid(), shift_id: l.shift_id, staff_id: l.staff_id, name: personById(l.staff_id)?.name ?? existing?.name ?? null, start: l.start, end: l.end, updated_at: now, deleted: false }), _dirty: true };
+  const row: Local<Crew> = { ...validateCrew({ id: existing?.id ?? l.id ?? uid(), shift_id: l.shift_id, staff_id: l.staff_id, name: personById(l.staff_id)?.name ?? existing?.name ?? null, start: l.start, end: l.end, location: l.location !== undefined ? l.location : existing?.location ?? null, updated_at: now, deleted: false }), _dirty: true };
   await commit({ crew: [row] });
   return row.id;
 }

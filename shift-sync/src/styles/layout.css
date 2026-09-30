@@ -5,10 +5,11 @@
    than the canvas, so the panel itself reads as a shape; a table or card inside it steps up
    again to --surface (the lightest, most prominent grey) so content stands apart from its panel.
    A table page is .fill: the panel takes the rest of the screen and scrolls inside. */
-.panel { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
-.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); padding: var(--s-1) var(--s-1) 0; border: 0; background: transparent; }
-.panel-head h2 { font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-semi); letter-spacing: -0.02em; }
-.panel-body { display: grid; gap: var(--s-4); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
+.panel { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); padding: 0 var(--s-1); border: 0; background: transparent; }
+.panel-head h2 { font-size: var(--fs-title); line-height: 1.2; font-weight: var(--fw-semi); letter-spacing: -0.02em; }
+.panel-body { display: grid; gap: var(--s-3); min-width: 0; padding: var(--s-3) var(--s-4) var(--s-4); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
+.panel-body.side { padding: var(--s-3); }
 .panel-body.open { padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 @media (max-width: 45rem) {
   .panel-head, .panel-body { padding-inline: var(--s-3); }

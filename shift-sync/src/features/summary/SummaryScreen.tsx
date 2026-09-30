@@ -1,14 +1,13 @@
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
 import { addDays } from '../../lib/dates.ts';
-import { MONTH_NAMES, WEEKDAY_NAMES, dec1, dollars, perHour, shortDate } from '../../lib/format.ts';
+import { DASH, MONTH_NAMES, WEEKDAY_NAMES, dec1, dollars, hours, money, shortDate } from '../../lib/format.ts';
 import { BYS, isTime, summaryRows } from '../../lib/summary.ts';
 import type { By, SumRow } from '../../lib/summary.ts';
 import { summarize } from '../../lib/stats.ts';
 import { pctChange } from '../../lib/trends.ts';
 
 import { DeltaPill } from '../../ui/kpi.tsx';
-import { Stack } from '../../ui/Stack.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { Table } from '../../ui/Table.tsx';
@@ -35,25 +34,21 @@ export function SummaryScreen() {
   const all = liveViews.value, views = scopedViews(all), b = by.value;
   const rows = summaryRows(views, b), s = summarize(views), time = isTime(b);
 
-  const earnedLines = (r: SumRow) => {
-    const more = [r.s.wage ? `Wage ${dollars(r.s.wage)}` : '', r.s.extra ? `Other ${dollars(r.s.extra)}` : ''].filter(Boolean).join(' · ');
-    return [more, r.s.perHour == null ? '' : `${perHour(r.s.perHour)} all-in`].filter(Boolean);
-  };
+  const blank = <span class="nil">{DASH}</span>;
+  const fig = (n: number) => (n ? <span class="fig">{dollars(n)}</span> : blank);
   const columns: Column<SumRow>[] = [
-    { key: 'label', head: BYS.find(x => x.id === b)!.label, sort: r => (time ? r.key : rows.indexOf(r)), cell: r => (
-      <Stack title={label(b, r.key)} lines={[`${r.s.shifts} shift${r.s.shifts === 1 ? '' : 's'} · ${dec1(r.s.hours)} hr`]} />
-    ) },
-    { key: 'tips', head: 'Tips', sort: r => r.s.tips, cell: r => <Stack title={dollars(r.s.tips)} lines={[perHour(r.s.tph)]} /> },
-    { key: 'total', head: 'Total', sort: r => r.s.total, cell: r => <Stack title={dollars(r.s.total)} lines={earnedLines(r)} /> },
-    { key: 'crew', head: 'Crew', className: 'fit hide-sm', sort: r => r.s.crewHours, cell: r => (r.s.crewHours ? `${dec1(r.s.crewHours)} hr` : '—') },
+    { key: 'label', group: 'When', head: BYS.find(x => x.id === b)!.label, className: 'fit', sort: r => (time ? r.key : rows.indexOf(r)), cell: r => label(b, r.key) },
+    { key: 'shifts', group: 'Work', groupStart: true, head: 'Shifts', className: 'r fit', sort: r => r.s.shifts, cell: r => <span class="fig">{r.s.shifts}</span> },
+    { key: 'hours', group: 'Work', head: 'Hours', className: 'r fit', sort: r => r.s.hours, cell: r => <span class="fig">{hours(r.s.hours)}</span> },
+    { key: 'tips', group: 'Pay', groupStart: true, head: 'Tips', className: 'r fit', sort: r => r.s.tips, cell: r => <span class="fig fig-key">{dollars(r.s.tips)}</span> },
+    { key: 'wage', group: 'Pay', head: 'Wage', className: 'r fit', sort: r => r.s.wage, cell: r => fig(r.s.wage) },
+    { key: 'other', group: 'Pay', head: 'Other', className: 'r fit', sort: r => r.s.extra, cell: r => fig(r.s.extra) },
+    { key: 'total', group: 'Pay', head: 'Total', className: 'r fit', sort: r => r.s.total, cell: r => <span class="fig fig-key">{dollars(r.s.total)}</span> },
+    { key: 'rate', group: 'Rate', groupStart: true, head: 'Rate', hint: 'Tips over hours. Not part of the total.', className: 'r fit soft', sort: r => r.s.tph, cell: r => (r.s.tph == null ? blank : <span class="fig">{money(r.s.tph)}</span>) },
+    { key: 'crew', group: 'Crew', groupStart: true, head: 'Crew hrs', className: 'r fit', sort: r => r.s.crewHours, cell: r => (r.s.crewHours ? <span class="fig">{dec1(r.s.crewHours)}</span> : blank) },
     ...(time ? [{
-      key: 'change', head: 'Vs previous', className: 'hide-sm', sort: (r: SumRow) => pctChange(r.s.total, r.prev?.total),
-      cell: (r: SumRow) => (
-        <span class="stack">
-          <span class="stack-row">{r.prev ? <DeltaPill pct={pctChange(r.s.total, r.prev.total)} /> : '—'} <span class="stack-meta">total</span></span>
-          <span class="stack-row">{r.prev ? <DeltaPill pct={pctChange(r.s.tph, r.prev.tph)} /> : null} <span class="stack-meta">rate</span></span>
-        </span>
-      )
+      key: 'change', head: 'Vs last', className: 'fit', sort: (r: SumRow) => pctChange(r.s.total, r.prev?.total),
+      cell: (r: SumRow) => (r.prev ? <DeltaPill pct={pctChange(r.s.total, r.prev.total)} /> : blank)
     }] satisfies Column<SumRow>[] : [])
   ];
 
@@ -61,7 +56,7 @@ export function SummaryScreen() {
     ? <FirstShiftEmpty>Totals appear here as you log shifts.</FirstShiftEmpty>
     : ready.value && views.length === 0
       ? <EmptyPeriod />
-      : <Table fill label="Summary" rows={rows} columns={columns} rowKey={r => r.key} defaultSort={time ? { key: 'label', dir: 'desc' } : undefined} key={b} />;
+      : <Table log fill label="Totals" rows={rows} columns={columns} rowKey={r => r.key} defaultSort={time ? { key: 'label', dir: 'desc' } : undefined} key={b} />;
 
   return (
     <section class="panel fill" aria-labelledby="sum-title">
@@ -72,7 +67,7 @@ export function SummaryScreen() {
         <ScopeControl />
       </PanelHead>
       <div class="split">
-        <div class={`panel-body flush ${styles.body}`}>{table}</div>
+        <div class={`panel-body flush data-sheet ${styles.body}`}>{table}</div>
         <SideStats items={periodItems(s)} note="Each row folds the shifts in that group. Rate is tips over hours." />
       </div>
     </section>

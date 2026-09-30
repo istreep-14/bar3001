@@ -29,7 +29,7 @@ function harness(initialRows = [], incomeRows = [], staffRows = [], crewRows = [
   const S = fakeSheet('Shifts', ['id', 'date', 'start', 'end', 'tips', 'notes', 'updated_at', 'deleted', 'other', 'shift_type', 'party'], initialRows);
   const I = fakeSheet('Income', ['id', 'shift_id', 'category', 'amount', 'note', 'updated_at', 'deleted'], incomeRows);
   const St = fakeSheet('Staff', ['id', 'name', 'first', 'last', 'roles', 'id_number', 'manager', 'is_user', 'status', 'notes', 'updated_at', 'deleted', 'aliases', 'photo', 'avatar_color', 'avatar_text', 'role'], staffRows);
-  const C = fakeSheet('Crew', ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'hours'], crewRows);
+  const C = fakeSheet('Crew', ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'location', 'hours'], crewRows);
   const W = fakeSheet('Wages', ['id', 'date', 'rate', 'note', 'updated_at', 'deleted'], wageRows);
   const R = fakeSheet('Roles', ['id', 'name', 'color', 'icon', 'sort', 'updated_at', 'deleted'], roleRows);
   const { grid, sheet } = S;
@@ -213,8 +213,8 @@ const member = (o = {}) => ({ id: 'c1', shift_id: 'a', staff_id: 'p1', name: 'Ab
 test('crew rows append to the Crew tab with HH:MM times and the roster name, and come back as a full set', () => {
   const h = harness();
   const res = h.post({ token: 'T', rows: [row()], crew: [member(), member({ id: 'c2', staff_id: 'me', name: 'Ian', start: 1020, end: null })] });
-  assert.deepEqual(h.crew[1], ['c1', 'a', 'p1', 'Abby', '18:00', '02:00', 1000, false, 8]);      // hours: derived, for whoever reads the Sheet
-  assert.deepEqual(h.crew[2], ['c2', 'a', 'me', 'Ian', '17:00', '', 1000, false, '']);
+  assert.deepEqual(h.crew[1], ['c1', 'a', 'p1', 'Abby', '18:00', '02:00', 1000, false, '', 8]);      // location, then derived hours
+  assert.deepEqual(h.crew[2], ['c2', 'a', 'me', 'Ian', '17:00', '', 1000, false, '', '']);
   assert.equal(res.crew.length, 2);
   assert.deepEqual(res.held_crew, []);
 });
@@ -243,9 +243,9 @@ test('wages: rows append to the Wages tab, a Date cell reads back as YYYY-MM-DD,
 });
 
 test('a hand edit of a Crew start or end refreshes its hours cell', () => {
-  const h = harness([], [], [], [['c1', 'a', 'p1', 'Abby', '18:00', '22:30', 500, false, 99]]);
+  const h = harness([], [], [], [['c1', 'a', 'p1', 'Abby', '18:00', '22:30', 500, false, '', 99]]);
   h.ctx.onEdit({ range: h.crewSheet.getRange(2, 6, 1, 1) });   // the end time
-  assert.equal(h.crew[1][8], 4.5);
+  assert.equal(h.crew[1][9], 4.5);   // hours stays the last column, after location
 });
 
 test('roles sync through their own tab; a hand-typed role with a bad colour is held', () => {

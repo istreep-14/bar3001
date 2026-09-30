@@ -37,13 +37,13 @@ export function HubIncome() {
   const shifts = new Set(rows.map(r => r.v.shift.id)).size;
 
   const columns: Column<Row>[] = [
-    { key: 'date', head: 'Shift', once: true, sort: r => r.v.shift.date + (r.v.shift.start ?? 0).toString().padStart(4, '0'),
+    { key: 'date', group: 'Shift', head: 'Shift', once: true, sort: r => r.v.shift.date + (r.v.shift.start ?? 0).toString().padStart(4, '0'),
       cell: r => <DayCell date={r.v.shift.date} type={r.v.shift.shift_type} party={r.v.shift.party} /> },
-    { key: 'cat', head: 'Source', sort: r => r.line ? order(r.line.category) : 99, cell: r => (
+    { key: 'cat', group: 'Line', groupStart: true, head: 'Source', sort: r => r.line ? order(r.line.category) : 99, cell: r => (
       <span class={styles.source}><MixKey token={r.line ? `--cat-${r.line.category.toLowerCase()}` : '--cat-other'} />{r.line ? r.line.category : 'Other'}</span>
     ) },
-    { key: 'amount', head: 'Amount', className: 'r fit strong num', sort: amount, cell: r => money(amount(r)) },
-    { key: 'note', head: 'Note', className: 'notes when', cell: r => r.line ? r.line.note ?? '' : 'Earlier entry' },
+    { key: 'amount', group: 'Line', head: 'Amount', className: 'r fit', sort: amount, cell: r => <span class="fig fig-key">{money(amount(r))}</span> },
+    { key: 'note', group: 'Line', head: 'Note', className: 'notes when', cell: r => r.line ? r.line.note ?? '' : 'Earlier entry' },
     { key: 'go', head: '', className: 'chev', once: true, cell: () => <Icon name="chevron" /> }
   ];
 
@@ -66,7 +66,7 @@ export function HubIncome() {
         <ScopeControl />
       </PanelHead>
       <div class="split">
-        <div class={`panel-body flush ${styles.body}`}>{table}</div>
+        <div class={`panel-body flush data-sheet ${styles.body}`}>{table}</div>
         <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Shifts', value: shifts || DASH }, { label: 'Total', value: moneyWhole(sum) }]} />
       </div>
     </section>

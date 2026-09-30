@@ -1,4 +1,4 @@
-.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-4) var(--inset-x) var(--s-3); }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); }
 .search { width: min(22rem, 100%); }
 .count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .long { display: none; }

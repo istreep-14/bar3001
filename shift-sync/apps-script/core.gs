@@ -26,8 +26,11 @@
  *     icon:string|null (an icon name the app draws), sort:number (lower ranks first), updated_at:ms, deleted:bool }
  * Crew row (child of a shift, linked by shift_id; one per bartender who worked it, including you):
  *   { id, shift_id, staff_id, name:string|null (snapshot of the roster name, so the Sheet reads),
- *     start:min|null, end:min|null, updated_at:ms, deleted:bool }
+ *     start:min|null, end:min|null, location:'Main'|'Deck'|'Upper'|null (where they worked that shift),
+ *     updated_at:ms, deleted:bool }
  *   A person appears at most once per shift. Their hours are derived from start/end, never stored.
+ *   `location` sits before the derived hours column, so a Crew tab from before it still reads: a number in
+ *   that cell is the old hours figure, not a station, and is ignored.
  * Wage row (an hourly wage from your employer, in effect from `date` until the next row's date):
  *   { id, date:'YYYY-MM-DD', rate:number (per hour), note:string|null, updated_at:ms, deleted:bool }
  *   A shift's wage is estimated, never stored: its hours times the rate in effect on its date.
@@ -49,8 +52,10 @@ function okColor(v) { return /^#[0-9a-fA-F]{6}$/.test(v) || COLOR_NAMES.indexOf(
 /* A photo is stored in its Sheet cell, and a cell holds 50,000 characters. */
 var PHOTO_MAX = 45000;
 
-/* `hours` is the last column: a readable, derived figure for whoever reads the Sheet. Written by the script, ignored on read. */
-var CREW_COLS = ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'hours'];
+/* `hours` stays last: a readable, derived figure for whoever reads the Sheet. Written by the script, ignored on read.
+   `location` is the column before it. The only stations are Main, Deck and Upper. */
+var LOCATIONS = ['Main', 'Deck', 'Upper'];
+var CREW_COLS = ['id', 'shift_id', 'staff_id', 'name', 'start', 'end', 'updated_at', 'deleted', 'location', 'hours'];
 var WAGE_COLS = ['id', 'date', 'rate', 'note', 'updated_at', 'deleted'];
 
 function blank(v) { return v === null || v === undefined || String(v).trim() === ''; }
@@ -168,6 +173,14 @@ function crewHours(crew) {
   return (crew || []).reduce(function (t, c) { return t + (hoursWorked(c.start, c.end) || 0); }, 0);
 }
 
+/* 'deck' and 'Deck' are the same station. Blank is none. Anything else is a typo. */
+function locationOf(v) {
+  if (blank(v)) return null;
+  var s = String(v).trim().toLowerCase();
+  for (var i = 0; i < LOCATIONS.length; i++) if (LOCATIONS[i].toLowerCase() === s) return LOCATIONS[i];
+  return false;
+}
+
 function validateCrew(r) {
   if (!r || blank(r.id)) throw new Error('Missing id');
   if (blank(r.shift_id)) throw new Error('Missing shift_id');
@@ -178,25 +191,32 @@ function validateCrew(r) {
     if (v !== null && (!Number.isInteger(v) || v < 0 || v >= 1440)) throw new Error('Bad ' + k + ' ' + v);
     t[k] = v;
   });
+  var loc = r.location === undefined ? null : locationOf(r.location);
+  if (loc === false) throw new Error('Bad location "' + r.location + '" (Main, Deck or Upper)');
   if (!Number.isFinite(r.updated_at)) throw new Error('Bad updated_at ' + r.updated_at);
   return { id: String(r.id), shift_id: String(r.shift_id), staff_id: String(r.staff_id),
-    name: blank(r.name) ? null : String(r.name).trim(), start: t.start, end: t.end,
+    name: blank(r.name) ? null : String(r.name).trim(), start: t.start, end: t.end, location: loc,
     updated_at: r.updated_at, deleted: !!r.deleted };
 }
 
 function crewToSheet(r) {
   var h = hoursWorked(r.start, r.end);
-  return [r.id, r.shift_id, r.staff_id, r.name || '', toHHMM(r.start), toHHMM(r.end), r.updated_at, !!r.deleted, h === null ? '' : Math.round(h * 100) / 100];
+  return [r.id, r.shift_id, r.staff_id, r.name || '', toHHMM(r.start), toHHMM(r.end), r.updated_at, !!r.deleted,
+    r.location || '', h === null ? '' : Math.round(h * 100) / 100];
 }
 
 function sheetToCrew(a) {
+  /* Column 8 is location now. On a Crew tab from before that, it still holds the derived hours (a number). */
+  var raw = a[8];
+  var legacyHours = typeof raw === 'number' || (!blank(raw) && /^[\d.]+$/.test(String(raw).trim()));
   return validateCrew({
     id: blank(a[0]) ? '' : String(a[0]).trim(),
     shift_id: blank(a[1]) ? '' : String(a[1]).trim(),
     staff_id: blank(a[2]) ? '' : String(a[2]).trim(),
     name: a[3], start: toMin(a[4]), end: toMin(a[5]),
     updated_at: toNum(a[6], 'updated_at'),
-    deleted: toBool(a[7])
+    deleted: toBool(a[7]),
+    location: legacyHours ? null : raw
   });
 }
 
@@ -380,7 +400,7 @@ function reconcileClient(local, serverRows, heldIds) {
 function stripLocal(r) { var c = Object.assign({}, r); delete c._dirty; return c; }
 
 if (typeof module !== 'undefined') {
-  module.exports = { COLOR_NAMES: COLOR_NAMES, PHOTO_MAX: PHOTO_MAX, ROLE_COLS: ROLE_COLS, validateRole: validateRole, roleToSheet: roleToSheet, sheetToRole: sheetToRole, WAGE_COLS: WAGE_COLS, validateWage: validateWage, wageToSheet: wageToSheet, sheetToWage: sheetToWage, wageRateFor: wageRateFor, wageFor: wageFor, CREW_COLS: CREW_COLS, validateCrew: validateCrew, crewToSheet: crewToSheet, sheetToCrew: sheetToCrew, crewHours: crewHours, STAFF_COLS: STAFF_COLS, validateStaff: validateStaff, staffToSheet: staffToSheet, sheetToStaff: sheetToStaff, COLS: COLS, INCOME_COLS: INCOME_COLS, CATEGORIES: CATEGORIES, sumIncome: sumIncome,
+  module.exports = { COLOR_NAMES: COLOR_NAMES, PHOTO_MAX: PHOTO_MAX, ROLE_COLS: ROLE_COLS, validateRole: validateRole, roleToSheet: roleToSheet, sheetToRole: sheetToRole, WAGE_COLS: WAGE_COLS, validateWage: validateWage, wageToSheet: wageToSheet, sheetToWage: sheetToWage, wageRateFor: wageRateFor, wageFor: wageFor, LOCATIONS: LOCATIONS, CREW_COLS: CREW_COLS, validateCrew: validateCrew, crewToSheet: crewToSheet, sheetToCrew: sheetToCrew, crewHours: crewHours, STAFF_COLS: STAFF_COLS, validateStaff: validateStaff, staffToSheet: staffToSheet, sheetToStaff: sheetToStaff, COLS: COLS, INCOME_COLS: INCOME_COLS, CATEGORIES: CATEGORIES, sumIncome: sumIncome,
     validateIncome: validateIncome, incomeToSheet: incomeToSheet, sheetToIncome: sheetToIncome, toMin: toMin, toHHMM: toHHMM, hoursWorked: hoursWorked, defaultShiftType: defaultShiftType, tipsPerHour: tipsPerHour, totalIncome: totalIncome,
     validateRow: validateRow, rowToSheet: rowToSheet, sheetToRow: sheetToRow,
     pickNewer: pickNewer, mergeInto: mergeInto, reconcileClient: reconcileClient, stripLocal: stripLocal };

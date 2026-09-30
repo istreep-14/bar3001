@@ -6,7 +6,7 @@
 .grid th:first-child, .grid tbody th, .grid tfoot th { text-align: left; }
 .grid th:first-child { width: 11rem; text-align: left; padding-left: var(--s-5); }
 .grid th:last-child, .grid td:last-child { width: 5rem; padding-right: var(--s-5); }
-.grid td { height: 3.25rem; padding: 3px 4px; }
+.grid td { height: 2.75rem; padding: 2px 3px; }
 .grid tfoot th, .grid tfoot td { position: static; height: var(--row-h); background: color-mix(in srgb, var(--ink) 4%, var(--bg)); box-shadow: inset 0 1px var(--line-soft); }
 .dhead b { font-weight: var(--fw-semi); color: var(--ink); }
 .dshift { display: flex; justify-content: center; gap: 2px; min-height: 1.5rem; margin-top: 2px; }
@@ -14,7 +14,7 @@
 .you { display: inline-flex; margin-left: var(--s-2); vertical-align: -1px; }
 .none { padding: var(--s-5); color: var(--ink-2); text-align: center; }
 .cell { display: grid; gap: 3px; }
-.cell button, .off { display: flex; align-items: center; justify-content: center; gap: var(--s-2); width: 100%; min-height: 2.5rem; border-radius: var(--r-sm); font: inherit; font-size: var(--fs-meta); }
+.cell button, .off { display: flex; align-items: center; justify-content: center; gap: var(--s-2); width: 100%; min-height: 2.15rem; border-radius: var(--r-sm); font: inherit; font-size: var(--fs-meta); }
 .off { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--line-soft) 5px 6px); opacity: 0.6; }
 .on { border: 0; background: var(--surface); color: var(--ink); cursor: pointer; flex-direction: column; gap: 0 !important; }
 .on b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }

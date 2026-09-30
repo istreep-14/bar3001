@@ -74,7 +74,10 @@ function setup() {
   roles.getRange('F:F').setNumberFormat('0');
   crew.getRange('A:F').setNumberFormat('@');    // ids and HH:MM times stay text
   crew.getRange('G:G').setNumberFormat('0');
-  crew.getRange('I:I').setNumberFormat('0.00');
+  crew.getRange('I:I').setNumberFormat('@');    // station: Main, Deck or Upper
+  crew.getRange('J:J').setNumberFormat('0.00'); // derived hours, last column
+  crew.getRange('I2:I').setDataValidation(SpreadsheetApp.newDataValidation()
+    .requireValueInList(LOCATIONS, true).setAllowInvalid(true).build());
   wages.getRange('A:B').setNumberFormat('@');   // ids and YYYY-MM-DD dates stay text
   wages.getRange('E:E').setNumberFormat('0');
   inc.getRange('C2:C').setDataValidation(SpreadsheetApp.newDataValidation()

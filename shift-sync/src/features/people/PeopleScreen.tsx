@@ -35,7 +35,7 @@ const FIELDS: Record<string, { label: string; get: Field<Staff>; labels?: Record
   photo: { label: 'Photo', get: p => (p.photo ? 'yes' : 'no'), labels: { yes: 'Has a photo', no: 'No photo' } }
 };
 
-/* People: the employee roster, read like the Log (one line a person, the same head band, hover and selected row).
+/* People: the employee roster, read like the Shift table (one line a person, category bands, hover and selected row).
  * Identity only (no shift counts or hours, so it can't be read as a leaderboard). Not scoped: a person is not an event,
  * so there is no period control.
  *   Search: names and aliases first, the same rules as the crew picker (a name that starts with what's typed ranks above
@@ -61,22 +61,17 @@ export function PeopleScreen() {
   const rankOf = (p: Staff) => { const m = rolesOf(p).main; return m == null ? null : (rank.get(m.toLowerCase()) ?? 900) + m.toLowerCase(); };
   const no = <span class={styles.no}>No</span>;
   const columns: Column<Local<Staff>>[] = [
-    { key: 'person', head: 'Person', weight: 2.4, sort: p => p.name.toLowerCase(), cell: p => <PersonCell p={p} via={viaOf.get(p.id)} /> },
-    { key: 'role', head: 'Role', weight: 1.7, sort: rankOf, cell: p => {
+    { key: 'person', head: 'Person', group: 'Who', sort: p => p.name.toLowerCase(), cell: p => <PersonCell p={p} via={viaOf.get(p.id)} /> },
+    { key: 'role', head: 'Role', group: 'Who', sort: rankOf, cell: p => {
       const { main, others } = rolesOf(p);
-      return (
-        <span class="cell-lines">
-          {main ? <RoleTag name={main} /> : quiet(null)}
-          {others.length > 0 && <span class="roles-sub">{others.map(r => <RoleTag key={r} name={r} quiet />)}</span>}
-        </span>
-      );
+      if (!main && others.length === 0) return quiet(null);
+      return <span class="roles-line">{main && <RoleTag name={main} />}{others.map(r => <RoleTag key={r} name={r} quiet />)}</span>;
     } },
-    { key: 'id', head: 'ID', weight: 0.9, sort: p => p.id_number, cell: p => (p.id_number ? <span class="idtag">#{p.id_number}</span> : quiet(null)) },
-    { key: 'status', head: 'Status', weight: 1, sort: p => p.status, cell: p => <span class="status-pill" data-status={p.status}><i />{p.status === 'active' ? 'Active' : 'Inactive'}</span> },
-    // Both marks are already after the name; these columns are there to sort by.
-    { key: 'me', head: 'Me', weight: 0.7, sort: p => (p.is_user ? 1 : 0), cell: p => (p.is_user ? <span class={styles.flag}><MeBadge />You</span> : no) },
-    { key: 'manager', head: 'Mgr', weight: 0.7, sort: p => (p.manager ? 1 : 0), cell: p => (p.manager ? <span class={styles.flag}><ManagerBadge />Mgr</span> : no) },
-    { key: 'go', head: '', className: 'chev', cell: () => <Icon name="chevron" /> }
+    { key: 'id', head: 'ID', group: 'Record', groupStart: true, className: 'fit', sort: p => p.id_number, cell: p => (p.id_number ? <span class="idtag">#{p.id_number}</span> : quiet(null)) },
+    { key: 'status', head: 'Status', group: 'Record', className: 'fit', sort: p => p.status, cell: p => <span class="status-pill" data-status={p.status}><i />{p.status === 'active' ? 'Active' : 'Inactive'}</span> },
+    { key: 'me', head: 'Me', group: 'Record', className: 'fit', sort: p => (p.is_user ? 1 : 0), cell: p => (p.is_user ? <span class={styles.flag}><MeBadge />You</span> : no) },
+    { key: 'manager', head: 'Mgr', group: 'Record', className: 'fit', sort: p => (p.manager ? 1 : 0), cell: p => (p.manager ? <span class={styles.flag}><ManagerBadge />Mgr</span> : no) },
+    { key: 'go', head: '', className: 'chev when', cell: () => <Icon name="chevron" /> }
   ];
 
   const roster = ready.value && all.length === 0
@@ -104,12 +99,12 @@ export function PeopleScreen() {
               </ul>
             )
             : <Table log fill paginate label="Roster" rows={rows} columns={columns} rowKey={p => p.id} onRow={p => openPerson(p.id)} selectedId={openId.value}
-                tall tone={toneOf} rank={q ? p => score.get(p.id) ?? 0 : undefined}
+                tone={toneOf} rank={q ? p => score.get(p.id) ?? 0 : undefined}
                 defaultSort={{ key: 'person', dir: 'asc' }} />}
       </>;
 
   return (
-    <Page title="People" id="people-title" fill flush bodyClass={styles.body} tools={<button class="btn btn-primary" onClick={() => openPerson('new')}><Icon name="plus" /> Add<span class={styles.long}> person</span></button>}
+    <Page title="People" id="people-title" fill flush bodyClass={`data-sheet ${styles.body}`} tools={<button class="btn btn-primary" onClick={() => openPerson('new')}><Icon name="plus" /> Add<span class={styles.long}> person</span></button>}
       side={<SideStats label="Roster" items={[
         { label: 'Employees', value: all.length },
         { label: 'Active', value: all.filter(p => p.status === 'active').length },
@@ -125,21 +120,17 @@ export function PeopleScreen() {
  *  then a manager's. */
 const toneOf = (p: Staff) => (p.is_user ? 'me' : p.status === 'inactive' ? 'muted' : p.manager ? 'manager' : undefined);
 
-/** A person in two lines: their avatar (framed in their colour, with the active/inactive dot); on top, the short name they go
- *  by in bold, a crown if it's you, a shield if they manage and their employee ID; under it, small, their first and last name. */
+/** One line: the short name, the marks, then the legal name or the alias the search hit, quieter, on the same line. */
 function PersonCell({ p, via }: { p: Staff; via?: string }) {
   const full = [p.first, p.last].filter(Boolean).join(' ');
-  const sub = [full, via ? `as “${via}”` : ''].filter(Boolean).join(' · ');
+  const extra = [full && full !== p.name ? full : '', via ? `“${via}”` : ''].filter(Boolean).join(' · ');
   return (
     <span class="who">
-      <PersonAvatar id={p.id} size="md" status />
-      <span class="who-lines">
-        <span class="who-top">
-          <span class="who-name">{p.name}</span>{p.is_user && <MeBadge />}{p.manager && <ManagerBadge />}
-          {p.id_number && <span class="idtag">#{p.id_number}</span>}
-        </span>
-        {sub && <span class="who-sub">{sub}</span>}
-      </span>
+      <PersonAvatar id={p.id} size="sm" status />
+      <span class="who-name">{p.name}</span>
+      {p.is_user && <MeBadge />}
+      {p.manager && <ManagerBadge />}
+      {extra && <span class="who-meta">{extra}</span>}
     </span>
   );
 }

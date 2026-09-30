@@ -195,10 +195,10 @@
 .chartcard { min-width: 0; padding: var(--s-2) 0; }   /* a chart is a heading and a plot on the panel, not a box in a box */
 .k-party { --k: var(--party); --k-soft: var(--party-soft); }
 .stats { display: grid; margin: 0; }
-.stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); padding: 0.6rem 0; border-top: 1px solid var(--line-soft); }
+.stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); padding: 0.3rem 0; border-top: 1px solid var(--line-soft); }
 .stats > div:first-child { border-top: 0; padding-top: 0; }
-.stats dt { color: var(--ink-2); font-weight: var(--fw-normal); font-size: var(--fs-body); }
-.stats dd { margin: 0; font-weight: var(--fw-bold); color: var(--ink); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; text-align: right; }
+.stats dt { color: var(--ink-3); font-weight: var(--fw-semi); font-size: var(--fs-micro); letter-spacing: 0.04em; text-transform: uppercase; }
+.stats dd { margin: 0; font-weight: var(--fw-semi); color: var(--ink); letter-spacing: -0.011em; font-variant-numeric: tabular-nums; text-align: right; }
 
 /* ---- trends: dual-axis chart, histogram, deltas, insight line -------------------------------------------------- */
 .plot.dual { grid-template-columns: auto minmax(0, 1fr) auto; }
