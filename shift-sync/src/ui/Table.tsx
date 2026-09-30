@@ -41,10 +41,18 @@ interface Props<T> {
   /** Marks rows as selected by a rule instead of one id: every line of the shift open in the drawer, say. */
   selected?: (row: T) => boolean;
   /** Rows that share a key and sit together once sorted are one block: no rule between them, a `once` column filled only
-   *  on the first, a rule and a little air between blocks. Sorted another way, the blocks break up and each row says it all. */
+   *  on the first, a rule and a little air between blocks. Sorted another way, the blocks break up and each row says it all,
+   *  unless `holdGroups` is set. */
   group?: (row: T) => string;
   /** With `group`: a heading rendered above each block instead of the plain separator, given the block's key. */
   groupLabel?: (key: string) => ComponentChildren;
+  /** With `group`, instead of one cell across the band: content for the columns that have some, so a total can sit in
+   *  its own column. A filled cell runs across the empty columns after it, up to the next one that has content. */
+  groupCells?: (key: string) => Partial<Record<string, ComponentChildren>>;
+  /** With `group`: blocks stay whole when a column is sorted. Pass the column whose order should also order the blocks
+   *  (the day). Sorting that column moves the blocks with it; any other sort reorders the rows inside a block, and the
+   *  blocks themselves stay newest first. */
+  holdGroups?: string;
   /** The Log's look: single-line rows at the Log's size, inset from the panel's edges, the accent bar on a selected row. */
   log?: boolean;
   /** A data grid, for looking things up across many columns: full-width rows with a faint stripe, the first column held in
@@ -88,7 +96,7 @@ function writeWidths(label: string, w: Record<string, number> | null) {
 const [pageSize, setPageSize] = persisted<number>('pagesize', oneOf(PAGE_SIZES), 50);
 
 /** The one grid component: sortable heads, paging, arrow-key row navigation, and rows grouped into blocks that say a value once. */
-export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, group, groupLabel, log, grid, separators, foot, tone, tall, rank, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
+export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, group, groupLabel, groupCells, holdGroups, log, grid, separators, foot, tone, tall, rank, label, defaultSort, paginate: paged, fill, footer }: Props<T>) {
   // The sorts clicked, newest first: the top one decides, the ones under it break its ties (so the order you had is kept).
   const [sorts, setSorts] = useState<{ key: string; dir: Dir }[]>(defaultSort ? [defaultSort] : []);
   const sort = sorts[0] ?? null;
@@ -97,10 +105,28 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
   useEffect(() => setPage(0), [rows.length, sort?.key, sort?.dir, size]);
 
   const keys: SortKey<T>[] = [
+    ...(group && holdGroups ? [{ get: group, dir: (sorts[0]?.key === holdGroups ? sorts[0].dir : 'desc') as Dir }] : []),
     ...(rank ? [{ get: rank, dir: 'desc' as Dir }] : []),
     ...sorts.flatMap(s => { const c = columns.find(x => x.key === s.key); return c?.sort ? [{ get: c.sort, dir: s.dir }] : []; })
   ];
   const sorted = sortBy(rows, keys);
+
+  /** A band as one cell per stretch: a filled column runs across the empty ones after it, until the next filled column,
+   *  so the name can be wide and a total still lands in its own column. Trailing empty columns stay empty. */
+  const bandPieces = (key: string) => {
+    const map = groupCells!(key);
+    const last = columns.reduce((at, c, i) => (map[c.key] != null ? i : at), -1);
+    const pieces: { key: string; span: number; content: ComponentChildren; align?: string }[] = [];
+    for (let i = 0; i < columns.length;) {
+      const has = map[columns[i]!.key] != null;
+      if (!has || i === last) { pieces.push({ key: columns[i]!.key, span: 1, content: has ? map[columns[i]!.key] : null, align: has && columns[i]!.className?.split(' ').includes('r') ? 'r' : undefined }); i++; continue; }
+      let j = i + 1;
+      while (j < columns.length && map[columns[j]!.key] == null) j++;
+      pieces.push({ key: columns[i]!.key, span: j - i, content: map[columns[i]!.key], align: undefined });
+      i = j;
+    }
+    return pieces;
+  };
   const pg = paginate(sorted, paged ? size : 0, page);
 
   const toggle = (c: Column<T>) => {
