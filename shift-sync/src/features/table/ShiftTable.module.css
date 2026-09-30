@@ -39,17 +39,17 @@
 .arr { color: var(--ink-4); }
 .sheet :global(.nil) { color: var(--ink-4); }
 
-/* A period band: the name, how many shifts sit under it, and what those shifts made, in one cluster at the left
-   where the rows' own figures start — not a total floated to the far edge of the panel. */
+/* A period band: the name and the count on the left, the total in the Total column, same padding as the figures
+   under it so the number lines up. */
 .sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td {
-  height: auto; padding: 0.55rem var(--s-3) 0.28rem; white-space: normal;
+  height: auto; padding: 0.5rem 0.45rem 0.28rem; white-space: nowrap;
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
-  box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line-soft);
+  box-shadow: inset 0 -1px 0 var(--line-soft);
 }
+.sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td:first-child { padding-left: var(--s-3); }
 .band { display: flex; align-items: baseline; gap: var(--s-3); }
 .bandName { font-weight: var(--fw-semi); color: var(--ink); }
 .bandMeta { color: var(--ink-3); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
-.bandTotal { font-size: var(--fs-body); }
 
 /* Crew: a one-line stack of faces. The row is short, so the circles are the small size and tuck tightly. */
 .crew { --av-overlap: 0.45rem; vertical-align: middle; }

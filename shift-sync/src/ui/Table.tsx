@@ -213,8 +213,10 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
               const on = selectedId === id || !!selected?.(r);
               return (
                 <Fragment key={id}>
-                  {group && first && (groupLabel
-                    ? <tr class="tbl-band" aria-hidden="true"><td colSpan={columns.length}>{groupLabel(group(r))}</td></tr>
+                  {group && first && ((groupCells || groupLabel)
+                    ? <tr class="tbl-band" aria-hidden="true">{groupCells
+                        ? bandPieces(group(r)).map(p => <td key={p.key} colSpan={p.span} class={p.align}>{p.content}</td>)
+                        : <td colSpan={columns.length}>{groupLabel!(group(r))}</td>}</tr>
                     : i > 0 && <tr class="tbl-sep" aria-hidden="true"><td colSpan={columns.length} /></tr>)}
                   <tr data-row={onRow ? '' : undefined} data-first={group && first ? '' : undefined}  data-last={last ? '' : undefined} data-tone={tone?.(r)} data-tall={tall ? '' : undefined} tabIndex={onRow ? 0 : undefined} aria-current={on ? 'true' : undefined}
                     onClick={() => onRow?.(r)}

@@ -31,7 +31,8 @@ import styles from './ShiftTable.module.css';
  * is a column, not a second line tucked under the day. Columns size to what they say and sit together; the spare
  * width of the panel goes to the trailing chevron, not into gaps between the numbers.
  *   Grouped by month or week, a band names the period once ("September 2026") and the rows under it only say the
- *   day, the way Crew names a shift once and lists the people under it. Flat, the row says the month itself.
+ *   day, the way Crew names a shift once and lists the people under it. The band's total sits in the Total column.
+ *   Sorting a column reorders the rows inside a period; the periods stay together. Flat, the row says the month itself.
  *   Tips is the figure that says how the shift went; Rate is tips over hours. Wage, Other and Total sit with them.
  *   A shift short of its numbers reads muted. Search: notes, crew names and the date as written. */
 const query = signal('');
@@ -81,17 +82,19 @@ export function ShiftTable() {
   const by = groupBy.value;
   const groupKey = (v: ShiftView) => (by === 'month' ? monthKey(v.shift.date) : by === 'week' ? weekStart(v.shift.date) : '');
   const groups = useMemo(() => (by === 'none' ? null : groupShifts(rows, by)), [rows, by]);
-  const bandFor = (key: string) => {
+  const bandCells = (key: string) => {
     const g = groups?.find(x => x.key === key);
-    if (!g) return null;
+    if (!g) return {};
     const n = g.views.length;
-    return (
-      <span class={styles.band}>
-        <span class={styles.bandName}>{g.label}</span>
-        <span class={styles.bandMeta}>{n} {n === 1 ? 'shift' : 'shifts'}</span>
-        <span class={`fig fig-key ${styles.bandTotal}`}>{g.done ? dollars(g.total) : DASH}</span>
-      </span>
-    );
+    return {
+      date: (
+        <span class={styles.band}>
+          <span class={styles.bandName}>{g.label}</span>
+          <span class={styles.bandMeta}>{n} {n === 1 ? 'shift' : 'shifts'}</span>
+        </span>
+      ),
+      total: <span class="fig fig-key">{g.done ? dollars(g.total) : DASH}</span>
+    };
   };
 
   const columns: Column<ShiftView>[] = [
@@ -123,7 +126,7 @@ export function ShiftTable() {
             ? <EmptyState title="No shifts match">Clear the search or a filter.</EmptyState>
             : <Table log fill paginate label="Shift table" rows={rows} columns={columns} rowKey={v => v.shift.id} onRow={v => openSheet(v.shift.id)}
                 selectedId={sheet.value} tone={v => (done(v) ? undefined : 'muted')} defaultSort={{ key: 'date', dir: 'desc' }}
-                group={by === 'none' ? undefined : groupKey} groupLabel={by === 'none' ? undefined : bandFor} />}
+                group={by === 'none' ? undefined : groupKey} groupCells={by === 'none' ? undefined : bandCells} holdGroups={by === 'none' ? undefined : 'date'} />}
         </>;
 
   const groupControl = (
