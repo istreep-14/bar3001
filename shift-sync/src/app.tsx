@@ -32,26 +32,32 @@ interface Tab { id: Screen; label: string }
  *  `also` = other routes that belong to this page (the rail marks it current on them). */
 interface Page { id: Screen; label: string; tabs?: Tab[]; also?: Screen[] }
 interface Group { id: string; label: string; icon: IconName; pages: Page[] }
+/* Data-first rail: three condensed tables, then roster and setup. Helper screens still resolve via the router. */
 const GROUPS: Group[] = [
-  { id: 'shift', label: 'Shifts', icon: 'log', pages: [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'overview', label: 'Insights', tabs: [{ id: 'overview', label: 'Trends' }, { id: 'summary', label: 'Totals' }] },
-    { id: 'log', label: 'Log' }, { id: 'table', label: 'Table' }, { id: 'calendar', label: 'Calendar' },
-    { id: 'hub/income', label: 'Other income' }] },
-  { id: 'crew', label: 'Crew', icon: 'users', pages: [
-    { id: 'hub/week', label: 'Crew', tabs: [{ id: 'hub/week', label: 'This week' }, { id: 'hub/crew', label: 'All shifts' }] },
+  { id: 'data', label: 'Data', icon: 'log', pages: [
+    { id: 'table', label: 'Shifts' },
+    { id: 'crew', label: 'Crew' },
+    { id: 'income', label: 'Income' }] },
+  { id: 'roster', label: 'Roster', icon: 'users', pages: [
     { id: 'people', label: 'People' }] },
-  { id: 'settings', label: 'Settings', icon: 'settings', pages: [
-    { id: 'settings/wages', label: 'Settings', also: ['settings/roles', 'settings/look', 'settings/sync', 'settings/data'] }] }
+  { id: 'settings', label: 'Setup', icon: 'settings', pages: [
+    { id: 'settings/wages', label: 'Hourly wage' },
+    { id: 'settings/roles', label: 'Roles' },
+    { id: 'settings/sync', label: 'Sync' },
+    { id: 'settings/look', label: 'Look' },
+    { id: 'settings/data', label: 'Your data' }] }
 ];
 const owns = (p: Page, s: Screen) => p.id === s || !!p.tabs?.some(t => t.id === s) || !!p.also?.includes(s);
+/** Helper routes are not in the rail; still render them when an old link lands. */
+const HELPERS: Screen[] = ['dashboard', 'overview', 'summary', 'log', 'calendar', 'hub/week'];
 
 export function App() {
   const current = screen.value, desktop = isDesktop.value;
   const open = ready.value ? sheet.value : null, who = ready.value ? person.value : null, editing = ready.value ? form.value : null;
-  const group = GROUPS.find(g => g.pages.some(p => owns(p, current)))!;
-  const page = group.pages.find(p => owns(p, current))!;
-  const solo = group.pages.length === 1;
+  const helper = HELPERS.includes(current);
+  const group = GROUPS.find(g => g.pages.some(p => owns(p, current))) ?? GROUPS[0]!;
+  const page = group.pages.find(p => owns(p, current));
+  const solo = !helper && group.pages.length === 1;
   // On the Log and the Calendar (desktop) an open shift shows inside the page, so the floating drawer stays shut there.
   const inline = desktop && (current === 'log' || current === 'calendar') && !!open;
   const drawer = inline ? who : open ?? who;
@@ -106,13 +112,13 @@ export function App() {
           <SyncPill />
           <button class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" /> New<span class={styles.long}> shift</span></button>
         </header>
-        {!solo && (
+        {!solo && !helper && (
           <nav class={styles.strip} aria-label={group.label}>
             {group.pages.map(p => <a key={p.id} href={`#/${p.id}`} class={styles.stripLink} aria-current={owns(p, current) ? 'page' : undefined} onClick={e => { e.preventDefault(); go(p.id); }}>{p.label}</a>)}
           </nav>
         )}
         <main id="main" tabIndex={-1} class={styles.page}>
-          {page.tabs && (
+          {page?.tabs && (
             <nav class={styles.tabs} aria-label={`${page.label} views`}>
               {page.tabs.map(t => <a key={t.id} href={`#/${t.id}`} class={styles.tab} aria-current={current === t.id ? 'page' : undefined} onClick={e => { e.preventDefault(); go(t.id); }}>{t.label}</a>)}
             </nav>
@@ -124,8 +130,8 @@ export function App() {
           {current === 'table' && <ShiftTable />}
           {current === 'summary' && <SummaryScreen />}
           {current === 'hub/week' && <HubWeek />}
-          {current === 'hub/crew' && <HubCrew />}
-          {current === 'hub/income' && <HubIncome />}
+          {current === 'crew' && <HubCrew />}
+          {current === 'income' && <HubIncome />}
           {current === 'people' && <PeopleScreen />}
           {current.startsWith('settings/') && <SettingsScreen page={current} />}
         </main>
