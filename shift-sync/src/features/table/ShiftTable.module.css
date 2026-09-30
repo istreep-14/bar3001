@@ -1,52 +1,64 @@
 /* The same toolbar as People: search, Filter, and a count, over the table. */
-.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-4) var(--inset-x) var(--s-3); }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-4) 1.15rem var(--s-3); }
 .search { width: min(22rem, 100%); }
 .count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.body { display: flex; flex-direction: column; min-height: 0; }   /* the toolbar keeps its height; the table takes the rest */
+.body { display: flex; flex-direction: column; min-height: 0; }
 
-/* Shift: People's own `.who`, exactly — a filled, squarish mark standing in for the avatar (the day number, on a
-   month-coloured fill, rounded like Avatar but not a circle), the shift's type a tiny glyph in a small circle on its
-   bottom-right corner (like an avatar's status dot), the weekday leading the who-name as a small squarish, all-caps,
-   cream tag, then who-sub carrying the start→end times — untouched, the same who-sub as every other page's. */
-.dateMark { position: relative; display: inline-grid; place-items: center; flex: none; width: 1.75rem; height: 1.75rem; border-radius: var(--r-sm); background: color-mix(in srgb, var(--mc) 20%, var(--surface)); color: var(--mc); font-size: var(--fs-body); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
-.typeDot { position: absolute; right: -0.25rem; bottom: -0.25rem; display: inline-grid; place-items: center; width: 0.9375rem; height: 0.9375rem; border-radius: 50%; box-shadow: 0 0 0 1.5px var(--surface); }
-.typeDot :global(.icon) { width: 0.5625rem; height: 0.5625rem; }
-.typeDot[data-kind='day'] { background: var(--day-soft); color: var(--day-ink); }
-.typeDot[data-kind='night'] { background: var(--night-soft); color: var(--night); }
-/* Squarish, not a pill (idtag's own r-sm is already close, so this trims it further); a cream fill lighter than the
-   surface, so it stands off the row without reading as a coloured status. */
-.weekdayTag { display: inline-flex; align-items: center; flex: none; min-height: 1rem; padding: 0 0.3rem; border-radius: 3px; background: color-mix(in srgb, var(--cream) 80%, var(--surface)); color: var(--ink-2); font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: var(--fw-semi); line-height: 1; letter-spacing: 0.03em; text-transform: uppercase; }
-/* Nine columns of Hours/Tips/Rate/Income figures pushed this table past auto-layout's comfort, so every column
-   carries a `weight` (Column.weight): the table lays out `table-layout: fixed`, each column an exact share of the
-   panel's width, and shrinks with it instead of overflowing into a scrollbar (`.tbl-fixed`, ui.css). That also
-   restores the who-lines/who-name's own `min-width: 0` (ui.css) to what it's for — ellipsis, not collapse — so the
-   old max-content override this table needed under auto-layout is gone.
-   `.valCol` alone (0,1,0) loses the cascade to ui.css's own `.tbl th, .tbl td { text-align: left }` (0,1,1) — every
-   cell here also carries `num`, so pairing with it (`:global(.num).valCol`) wins outright, any load order. Its own
-   width now comes from its weight, not a fixed rem, so it can shrink with the column; the same fight over padding
-   (`.tbl-log .tbl :is(th, td)`, three selector steps deep) needs the same extra class to win it back tighter. */
-:global(.num).valCol { text-align: center; }
-:global(.tbl-log) :global(.tbl) :global(.num).valCol { padding-left: var(--s-1); padding-right: var(--s-1); }
-.valFig { display: inline-block; }
-/* Crew: the crew's total hours leading the faces, in Hours' own quiet figure, with more air than the default
-   stack's tight tuck. */
-.crewHoursFig { color: var(--ink-2); }
-.crewCell { display: inline-flex; align-items: center; gap: var(--s-3); }
-/* CrewPhotos measures itself off this cell: --crew-h is the row's own height (it's already `position: relative` —
-   the base `.tbl-log .tbl td` rule), --crew-scale how much of that height a figure stands. Once the row mutes, a
-   plain 0.6 opacity would fade a face past easy placing; muted here dims less (0.85) and it holds. */
-.crewTd { --crew-h: 2.625rem; --crew-scale: 0.82; }
-:global(.tbl-log) :global(.tbl) tbody tr[data-tone='muted'] .crewTd :global(.fig) { opacity: 0.85; }
+/* A sheet, not a list of cards. Rows stay one line high and square, so a hairline runs the whole way across even
+   inside a month, and the columns hug their text. The log's own padding and sticky day column stay. */
+.sheet :global(.tbl-log) :global(.tbl) { font-size: var(--fs-body); }
+.sheet :global(.tbl-log) :global(.tbl) :is(th, td) { padding: 0 0.45rem; }
+.sheet :global(.tbl-log) :global(.tbl) :is(th, td):first-child { padding-left: var(--s-3); }
+.sheet :global(.tbl-log) :global(.tbl) :is(th, td):global(.gs) { padding-left: 0.8rem; }
+.sheet :global(.tbl-log) :global(.tbl) tbody td:first-child,
+.sheet :global(.tbl-log) :global(.tbl) tbody td:last-child { border-radius: 0; }
+.sheet :global(.tbl-log) :global(.tbl) thead th { height: 2rem; }
+/* Number heads sit over their figures. The sort arrow stays on the inner side. */
+.sheet :global(.tbl-log) :global(th.r) :global(.th-sort) { display: flex; width: 100%; flex-direction: row-reverse; justify-content: flex-start; }
+/* A hairline between shifts, including under a band. The log draws one only when the table is not grouped. */
+.sheet :global(.tbl-log) :global(.tbl)[data-grouped] tbody tr[data-row] + tr[data-row] td::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--line-soft);
+}
 
-/* A group's band: its name, a shift count, then the total lined up to the right, like the Log's. */
+/* Day: weekday as a quiet label in a fixed width so the dates line up, then the day (and the month, when the band
+   has not already said it). Type and party are marks on the same line. */
+.day { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; vertical-align: middle; }
+.wd { display: inline-block; width: 1.85rem; color: var(--ink-3); font-weight: var(--fw-normal); }
+.date { display: inline-flex; align-items: baseline; gap: 0.28rem; font-weight: var(--fw-semi); color: var(--ink); }
+.month { font-weight: var(--fw-semi); }
+.dayNum { display: inline-block; min-width: 1.15rem; font-variant-numeric: tabular-nums; text-align: right; }
+.year { font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-4); }
+.mark { display: inline-flex; flex: none; color: var(--ink-4); }
+.mark[data-kind='day'] { color: var(--day-ink); }
+.mark[data-kind='night'] { color: var(--night); }
+.mark[data-kind='party'] { color: var(--party); }
+.mark :global(.icon) { width: 0.8rem; height: 0.8rem; }
+.time { display: inline-grid; grid-template-columns: 3.35rem auto 3.35rem; column-gap: 0.3rem; align-items: baseline; font-variant-numeric: tabular-nums; }
+.t0 { text-align: right; }
+.t1 { text-align: left; }
+.arr { color: var(--ink-4); }
+.sheet :global(.nil) { color: var(--ink-4); }
+
+/* A period band: the name, how many shifts sit under it, and what those shifts made, in one cluster at the left
+   where the rows' own figures start — not a total floated to the far edge of the panel. */
+.sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td {
+  height: auto; padding: 0.55rem var(--s-3) 0.28rem; white-space: normal;
+  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+  box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line-soft);
+}
 .band { display: flex; align-items: baseline; gap: var(--s-3); }
-.bandName { font-size: var(--fs-lead); font-weight: var(--fw-semi); color: var(--ink); }
-.bandTotal { margin-left: auto; }
+.bandName { font-weight: var(--fw-semi); color: var(--ink); }
+.bandMeta { color: var(--ink-3); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
+.bandTotal { font-size: var(--fs-body); }
 
-/* Crew: a plain overlapping circle stack; the hover card lists everyone */
+/* Crew: a one-line stack of faces. The row is short, so the circles are the small size and tuck tightly. */
+.crew { --av-overlap: 0.45rem; vertical-align: middle; }
+.crewTd { overflow: visible; }
+
+/* The hover card: everyone on the shift, with their own hours. */
 .who { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s-2); padding: 5px 6px; border-radius: var(--r-sm); }
 .who:hover { background: var(--surface-2); }
-.who :global(.avatar) { width: 1.625rem; height: 1.625rem; font-size: var(--fs-meta); }
+.who :global(.avatar) { width: 1.625rem; height: 1.625rem; font-size: 0.6875rem; }
 .whoName { display: inline-flex; align-items: center; min-width: 0; font-weight: var(--fw-med); }
 .who > :global(.fig) { font-size: var(--fs-meta); color: var(--ink-2); }
 .whoFoot { display: flex; justify-content: space-between; margin-top: var(--s-1); padding: 7px 6px 2px; border-top: 1px solid var(--line-soft); font-size: var(--fs-meta); color: var(--ink-3); }
