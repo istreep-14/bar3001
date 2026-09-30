@@ -8,7 +8,8 @@ import { RANK_MIN_HOURS } from '../../lib/stats.ts';
 import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
-import { DeltaPill } from '../../ui/kpi.tsx';
+import { KpiChip } from '../../ui/kpi.tsx';
+import type { IconName } from '../../ui/Icon.tsx';
 import { Page } from '../../ui/Page.tsx';
 import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
 import { ShiftLog } from '../../parts/ShiftLog.tsx';
@@ -47,13 +48,13 @@ export function DashboardScreen() {
     );
   }
 
-  const kpis = [
-    { label: 'Tips', value: dollars(w.now.tips), pct: w.delta.tips },
-    { label: 'Rate', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph },
-    { label: 'Hours', value: hours(w.now.hours), pct: w.delta.hours, neutral: true },
-    { label: 'Shifts', value: String(w.now.shifts), pct: null },
-    { label: 'Other income', value: dollars(w.now.extra), pct: w.delta.extra },
-    { label: 'Total', value: dollars(w.now.total), pct: w.delta.total }
+  const kpis: { label: string; value: string; pct: number | null; hint: string; icon: IconName; neutral?: boolean }[] = [
+    { label: 'Tips', value: dollars(w.now.tips), pct: w.delta.tips, hint: 'against last week', icon: 'dollar' },
+    { label: 'Rate', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph, hint: 'tips over hours', icon: 'trend' },
+    { label: 'Hours', value: hours(w.now.hours), pct: w.delta.hours, hint: 'hours worked', icon: 'clock', neutral: true },
+    { label: 'Shifts', value: String(w.now.shifts), pct: null, hint: 'with money in', icon: 'log' },
+    { label: 'Other income', value: dollars(w.now.extra), pct: w.delta.extra, hint: 'besides tips and wage', icon: 'plus' },
+    { label: 'Total', value: dollars(w.now.total), pct: w.delta.total, hint: 'tips, wage and other', icon: 'chart' }
   ];
   const maxH = Math.max(10, ...w.days.map(d => d.hours));
   const bestDay = w.days.filter(d => d.hours).sort((a, b) => b.tips / b.hours - a.tips / a.hours)[0];
@@ -82,14 +83,13 @@ export function DashboardScreen() {
     }>
       <div class={styles.grid}>
         <div class={styles.main}>
-          <dl class={styles.kpis} aria-label={offset === 0 ? 'This week against last week' : 'Last week against the week before'}>
+          <div class={styles.kpis} role="list" aria-label={offset === 0 ? 'This week against last week' : 'Last week against the week before'}>
             {kpis.map(k => (
-              <div key={k.label} class={styles.kpi}>
-                <dt>{k.label}</dt>
-                <dd><span class="num">{k.value}</span><DeltaPill pct={k.pct} neutral={k.neutral} /></dd>
+              <div key={k.label} role="listitem">
+                <KpiChip label={k.label} value={k.value} pct={k.pct} hint={k.hint} icon={k.icon} neutral={k.neutral} />
               </div>
             ))}
-          </dl>
+          </div>
 
           <Card title="Last two weeks" to="log" link="Open the log">
             <ShiftLog views={recent} by="week" openId={open} inline={false} hidden={NARROW} />

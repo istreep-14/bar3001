@@ -1,22 +1,40 @@
-/* Days down the side, one ruler across, a bar per bartender. The ruler column is shared by every row. */
-.tl { display: grid; gap: var(--s-1); padding: 0 var(--s-4) var(--s-4); background: var(--surface); }
-.row { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 6rem; align-items: center; column-gap: var(--s-4); padding: var(--s-2) var(--s-2); border-radius: var(--r-md); }
-.row[data-today] { background: var(--surface-2); }
-.row :global(.r) { text-align: right; }
-.headRow { position: sticky; top: 0; z-index: 1; margin: 0 calc(-1 * var(--s-4)); padding: var(--s-2) calc(var(--s-4) + var(--s-2)); border-radius: 0; background: var(--th-bg); border-bottom: 1px solid var(--th-line); }
-.head { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--th-ink); }
-.headRow .tick { color: var(--th-ink); }
-.ticks { position: relative; height: 1.25rem; }
-.tick { position: absolute; top: 0; transform: translateX(-50%); font-size: var(--fs-meta); color: var(--ink-3); white-space: nowrap; }
+/* One night-style coverage strip per day: who on the left, a shared hour grid, a coloured bar for their hours. */
+.tl { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-4); background: var(--surface); }
+.row { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr); align-items: center; column-gap: var(--s-3); }
+.headRow { position: sticky; top: 0; z-index: 1; margin: 0 calc(-1 * var(--s-4)); padding: var(--s-2) var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); }
+.whoHead { font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--th-ink); }
+.ticks { position: relative; height: 1.125rem; }
+.tick { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--ink-3); white-space: nowrap; }
 .tick:first-child { transform: none; }
-.day { display: flex; align-items: center; gap: var(--s-2); white-space: nowrap; }
-.lanes { display: grid; gap: 3px; min-width: 0; }
-.lane { position: relative; height: 1.5rem; border-radius: var(--r-sm); background: var(--surface-2); }
-.bar { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 var(--s-2); border: 0; border-radius: var(--r-sm); background: color-mix(in srgb, var(--accent) 22%, var(--surface)); color: var(--ink); font: inherit; font-size: var(--fs-meta); font-weight: var(--fw-semi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; min-width: 4px; }
-.bar:hover { background: color-mix(in srgb, var(--accent) 34%, var(--surface)); }
-.bar[data-you] { background: var(--accent); color: var(--on-accent); }
-.nobody { cursor: default; background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); color: var(--ink-2); font-weight: var(--fw-normal); }
-.off { font-size: var(--fs-meta); color: var(--ink-3); }
-.hrs { font-weight: var(--fw-semi); }
 
-.bar :global(.me-badge) { margin-left: 0.25em; color: inherit; }   /* on the filled bar the crown takes the bar's own ink */
+.block { display: grid; gap: 0.35rem; padding: var(--s-2) 0; }
+.block + .block { border-top: 1px solid var(--line-soft); }
+.block[data-today] { background: color-mix(in srgb, var(--accent) 5%, transparent); margin: 0 calc(-1 * var(--s-3)); padding: var(--s-2) var(--s-3); border-radius: var(--r-md); border-top: 0; }
+.dayHead { display: flex; align-items: baseline; gap: var(--s-2); min-height: 1.25rem; }
+.dayHead b { font-size: var(--fs-meta); font-weight: var(--fw-semi); }
+.nowChip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0 0.4rem; border-radius: var(--r-pill); background: color-mix(in srgb, var(--good) 14%, var(--surface)); color: var(--good); font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: var(--fw-med); }
+.nowChip i { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--good); }
+.dayHrs { margin-left: auto; font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink-2); }
+
+.person { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr); align-items: center; column-gap: var(--s-3); }
+.who { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.whoText { display: grid; min-width: 0; line-height: 1.15; }
+.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-meta); font-weight: var(--fw-med); }
+.role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-micro); color: var(--ink-3); }
+.off { font-size: var(--fs-meta); color: var(--ink-3); }
+
+.track { position: relative; height: 1.75rem; min-width: 0; overflow: hidden; border-radius: var(--r-sm); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-soft); }
+.grid { position: absolute; inset: 0; pointer-events: none; }
+.grid i { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.now { position: absolute; top: 0; bottom: 0; z-index: 2; width: 2px; margin-left: -1px; background: var(--good); pointer-events: none; }
+
+.bar { position: absolute; top: 3px; bottom: 3px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); padding: 0 0.4rem; border: 0; border-radius: 6px; background: color-mix(in srgb, var(--bar, var(--accent)) 22%, var(--surface)); color: var(--bar, var(--accent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bar, var(--accent)) 45%, transparent); font: inherit; cursor: pointer; min-width: 4px; overflow: hidden; }
+.bar:hover { background: color-mix(in srgb, var(--bar, var(--accent)) 32%, var(--surface)); }
+.when { font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: var(--fw-semi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.len { flex: none; font-size: var(--fs-micro); font-weight: var(--fw-semi); opacity: 0.8; }
+.nobody { cursor: default; background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1.5px var(--line-strong); font-weight: var(--fw-normal); }
+.bar :global(.me-badge) { margin-left: 0.25em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nowChip i { animation: none; }
+}

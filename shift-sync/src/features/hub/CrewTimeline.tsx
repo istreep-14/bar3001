@@ -1,14 +1,18 @@
-import { personById } from '../../data/store.ts';
+import { hoursWorked } from '../../core/core.generated.js';
+import { personById, roleByName } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
-import { clockPlain, dec1, weekdayShort } from '../../lib/format.ts';
-import { place, rulerFor, tickLabel } from '../../lib/ruler.ts';
+import { clockPlain, clockShort, dec1, weekdayShort } from '../../lib/format.ts';
+import { rolesOf } from '../../lib/people.ts';
+import { nowOnRuler, place, rulerFor, tickLabel } from '../../lib/ruler.ts';
 import type { ShiftView } from '../../lib/stats.ts';
-import styles from './CrewTimeline.module.css';
+import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
 import { MeBadge } from '../../ui/MeBadge.tsx';
+import { avatarColor } from '../../ui/Avatar.tsx';
+import { swatchColor } from '../../ui/swatches.ts';
+import styles from './CrewTimeline.module.css';
 
-/* Crew week as a timeline: the days down the side, one shared ruler across (noon to the small hours), and a bar per
- * bartender on each day's shift, so who overlapped with whom reads at a glance. Your bar is in the accent. Hours only,
- * never money per person. Clicking a bar edits that person's times (the same dialog as the grid). */
+/* Crew week as a timeline: days down the page, one shared hour ruler, a lane per bartender. The bar is the role's
+ * colour (or their avatar colour) so overlap reads by hue. Hours only, never money. A click edits that person's times. */
 export function CrewTimeline({ days, shiftsPerDay, dayHours, onEdit }: {
   days: string[]; shiftsPerDay: ShiftView[][]; dayHours: number[];
   onEdit: (view: ShiftView, staff_id: string, name: string) => void;
@@ -16,48 +20,100 @@ export function CrewTimeline({ days, shiftsPerDay, dayHours, onEdit }: {
   const all = shiftsPerDay.flat();
   const r = rulerFor(all.flatMap(v => [{ start: v.shift.start, end: v.shift.end }, ...v.crew.map(c => ({ start: c.start, end: c.end }))]));
   const t = today();
+  const now = new Date();
+  const nowPct = nowOnRuler(r, now);
   return (
     <div class={styles.tl} role="table" aria-label="Crew times this week">
       <div class={`${styles.row} ${styles.headRow}`} role="row">
-        <span role="columnheader" class={styles.head}>Day</span>
+        <span role="columnheader" class={styles.whoHead}>Who</span>
         <span role="columnheader" class={styles.ticks}>
           {r.ticks.map(m => <span key={m} class={styles.tick} style={{ left: `${((m - r.origin) / r.length) * 100}%` }}>{tickLabel(m)}</span>)}
         </span>
-        <span role="columnheader" class={`${styles.head} r`}>Crew hours</span>
       </div>
       {days.map((d, i) => {
         const shifts = shiftsPerDay[i]!;
+        const lanes = peopleOn(shifts);
         return (
-          <div class={styles.row} role="row" key={d} data-today={d === t ? '' : undefined}>
-            <span role="rowheader" class={styles.day}><b>{weekdayShort(d)} {+d.slice(8)}</b>{d === t && <span class="chip" data-kind="accent">Today</span>}</span>
-            <span role="cell" class={styles.lanes}>
-              {shifts.length === 0 && <span class={styles.off}>Off</span>}
-              {shifts.map(v => {
-                const crew = [...v.crew].sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
-                if (!crew.length) {
-                  const p = place(v.shift.start, v.shift.end, r);
-                  return p && <span key={v.shift.id} class={styles.lane}><span class={`${styles.bar} ${styles.nobody}`} style={{ left: `${p.left}%`, width: `${p.width}%` }}>Nobody logged</span></span>;
-                }
-                return crew.map(c => {
-                  const person = personById(c.staff_id), name = person?.name ?? c.name ?? '?';
-                  const p = place(c.start, c.end, r);
-                  const label = `${name}${person?.is_user ? ' (you)' : ''}`;
-                  return (
-                    <span key={c.id} class={styles.lane}>
-                      {p && (
-                        <button type="button" class={styles.bar} data-you={person?.is_user ? '' : undefined} style={{ left: `${p.left}%`, width: `${p.width}%` }}
-                          aria-label={`${label}, ${clockPlain(c.start)} to ${clockPlain(c.end)}. Edit`} title={`${label}: ${clockPlain(c.start)} – ${clockPlain(c.end)}`}
-                          onClick={() => onEdit(v, c.staff_id, name)}>{name}{person?.is_user && <MeBadge />}</button>
-                      )}
+          <div class={styles.block} role="rowgroup" key={d} data-today={d === t ? '' : undefined}>
+            <div class={styles.dayHead}>
+              <b>{weekdayShort(d)} {+d.slice(8)}</b>
+              {d === t && <span class={styles.nowChip}><i />Now {clockShort(now.getHours() * 60 + now.getMinutes())}</span>}
+              <span class={`${styles.dayHrs} num`}>{dayHours[i] ? `${dec1(dayHours[i]!)}h` : '—'}</span>
+            </div>
+            {lanes.length === 0 && (
+              <div class={styles.person} role="row">
+                <span class={styles.who} role="rowheader"><span class={styles.off}>Off</span></span>
+                <span role="cell" class={styles.track}><Grid r={r} />{d === t && nowPct != null && <i class={styles.now} style={{ left: `${nowPct}%` }} />}</span>
+              </div>
+            )}
+            {lanes.map(lane => {
+              const p = place(lane.start, lane.end, r);
+              const color = barColor(lane.staff_id);
+              const you = !!(lane.staff_id && personById(lane.staff_id)?.is_user);
+              const label = `${lane.name}${you ? ' (you)' : ''}`;
+              const h = hoursWorked(lane.start, lane.end);
+              return (
+                <div class={styles.person} role="row" key={lane.key}>
+                  <span class={styles.who} role="rowheader">
+                    {lane.staff_id ? <PersonAvatar id={lane.staff_id} fallback={lane.name} size="sm" /> : null}
+                    <span class={styles.whoText}>
+                      <span class={styles.name}>{lane.name}{you && <MeBadge />}</span>
+                      {lane.role && <span class={styles.role}>{lane.role}</span>}
                     </span>
-                  );
-                });
-              })}
-            </span>
-            <span role="cell" class={`${styles.hrs} r num`}>{dayHours[i] ? `${dec1(dayHours[i]!)}h` : '—'}</span>
+                  </span>
+                  <span role="cell" class={styles.track}>
+                    <Grid r={r} />
+                    {d === t && nowPct != null && <i class={styles.now} style={{ left: `${nowPct}%` }} />}
+                    {p && lane.staff_id ? (
+                      <button type="button" class={styles.bar} style={{ left: `${p.left}%`, width: `${p.width}%`, ['--bar']: color }}
+                        aria-label={`${label}, ${clockPlain(lane.start)} to ${clockPlain(lane.end)}. Edit`}
+                        title={`${label}: ${clockPlain(lane.start)} – ${clockPlain(lane.end)}`}
+                        onClick={() => onEdit(lane.view, lane.staff_id!, lane.name)}>
+                        <span class={styles.when}>{clockShort(lane.start)} – {clockShort(lane.end)}</span>
+                        {h != null && <span class={styles.len}>{dec1(h)}h</span>}
+                      </button>
+                    ) : p ? (
+                      <span class={`${styles.bar} ${styles.nobody}`} style={{ left: `${p.left}%`, width: `${p.width}%` }}>Nobody logged</span>
+                    ) : null}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         );
       })}
     </div>
   );
+}
+
+function Grid({ r }: { r: ReturnType<typeof rulerFor> }) {
+  return (
+    <span class={styles.grid} aria-hidden="true">
+      {r.ticks.map(m => <i key={m} style={{ left: `${((m - r.origin) / r.length) * 100}%` }} />)}
+    </span>
+  );
+}
+
+function peopleOn(shifts: ShiftView[]) {
+  const out: { key: string; view: ShiftView; staff_id: string | null; name: string; role: string | null; start: number | null; end: number | null }[] = [];
+  for (const v of shifts) {
+    const crew = [...v.crew].sort((a, b) => (a.start ?? 9999) - (b.start ?? 9999));
+    if (!crew.length) out.push({ key: v.shift.id, view: v, staff_id: null, name: 'Nobody logged', role: null, start: v.shift.start, end: v.shift.end });
+    for (const c of crew) {
+      const person = personById(c.staff_id);
+      out.push({
+        key: c.id, view: v, staff_id: c.staff_id, name: person?.name ?? c.name ?? '?',
+        role: person ? rolesOf(person).main : null, start: c.start, end: c.end
+      });
+    }
+  }
+  return out;
+}
+
+function barColor(id: string | null): string {
+  if (!id) return 'var(--ink-3)';
+  const person = personById(id);
+  const main = person ? rolesOf(person).main : null;
+  const role = main ? roleByName(main) : undefined;
+  return swatchColor(role?.color)?.value ?? avatarColor(id, person?.avatar_color).value;
 }
