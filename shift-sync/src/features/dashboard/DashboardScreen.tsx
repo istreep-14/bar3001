@@ -9,7 +9,7 @@ import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdaySho
 import { go, openForm, openSheet, sheet } from '../../router.ts';
 import type { Screen } from '../../router.ts';
 import { DeltaPill } from '../../ui/kpi.tsx';
-import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Page } from '../../ui/Page.tsx';
 import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
 import { ShiftLog } from '../../parts/ShiftLog.tsx';
 import type { LogCol } from '../../parts/ShiftLog.tsx';
@@ -39,14 +39,11 @@ export function DashboardScreen() {
 
   if (ready.value && all.length === 0) {
     return (
-      <section class="panel" aria-labelledby="dash-title">
-        <PanelHead title="Dashboard" id="dash-title" />
-        <div class="panel-body">
-          <FirstShiftEmpty>
-            This week, your best nights and the crew fill in as you log shifts.
-          </FirstShiftEmpty>
-        </div>
-      </section>
+      <Page title="Dashboard" id="dash-title">
+        <FirstShiftEmpty>
+          This week, your best nights and the crew fill in as you log shifts.
+        </FirstShiftEmpty>
+      </Page>
     );
   }
 
@@ -73,15 +70,16 @@ export function DashboardScreen() {
   const crewRows = [...crew.values()].sort((a, b) => Number(b.you) - Number(a.you) || b.hours - a.hours);
 
   return (
-    <section class="panel" aria-labelledby="dash-title">
-      <PanelHead title="Dashboard" id="dash-title">
+    <Page title="Dashboard" id="dash-title" tools={
+      <>
         <span class="muted num">{shortDate(w.start)} – {shortDate(addDays(w.start, 6))} · {w.partial ? 'so far, against the same days last week' : 'against the week before'}</span>
         <div class="seg" role="radiogroup" aria-label="Week">
           {([[0, 'This week'], [-1, 'Last week']] as const).map(([o, l]) => (
             <label key={o}><input type="radio" name="dash-week" checked={offset === o} onChange={() => { pinned.value = o; }} /><span>{l}</span></label>
           ))}
         </div>
-      </PanelHead>
+      </>
+    }>
       <div class={styles.grid}>
         <div class={styles.main}>
           <dl class={styles.kpis} aria-label={offset === 0 ? 'This week against last week' : 'Last week against the week before'}>
@@ -157,7 +155,7 @@ export function DashboardScreen() {
           </Card>
         </aside>
       </div>
-    </section>
+    </Page>
   );
 }
 

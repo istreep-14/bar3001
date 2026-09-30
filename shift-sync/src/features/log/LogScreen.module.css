@@ -1,4 +1,4 @@
-.banner { margin: var(--s-3) 1.15rem 0; display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--danger-soft); border: 1px solid var(--danger-line); font-size: var(--fs-body); }
+.banner { margin: var(--s-3) var(--inset-x) 0; display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--danger-soft); border: 1px solid var(--danger-line); font-size: var(--fs-body); }
 .banner svg { color: var(--danger); margin-top: 2px; }
 .banner ul { margin: var(--s-1) 0 0; padding-left: var(--s-4); list-style: disc; }
 .week { display: grid; gap: var(--s-1); }

@@ -4,7 +4,7 @@
 .pick button { display: inline-grid; place-items: center; width: 1.125rem; height: 1.125rem; padding: 0; border: 0; border-radius: var(--r-sm); background: none; color: inherit; cursor: pointer; }
 .pick button:hover { background: var(--surface-2); color: var(--ink); }
 .pick :global(.icon) { width: 0.75rem; height: 0.75rem; }
-.panel { position: absolute; top: calc(100% + var(--s-2)); left: 0; z-index: 5; display: grid; gap: var(--s-4); width: min(28rem, calc(100vw - 2rem)); max-height: 60vh; overflow: auto; padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
+.panel { position: absolute; top: calc(100% + var(--s-2)); left: 0; z-index: var(--z-pop); display: grid; gap: var(--s-4); width: min(28rem, calc(100vw - 2rem)); max-height: 60vh; overflow: auto; padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
 .facet { display: grid; gap: var(--s-2); }
 .options { display: flex; flex-wrap: wrap; gap: var(--s-1); }
 .options :global(.tog) { min-height: 2rem; }

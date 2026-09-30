@@ -1,5 +1,5 @@
-/* Dashboard: numbers across the top, the last two weeks under them, this week's cards in a side column.
-   Cards are grey panels; what you act on inside them (the list, the tiles) sits on the white content surface. */
+/* Dashboard: one panel. Numbers across the top, the last two weeks under them, this week's sections beside that.
+   What you act on (the week strip, the day capsules, a best-night tile) sits on the content surface. */
 .grid { display: grid; gap: var(--shell-gap); align-items: start; min-width: 0; }
 @media (min-width: 64rem) { .grid { grid-template-columns: minmax(0, 1fr) 20rem; } }
 .main, .side { display: grid; gap: var(--shell-gap); min-width: 0; align-content: start; }
@@ -10,7 +10,7 @@
 .kpi dt { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink-2); }
 .kpi dd { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s-2); font-size: var(--fs-hero); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
 
-.card { display: grid; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface-2); border: 1px solid var(--line-soft); min-width: 0; }
+.card { display: grid; gap: var(--s-3); min-width: 0; }
 .cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
 .cardTitle { margin: 0; display: grid; font-size: var(--fs-title); font-weight: var(--fw-bold); color: var(--ink); }
 .cardSub { font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-2); }

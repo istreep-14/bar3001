@@ -28,7 +28,7 @@
 
 .dialog { width: min(24rem, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 .dialog::backdrop { background: var(--overlay); }
-.dform { display: grid; gap: var(--s-4); padding: var(--s-5); }
+.dform { display: grid; gap: var(--s-4); padding: var(--s-4); }
 .dform h2 { margin: 0; font-size: var(--fs-title); }
 .dform header p { margin: 2px 0 0; color: var(--ink-2); font-size: var(--fs-meta); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }

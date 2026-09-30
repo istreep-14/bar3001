@@ -14,15 +14,20 @@ export const periodItems = (s: Summary): Item[] => [
   { label: 'Total', value: moneyWhole(s.total), hint: 'Tips, estimated wage and other income' }
 ];
 
-/** A page's side column: a label, its figures, and an optional line of explanation. */
-export function SideStats({ label = 'This period', items, note }: { label?: string; items: Item[]; note?: ComponentChildren }) {
+/** A page's side column: optional content (an open shift, say), then a label, its figures, and a line of explanation. */
+export function SideStats({ label = 'This period', items, note, children, ariaLabel }: {
+  label?: string; items?: Item[]; note?: ComponentChildren; children?: ComponentChildren; ariaLabel?: string;
+}) {
   return (
-    <aside class="panel-body side" aria-label={label}>
-      <div class="side-block">
-        <h3 class="label">{label}</h3>
-        <StatList items={items} />
-        {note && <p class="muted side-note">{note}</p>}
-      </div>
+    <aside class="panel-body side" aria-label={ariaLabel ?? label}>
+      {children}
+      {items && (
+        <div class="side-block">
+          <h3 class="label">{label}</h3>
+          <StatList items={items} />
+          {note && <p class="muted side-note">{note}</p>}
+        </div>
+      )}
     </aside>
   );
 }

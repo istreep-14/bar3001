@@ -12,9 +12,9 @@ import { EmptyState } from '../../ui/EmptyState.tsx';
 import { FilterMenu } from '../../ui/FilterMenu.tsx';
 import type { Facet } from '../../ui/FilterMenu.tsx';
 import { Icon } from '../../ui/Icon.tsx';
-import { StatList } from '../../ui/kpi.tsx';
 import { ManagerBadge, MeBadge } from '../../ui/MeBadge.tsx';
-import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Page } from '../../ui/Page.tsx';
+import { SideStats } from '../../ui/SideStats.tsx';
 import { Table } from '../../ui/Table.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import type { Column } from '../../ui/Table.tsx';
@@ -109,23 +109,15 @@ export function PeopleScreen() {
       </>;
 
   return (
-    <section class="panel fill" aria-labelledby="people-title">
-      <PanelHead title="People" id="people-title"><button class="btn btn-primary" onClick={() => openPerson('new')}><Icon name="plus" /> Add<span class={styles.long}> person</span></button></PanelHead>
-      <div class="split">
-        <div class={`panel-body flush ${styles.body}`}>{roster}</div>
-        <aside class="panel-body side" aria-label="Roster">
-          <div class="side-block">
-            <h3 class="label">Roster</h3>
-            <StatList items={[
-              { label: 'Employees', value: all.length },
-              { label: 'Active', value: all.filter(p => p.status === 'active').length },
-              { label: 'Managers', value: all.filter(p => p.manager).length },
-              { label: 'Roles', value: roles.size }
-            ]} />
-          </div>
-        </aside>
-      </div>
-    </section>
+    <Page title="People" id="people-title" fill flush bodyClass={styles.body} tools={<button class="btn btn-primary" onClick={() => openPerson('new')}><Icon name="plus" /> Add<span class={styles.long}> person</span></button>}
+      side={<SideStats label="Roster" items={[
+        { label: 'Employees', value: all.length },
+        { label: 'Active', value: all.filter(p => p.status === 'active').length },
+        { label: 'Managers', value: all.filter(p => p.manager).length },
+        { label: 'Roles', value: roles.size }
+      ]} />}>
+      {roster}
+    </Page>
   );
 }
 

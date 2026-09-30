@@ -7,7 +7,7 @@
 .column { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .formBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
-.head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2); padding: var(--s-3) var(--s-2) var(--s-3) var(--s-4); border-bottom: 1px solid var(--line-soft); }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line-soft); }
 .title { display: grid; justify-items: start; gap: var(--s-1); padding-top: var(--s-1); min-width: 0; }
 .head > h2 { padding-top: var(--s-2); }
 .actions { display: flex; align-items: center; flex: none; }

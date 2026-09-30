@@ -8,7 +8,7 @@ import type { GroupBy } from '../../lib/groups.ts';
 import { rateContext, summarize } from '../../lib/stats.ts';
 import { sheet } from '../../router.ts';
 import { Icon } from '../../ui/Icon.tsx';
-import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Page } from '../../ui/Page.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { isDesktop } from '../../ui/viewport.ts';
 import { ShiftCard } from './ShiftCard.tsx';
@@ -63,30 +63,21 @@ export function LogScreen() {
   );
 
   return (
-    <section class={`panel ${desktop ? 'fill' : ''}`} aria-labelledby="log-title">
-      <PanelHead title="Shift log" id="log-title">{groupControl}<ScopeControl /></PanelHead>
-      {desktop ? (
-        <div class="split">
-          <div class={`panel-body flush ${styles.body} ${styles.scroll}`}>
-            {alerts}
-            {empty ?? <ShiftLog views={views} by={by} openId={selected} hidden={hiddenCols.value} onHidden={setHiddenCols} />}
-          </div>
-          <SideStats items={periodItems(s)} note="Rate is tips over hours. Total also includes wage and other income." />
-        </div>
-      ) : (
-        <div class={`panel-body ${styles.body}`}>
-          {alerts}
-          {empty ?? groupShifts(views, by === 'none' ? 'week' : by).map(g => (
-            <section key={g.key} class={styles.week} aria-label={g.label}>
-              <div class={styles.weekHead}>
-                <h2 class={styles.bandName}>{g.label}</h2>
-                <span class="fig fig-key">{g.done ? dollars(g.total) : DASH}</span>
-              </div>
-              <ul class={styles.list}>{g.views.map(v => <ShiftCard key={v.shift.id} v={v} ctx={ctx} selected={selected === v.shift.id} />)}</ul>
-            </section>
-          ))}
-        </div>
-      )}
-    </section>
+    <Page title="Shift log" id="log-title" fill={desktop} flush={desktop} bodyClass={desktop ? `${styles.body} ${styles.scroll}` : styles.body}
+      tools={<>{groupControl}<ScopeControl /></>}
+      side={desktop ? <SideStats items={periodItems(s)} note="Rate is tips over hours. Total also includes wage and other income." /> : undefined}>
+      {alerts}
+      {empty ?? (desktop
+        ? <ShiftLog views={views} by={by} openId={selected} hidden={hiddenCols.value} onHidden={setHiddenCols} />
+        : groupShifts(views, by === 'none' ? 'week' : by).map(g => (
+          <section key={g.key} class={styles.week} aria-label={g.label}>
+            <div class={styles.weekHead}>
+              <h3 class={styles.bandName}>{g.label}</h3>
+              <span class="fig fig-key">{g.done ? dollars(g.total) : DASH}</span>
+            </div>
+            <ul class={styles.list}>{g.views.map(v => <ShiftCard key={v.shift.id} v={v} ctx={ctx} selected={selected === v.shift.id} />)}</ul>
+          </section>
+        )))}
+    </Page>
   );
 }

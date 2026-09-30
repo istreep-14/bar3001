@@ -21,7 +21,7 @@ import type { Facet } from '../../ui/FilterMenu.tsx';
 import { HoverCard } from '../../ui/HoverCard.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { MeBadge } from '../../ui/MeBadge.tsx';
-import { PanelHead } from '../../ui/PanelHead.tsx';
+import { Page } from '../../ui/Page.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { SideStats, periodItems } from '../../ui/SideStats.tsx';
 import { Table } from '../../ui/Table.tsx';
@@ -133,13 +133,11 @@ export function ShiftTable() {
   );
 
   return (
-    <section class="panel fill" aria-labelledby="table-title">
-      <PanelHead title="Shift table" id="table-title">{groupControl}<ScopeControl /></PanelHead>
-      <div class="split">
-        <div class={`panel-body flush ${styles.body}`}>{table}</div>
-        <SideStats items={periodItems(summarize(rows))} note="Rate is tips over hours. Total also includes wage and other income." />
-      </div>
-    </section>
+    <Page title="Shift table" id="table-title" fill flush bodyClass={styles.body}
+      tools={<>{groupControl}<ScopeControl /></>}
+      side={<SideStats items={periodItems(summarize(rows))} note="Rate is tips over hours. Total also includes wage and other income." />}>
+      {table}
+    </Page>
   );
 }
 
@@ -176,23 +174,22 @@ function CrewCell({ v }: { v: ShiftView }) {
   if (!v.crewCount) return <span class="nil">{DASH}</span>;
   const shown = v.crew.slice(0, CREW_SHOWN);
   const more = v.crewCount - shown.length;
-  const card = (
-    <>
-      {v.crew.map(c => {
-        const p = personById(c.staff_id), h = hoursWorked(c.start, c.end);
-        return (
-          <span key={c.id} class={styles.who}>
-            <PersonAvatar id={c.staff_id} fallback={c.name} />
-            <span class={styles.whoName}>{p?.name ?? c.name ?? 'Someone'}{p?.is_user && <MeBadge />}</span>
-            <span class="fig">{h == null ? DASH : dec1(h)}</span>
-          </span>
-        );
-      })}
-      <span class={styles.whoFoot}><span>{v.crewCount} on the bar</span><b class="fig">{dec1(v.crewHours)}</b></span>
-    </>
-  );
   return (
-    <HoverCard card={card} label={`${v.crewCount} on the bar: ${crewNames(v).join(', ')}`}>
+    <HoverCard card={() => (
+      <>
+        {v.crew.map(c => {
+          const p = personById(c.staff_id), h = hoursWorked(c.start, c.end);
+          return (
+            <span key={c.id} class={styles.who}>
+              <PersonAvatar id={c.staff_id} fallback={c.name} />
+              <span class={styles.whoName}>{p?.name ?? c.name ?? 'Someone'}{p?.is_user && <MeBadge />}</span>
+              <span class="fig">{h == null ? DASH : dec1(h)}</span>
+            </span>
+          );
+        })}
+        <span class={styles.whoFoot}><span>{v.crewCount} on the bar</span><b class="fig">{dec1(v.crewHours)}</b></span>
+      </>
+    )} label={`${v.crewCount} on the bar: ${crewNames(v).join(', ')}`}>
       <span class={styles.crewCell}>
         <span class={`fig ${styles.crewHoursFig}`}>{hoursFig(v.crewHours)}</span>
         <CrewPhotos crew={shown} more={more} />

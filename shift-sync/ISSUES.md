@@ -87,11 +87,10 @@ resolve under Vite 8 yet. Revisit on the next Vite bump.
 `.github/workflows/ci.yml` pins `node-version: '22.18'`, the floor `package.json` asks for, so a later 22.x cannot change
 type stripping under CI.
 
-### 19. About 30 font sizes are still literal
-Colours and weights are tokens, and `tests/tokens.test.ts` keeps them that way. The Log's two figure sizes are tokens now
-(`--fs-fig` 15px, `--fs-tips` 17px) and they stay put when a mouse densifies the type ladder. The rest are not on that
-ladder: `charts.css` sets its labels in px (10, 11, 13, 22, 30) and module rules use one-off rems (0.5625rem to 1.375rem).
-Pointing those at `--fs-*` would change them on a mouse, so each still needs a look rather than a find-and-replace.
+### 19. (fixed) Font sizes are on the type scale
+`tests/tokens.test.ts` rejects a `font-size` that is not `var(--fs-*)`, `inherit`, or a relative `em`. Chart labels, the
+22/30 tiles and the day chip's month band are their own tokens (`--fs-axis`, `--fs-tile`, `--fs-stat`, `--fs-chip`) and
+do not densify with a mouse. The Log's `--fs-fig` and `--fs-tips` stay fixed too.
 
 ## Repo state
 The review's work is on `main` (merged from `review-fixes`). `shift-sync/dist/` is build output on disk, git-ignored. The

@@ -5,7 +5,7 @@
 .modal::backdrop { background: var(--overlay); }
 .form { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-.head { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line); }
+.head { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
 .crumbs { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); min-width: 0; font-size: var(--fs-body); color: var(--ink-2); }
 .crumbs b { font-size: var(--fs-title); font-weight: var(--fw-semi); color: var(--ink); }
 .crumbs .page { font-weight: var(--fw-med); color: var(--accent); }
