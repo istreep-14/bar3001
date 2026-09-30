@@ -1,19 +1,12 @@
-.card { width: 100%; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-2); text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); transition: background var(--dur) var(--ease); }
+.card { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-2); row-gap: 2px; padding: 0.2rem var(--s-2); min-height: 1.75rem; text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: -0.011em; transition: background var(--dur) var(--ease); }
 .card:hover { background: var(--surface-2); }
 .card[aria-current='true'] { background: var(--sel-bg); box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
-/* The date, drawn rather than written: a shift IS its date. No box, so nothing nests. */
-.date { display: grid; justify-items: center; line-height: 1.1; }
-.month { font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--ink-2); }
-.day { font-size: var(--fs-hero); font-weight: var(--fw-bold); }
-.body { display: grid; gap: 2px; min-width: 0; }
-.head { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lead); }
-.weekday { font-weight: var(--fw-semi); }
-.year { margin-left: -0.25rem; font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-3); }
-.meta { font-size: var(--fs-meta); color: var(--ink-2); }
-.foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-1) var(--s-3); margin-top: 2px; min-width: 0; font-size: var(--fs-meta); }
-.note { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 100%; }
-.figures { display: grid; justify-items: end; gap: 2px; }
-.total { font-size: var(--fs-title); font-weight: var(--fw-semi); }
-/* the same size/shape as RateFigure's own pill (`--fs-meta`), so a shift with no rate yet doesn't jump the column */
+.line { display: flex; align-items: baseline; gap: 0.35rem; min-width: 0; overflow: hidden; }
+.line > :global([class*='date']) { flex: none; }
+.time, .quiet { color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.figures { display: flex; align-items: center; justify-content: flex-end; gap: var(--s-2); }
+.total { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; color: var(--ink); }
 .rateEmpty { font-size: var(--fs-meta); }
-.pending { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--accent); }
+.foot { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--s-2); min-width: 0; color: var(--ink-2); }
+.note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.pending { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--accent); align-self: center; }

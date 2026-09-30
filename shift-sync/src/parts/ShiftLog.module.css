@@ -1,70 +1,60 @@
 /* The grouped Log. One grid for the head, the bands and the rows, so every column lines up down the page. */
-.log { background: var(--surface); padding: 0 var(--s-4) var(--s-5); min-width: 0; }
+.log { background: var(--surface); padding: 0 var(--s-2) var(--s-2); min-width: 0; --fig-h: 1.125rem; }
 .grid { display: grid; grid-template-columns: var(--log-cols); align-items: center; }   /* set on .log, from the columns shown */
 .grid :global(.c) { text-align: center; }
 .grid > span { padding: 0 var(--s-2); min-width: 0; }
 .grid > span:first-child { padding-left: var(--s-3); }
 .grid :global(.r) { text-align: right; }
 
-/* Same header band as the shared table (`.tbl thead th` in ui.css): sentence case, semibold — no small caps
-   anywhere in a table head, so the Log's own grid still reads as the same kind of thing as every other table. */
-.head { position: sticky; top: 0; z-index: 1; min-height: 2.25rem; margin: 0 calc(-1 * var(--s-4)) var(--s-1); padding: 0 var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--th-ink); }
+/* The block names sit in a short strip; the column heads under them stay sentence case, the same size as the sheet. */
+.groups { position: sticky; top: 0; z-index: 2; height: 1rem; margin: 0 calc(-1 * var(--s-2)); padding: 0 var(--s-2); background: color-mix(in srgb, var(--ink) 5%, var(--th-bg)); box-shadow: inset 0 -1px 0 var(--line-soft); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.head { position: sticky; top: 1rem; z-index: 1; min-height: 1.375rem; margin: 0 calc(-1 * var(--s-2)); padding: 0 var(--s-2); background: var(--th-bg); border-bottom: 1px solid var(--th-line); font-size: var(--fs-micro); font-weight: var(--fw-semi); color: var(--th-ink); }
 
 .corner { display: flex; justify-content: center; padding: 0 !important; }
-.group + .group { margin-top: var(--s-4); }
-/* The group heading: no block, just its name, a count chip and the group's tips and total in their columns, on a hairline —
-   a quiet break between groups, the way the lists on Other income and Crew break between shifts. */
-.band { min-height: 2.25rem; margin: var(--s-2) 0 0; border-bottom: 1px solid var(--line); }
-.bandLabel { display: flex; align-items: center; gap: var(--s-3); }
-.bandName { font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: -0.01em; color: var(--ink); }
-.bandTips { font-size: var(--fs-tips); font-weight: var(--fw-bold); color: var(--ink); }
-.bandTotal { font-size: var(--fs-fig); font-weight: var(--fw-semi); color: var(--ink-2); }
+.group + .group { margin-top: var(--s-2); }
+/* The group heading: the name and the count, with the group's tips and total in their columns. */
+.band { min-height: 1.5rem; margin: 0; background: color-mix(in srgb, var(--ink) 4%, var(--surface)); box-shadow: inset 0 -1px 0 var(--line-soft); }
+.bandLabel { display: flex; align-items: baseline; gap: var(--s-2); }
+.bandName { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink); }
+.bandTips, .bandTotal { font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink); }
 
-.item { content-visibility: auto; contain-intrinsic-size: auto 3.25rem; }
+.item { content-visibility: auto; contain-intrinsic-size: auto 1.75rem; }
 .item + .item { border-top: 1px solid var(--line-soft); }
 
-.row { width: 100%; min-height: 3.25rem; padding-block: 1px !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-fig); text-align: left; border-radius: var(--r-md); cursor: pointer; }
+.row { width: 100%; min-height: 1.75rem; padding-block: 0 !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: -0.011em; text-align: left; border-radius: 0; cursor: pointer; }
 .row:hover { background: var(--surface-2); }
 .item[data-selected] .row { background: var(--sel-bg); box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
-/* The figures, by how much they say about the shift: tips strongest; total, rate and hours a step down; the flat extras quiet. */
-.tips { font-size: var(--fs-tips); font-weight: var(--fw-bold); color: var(--ink); }
-.total { font-weight: var(--fw-semi); color: var(--ink-2); }
-.total:global(.figure) { display: inline-flex; align-items: center; height: var(--fig-h); }
-.total:global(.figure) :global(.figure-under) { top: calc(50% + 0.75em); }   /* under the figure, inside the block's height */
+/* Tips and the total are the two figures that count. Wage and other stay quiet. */
+.tips, .total { font-weight: var(--fw-semi); color: var(--ink); }
 .quiet { color: var(--ink-3); font-weight: var(--fw-med); }
-/* Rate, Hours and Total stand the same height (--fig-h, the clock ring's), so the row's figures line up as blocks.
-   Rate is ui/RateFigure, which reads --fig-h. */
-.log { --fig-h: 2.25rem; }
-/* Hours: the figure in its clock ring, styled like Total */
-.hours { display: flex; align-items: center; justify-content: flex-end; height: var(--fig-h); color: var(--ink-2); font-weight: var(--fw-semi); }
-.hours :global(.dial) { width: var(--fig-h); height: var(--fig-h); }
-/* the crew's group picture: its cell stretches to the row and takes back the row's 1px padding, so the figures stand on
-   the row's bottom edge (CrewPhotos hangs them off this cell) */
-.grid > span.crew { --crew-h: 3.25rem; position: relative; align-self: stretch; display: flex; align-items: center; margin-block: -1px; padding-block: 0; }
+.hours { font-variant-numeric: tabular-nums; }
+.when { display: inline-flex; align-items: baseline; gap: 0.35rem; min-width: 0; }
+.when :global([class*='date']) { flex: none; }
+/* the crew's group picture scales to the short row and hangs off this cell */
+.grid > span.crew { --crew-h: 1.75rem; --crew-scale: 0.92; position: relative; align-self: stretch; display: flex; align-items: center; margin-block: 0; padding-block: 0; }
 .crew::after { left: var(--s-2); right: auto; }   /* the names bubble opens rightward from the faces */
-.item[data-status='scheduled'] :global(.dial) { opacity: 0.55; }
 /* the narrow icon columns: day or night, and party */
 .icon { display: flex; justify-content: center; }
 .type { display: inline-flex; color: var(--ink-4); }
 .type[data-kind='day'] { color: var(--day-ink); }
 .type[data-kind='night'] { color: var(--night); }
-.type :global(.icon) { width: 1rem; height: 1rem; }
+.type :global(.icon) { width: 0.7rem; height: 0.7rem; }
 .chev { display: flex; justify-content: center; color: var(--ink-3); }
 .chev :global(.icon) { width: 1rem; height: 1rem; transform: rotate(90deg); transition: transform var(--dur) var(--ease); }
 
 /* A shift still short of its numbers (not yet worked, or worked but not yet paid) reads muted — text colour
    only, so nothing changes size or position and the columns stay in line row to row. */
 .item[data-status='worked'] .row { color: var(--ink-2); }
-.item[data-status='scheduled'] .row { color: var(--ink-3); font-style: italic; }
-/* the shift's times under the date: small, light, italic, quieter than anything else in the row */
-.times { font-size: var(--fs-meta); font-style: italic; font-weight: var(--fw-normal); color: var(--ink-3); letter-spacing: 0.01em; }
+.item[data-status='scheduled'] .row { color: var(--ink-3); }
+/* the shift's times, on the same line as the date */
+.times { font-size: var(--fs-meta); font-weight: var(--fw-med); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Opened: the row and its card are one white block with the accent ring, lifted off the list. */
 .item[data-open] { margin: var(--s-2) 0 var(--s-3); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }
 .item[data-open] .row { border-radius: var(--r-lg) var(--r-lg) 0 0; }
 .item[data-open] .row:hover { background: transparent; }
 .item[data-open] .chev :global(.icon) { transform: rotate(-90deg); color: var(--ink); }
-.card { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-5) var(--s-5); }
+.card { display: grid; gap: var(--s-3); padding: var(--s-2) var(--s-4) var(--s-3); }
 .actions { display: flex; gap: var(--s-2); }
 .spacer { flex: 1; }
 .sync { margin: 0; font-size: var(--fs-meta); color: var(--ink-2); }
