@@ -18,7 +18,7 @@ export const ACCENTS: Accent[] = [
   { id: 'slate', label: 'Slate', light: '#475569', dark: '#a9b8cc' }
 ];
 export const TINTS: Tint[] = [
-  { id: 'grey', label: 'Soft grey', h: 220, s: 5 },
+  { id: 'grey', label: 'Soft grey', h: 232, s: 12 },
   { id: 'teal', label: 'Mint', h: 172, s: 14 },
   { id: 'slate', label: 'Slate', h: 215, s: 14 },
   { id: 'warm', label: 'Stone', h: 38, s: 13 },
@@ -102,7 +102,7 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
   // as one field; only content you act on (the table, a field, an opened row) reaches the near-white top step.
   const bg = exact ?? hslToHex(h, s, base), surface = hslToHex(h, s, step(99.5, 13.5)), surface2 = hslToHex(h, s, step(96, 10));
   const surface3 = hslToHex(h, s + 2, step(86, 18));
-  const lines = dark ? [step(0, 21 + k * 2), step(0, 27 + k * 3), step(0, 38 + k * 5)] : [step(89 - k * 2, 0), step(84 - k * 3, 0), step(74 - k * 5, 0)];
+  const lines = dark ? [step(0, 24 + k * 2), step(0, 30 + k * 3), step(0, 40 + k * 5)] : [step(92 - k * 2, 0), step(88 - k * 3, 0), step(78 - k * 5, 0)];
   const grounds = [bg, surface, surface2, surface3];
   const ink = solve(grounds, h, Math.min(ts + 6, 24), dark ? 94 : 12, dark ? 1 : -1, [12, 14, 16][k]!);
   const ink2 = solve(grounds, h, ts, dark ? 78 : 30, dark ? 1 : -1, [5.4, 6.6, 8.2][k]!);

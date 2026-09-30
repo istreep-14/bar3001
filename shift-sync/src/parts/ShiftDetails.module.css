@@ -3,7 +3,7 @@
 .lists { display: grid; gap: var(--s-3); }
 .details[data-layout='columns'] .lists { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-4); }
 .list { display: grid; align-content: start; min-width: 0; }
-.cap { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin: 0 0 var(--s-1); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.cap { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin: 0 0 var(--s-1); font-size: var(--fs-meta); font-weight: var(--fw-med); color: var(--ink-3); }
 .kv { display: grid; margin: 0; }
 .kv > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); padding: 0.3rem 0; border-bottom: 1px solid var(--line-soft); }
 .kv dt { display: flex; align-items: center; gap: var(--s-2); color: var(--ink-2); min-width: 0; }

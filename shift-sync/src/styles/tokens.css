@@ -22,13 +22,13 @@
   --fs-title: 1rem; --fs-hero: 1.25rem;
   /* The Log's two figure sizes, in px in the contract (15 and 17). They stay put when a mouse densifies the ladder above.
      Axis, tile, stat and chip are fixed too: chart labels, the 22/30 tiles, and the day chip's month band. */
-  --fs-fig: 0.9375rem; --fs-tips: 1.0625rem;
+  --fs-fig: 0.9375rem; --fs-tips: 1.0625rem; --fs-kpi: 1.5rem;
   --fs-axis: 0.6875rem; --fs-tile: 1.375rem; --fs-stat: 1.875rem; --fs-chip: 0.5625rem;
   --fw-normal: 400; --fw-med: 500; --fw-semi: 600; --fw-bold: 700;
 
   /* spacing: 4px base */
   --s-1: 0.25rem; --s-2: 0.5rem; --s-3: 0.75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem;
-  --r-sm: 0.5rem; --r-md: 0.75rem; --r-lg: 1rem; --r-pill: 999px;
+  --r-sm: 0.5rem; --r-md: 0.75rem; --r-lg: 1.375rem; --r-chip: 1rem; --r-pill: 999px;
 
   /* geometry */
   --ctl-h: 2.75rem; --row-h: 3.5rem; --row-h-head: 2rem;
@@ -40,8 +40,8 @@
 
   /* surfaces + lines: canvas (--bg) < panel (--surface-2) < table/content, the prominent surface (--surface) ;
      each step must read as a distinct grey, not just a hover tint. --surface-3 is the pressed/inset shade. */
-  --bg: #e7e8e9; --surface: #fefefe; --surface-2: #f4f5f5; --surface-3: #d9dade;
-  --line: #ccced1; --line-soft: #dcdde0; --line-strong: #acafb4;
+  --bg: #eef0f8; --surface: #fefefe; --surface-2: #f6f7fb; --surface-3: #e1e3ec;
+  --line: #d8dae3; --line-soft: #e6e8ef; --line-strong: #c4c7d2;
   /* ink: --ink-3 is for non-essential labels only; --ink-4 never carries meaning. */
   --ink: #0b0c0e; --ink-2: #44464b; --ink-3: #52555b; --ink-4: #878a92;
 
@@ -112,8 +112,8 @@
 /* Dark: written twice (OS preference, manual override). Keep the two blocks identical. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #101011; --surface: #212224; --surface-2: #18191b; --surface-3: #2b2d31;
-    --line: #494b50; --line-soft: #383a3e; --line-strong: #686c73;
+    --bg: #12131a; --surface: #212224; --surface-2: #18191d; --surface-3: #2b2d33;
+    --line: #4a4c56; --line-soft: #3a3c44; --line-strong: #686c76;
     --ink: #ffffff; --ink-2: #c4c6ca; --ink-3: #a4a7ad; --ink-4: #747881;
     --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
     --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
@@ -134,8 +134,8 @@
   }
 }
 :root[data-theme='dark'] {
-  --bg: #101011; --surface: #212224; --surface-2: #18191b; --surface-3: #2b2d31;
-  --line: #494b50; --line-soft: #383a3e; --line-strong: #686c73;
+  --bg: #12131a; --surface: #212224; --surface-2: #18191d; --surface-3: #2b2d33;
+  --line: #4a4c56; --line-soft: #3a3c44; --line-strong: #686c76;
   --ink: #ffffff; --ink-2: #c4c6ca; --ink-3: #a4a7ad; --ink-4: #747881;
   --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
   --good: #4ade80; --warn: #fbbf24; --bad: #f87171;

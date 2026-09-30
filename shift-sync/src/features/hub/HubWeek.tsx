@@ -3,31 +3,27 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { hoursWorked, toHHMM, toMin } from '../../core/core.generated.js';
 import { liveStaff, liveViews, personById, removeCrewLine, saveCrewLine } from '../../data/store.ts';
 import { addDays, today, weekStart } from '../../lib/dates.ts';
-import { clockPlain, clockShort, dec1, shortDate, weekdayShort } from '../../lib/format.ts';
+import { clockPlain, clockShort, dec1, shortDate, weekdayShort, weekLabel } from '../../lib/format.ts';
 import { crewWeek } from '../../lib/hub.ts';
 import type { Cell } from '../../lib/hub.ts';
 import type { ShiftView } from '../../lib/stats.ts';
-import { TypeIcon } from '../../ui/Badges.tsx';
-import { isDesktop } from '../../ui/viewport.ts';
-import { CrewTimeline } from './CrewTimeline.tsx';
+import { OpenPill, TypeIcon } from '../../ui/Badges.tsx';
+import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
 import { Icon } from '../../ui/Icon.tsx';
+import { KpiStrip } from '../../ui/kpi.tsx';
 import { MeBadge } from '../../ui/MeBadge.tsx';
 import { TimeField } from '../../ui/TimeField.tsx';
 import { PanelHead } from '../../ui/PanelHead.tsx';
 import { toast } from '../../ui/toast.tsx';
-import { oneOf, persisted } from '../../data/persisted.ts';
 import styles from './Hub.module.css';
 
-/* Crew week: every bartender as a row, Monday to Sunday across, each cell that person's hours on that day's shift.
- * Click a cell to set or change their start and end; hours are worked out from the times. A day with no shift can't hold hours,
- * so its cells are blank until the shift is logged. */
+/* Crew week: bartenders down the left (avatar + name once), Monday–Sunday across. Click a cell to set hours.
+ * A day with no shift can't hold hours. Day headers toggle a focus column. This is the grid, not a week Gantt. */
 const monday = signal(weekStart(today()));
 /** People added to a week with no shift of theirs in it yet, by that week's Monday: added to this week, not every week. */
 const extra = signal<Record<string, string[]>>({});
 const editing = signal<{ view: ShiftView; staff_id: string; name: string } | null>(null);
-/* Two views of the same week: Timeline (days down, a bar per bartender on one time ruler) and Grid (bartenders down, days across). */
-type View = 'timeline' | 'grid';
-const [view, setView] = persisted<View>('crew:view', oneOf(['timeline', 'grid'] as const), 'timeline');
+const focusDay = signal<string | null>(null);
 
 export function HubWeek() {
   const people = liveStaff.value.map(p => ({ id: p.id, name: p.name, is_user: p.is_user }));
@@ -36,37 +32,39 @@ export function HubWeek() {
   const shown = new Set(g.rows.map(r => r.staff_id));
   const roster = liveStaff.value.filter(p => !shown.has(p.id) && p.status === 'active');
   const thisWeek = monday.value === weekStart(today());
+  const shiftN = g.shiftsPerDay.reduce((n, d) => n + d.length, 0);
+  const focus = focusDay.value;
   return (
-    <section class="panel" aria-labelledby="hw-title">
-      <PanelHead title="Crew week" id="hw-title">
-        {isDesktop.value && (
-          <div class="seg" role="radiogroup" aria-label="Crew week view">
-            <label><input type="radio" name="crew-view" checked={view.value === 'timeline'} onChange={() => setView('timeline')} /><span>Timeline</span></label>
-            <label><input type="radio" name="crew-view" checked={view.value === 'grid'} onChange={() => setView('grid')} /><span>Grid</span></label>
-          </div>
-        )}
-        <span class={styles.range} aria-live="polite">{shortDate(g.days[0]!)} – {shortDate(g.days[6]!)}</span>
+    <section class="panel fill" aria-labelledby="hw-title">
+      <PanelHead title="This week's hours" id="hw-title">
         <div class={styles.nav}>
-          {!thisWeek && <button type="button" class="linkbtn" onClick={() => { monday.value = weekStart(today()); }}>This week</button>}
-          <button type="button" class="icon-btn" aria-label="Previous week" onClick={() => { monday.value = addDays(monday.value, -7); }}><Icon name="left" /></button>
-          <button type="button" class="icon-btn" aria-label="Next week" onClick={() => { monday.value = addDays(monday.value, 7); }}><Icon name="chevron" /></button>
+          <button type="button" class="icon-btn" aria-label="Previous week" onClick={() => { monday.value = addDays(monday.value, -7); focusDay.value = null; }}><Icon name="left" /></button>
+          <span class={styles.range}>{weekLabel(monday.value)}</span>
+          <button type="button" class="icon-btn" aria-label="Next week" onClick={() => { monday.value = addDays(monday.value, 7); focusDay.value = null; }}><Icon name="chevron" /></button>
         </div>
+        {!thisWeek && <button type="button" class="linkbtn" onClick={() => { monday.value = weekStart(today()); focusDay.value = null; }}>This week</button>}
       </PanelHead>
-      <div class="panel-body flush">
-        {isDesktop.value && view.value === 'timeline' ? (
-          <CrewTimeline days={g.days} shiftsPerDay={g.shiftsPerDay} dayHours={g.dayHours} onEdit={(v, staff_id, name) => { editing.value = { view: v, staff_id, name }; }} />
-        ) : (
+      <div class={`panel-body list-sheet ${styles.body}`}>
+        <KpiStrip label="This week" items={[
+          { label: 'Hours', value: `${dec1(g.total)}h`, icon: 'clock', neutral: true },
+          { label: 'Bartenders', value: g.rows.length, icon: 'users' },
+          { label: 'Shifts', value: shiftN, icon: 'log' }
+        ]} />
+        <div class={styles.sheet}>
         <div class={styles.scroll}>
           <table class={`tbl ${styles.grid}`} aria-label="Crew hours this week">
             <thead>
               <tr>
                 <th class="l" scope="col">Bartender</th>
                 {g.days.map((d, i) => (
-                  <th key={d} scope="col" class={d === today() ? styles.today : undefined}>
-                    <span class={styles.dhead}>{weekdayShort(d)} <b>{+d.slice(8)}</b></span>
-                    <span class={styles.dshift}>{g.shiftsPerDay[i]!.map(v => (
-                      <span key={v.shift.id} title={`${v.shift.shift_type ?? 'Shift'} ${clockPlain(v.shift.start)} – ${clockPlain(v.shift.end)}`}><TypeIcon type={v.shift.shift_type} /></span>
-                    ))}</span>
+                  <th key={d} scope="col" class={`${d === today() ? styles.today : ''} ${focus === d ? styles.colOn : ''}`}>
+                    <button type="button" class={styles.dheadBtn} aria-pressed={focus === d}
+                      onClick={() => { focusDay.value = focus === d ? null : d; }}>
+                      <span class={styles.dhead}>{weekdayShort(d)} <b>{+d.slice(8)}</b></span>
+                      <span class={styles.dshift}>{g.shiftsPerDay[i]!.map(v => (
+                        <span key={v.shift.id} title={`${v.shift.shift_type ?? 'Shift'} ${clockPlain(v.shift.start)} – ${clockPlain(v.shift.end)}`}><TypeIcon type={v.shift.shift_type} /></span>
+                      ))}</span>
+                    </button>
                   </th>
                 ))}
                 <th scope="col">Hours</th>
@@ -75,9 +73,19 @@ export function HubWeek() {
             <tbody>
               {g.rows.map(r => (
                 <tr key={r.staff_id}>
-                  <th class="l strong" scope="row">{r.name}{personById(r.staff_id)?.is_user && <span class={styles.you}><MeBadge /></span>}</th>
-                  {r.cells.map(c => <td key={c.date}><CellButtons cell={c} staff_id={r.staff_id} name={r.name} /></td>)}
-                  <td class="strong">{r.hours ? dec1(r.hours) : '—'}</td>
+                  <th class={`l ${styles.whoCell}`} scope="row">
+                    <span class="who">
+                      <PersonAvatar id={r.staff_id} size="md" />
+                      <span class="who-name">{r.name}</span>
+                      {personById(r.staff_id)?.is_user && <span class={styles.you}><MeBadge /></span>}
+                    </span>
+                  </th>
+                  {r.cells.map(c => (
+                    <td key={c.date} class={focus && focus !== c.date ? styles.dim : undefined}>
+                      <CellButtons cell={c} staff_id={r.staff_id} name={r.name} />
+                    </td>
+                  ))}
+                  <td class="strong">{r.hours ? dec1(r.hours) : ''}</td>
                 </tr>
               ))}
               {g.rows.length === 0 && <tr><td colSpan={9} class={styles.none}>No shifts logged this week. Log a shift, then set who worked it here.</td></tr>}
@@ -85,13 +93,13 @@ export function HubWeek() {
             <tfoot>
               <tr>
                 <th class="l" scope="row">All bartenders</th>
-                {g.dayHours.map((h, i) => <td key={i} class="mute">{h ? dec1(h) : '—'}</td>)}
-                <td class="strong">{g.total ? dec1(g.total) : '—'}</td>
+                {g.dayHours.map((h, i) => <td key={i} class="mute">{h ? dec1(h) : ''}</td>)}
+                <td class="strong">{g.total ? dec1(g.total) : ''}</td>
               </tr>
             </tfoot>
           </table>
         </div>
-        )}
+        </div>
         <div class={styles.addbar}>
           <label class={styles.add}>
             <span class="label-text">Add a bartender to this week</span>
@@ -115,8 +123,8 @@ function CellButtons({ cell, staff_id, name }: { cell: Cell; staff_id: string; n
         const h = line ? hoursWorked(line.start, line.end) : null;
         return (
           <button type="button" key={view.shift.id} class={line ? styles.on : styles.empty} onClick={() => { editing.value = { view, staff_id, name }; }}
-            aria-label={line ? `${name}, ${cell.date}: ${clockPlain(line.start)} to ${clockPlain(line.end)}. Edit` : `Add ${name} to the ${cell.date} shift`}>
-            {line ? <><span class={styles.times}>{clockShort(line.start)}–{clockShort(line.end)}</span>{h != null && <b>{dec1(h)}h</b>}</> : <Icon name="plus" />}
+            aria-label={line ? `${name}, ${cell.date}: ${clockPlain(line.start)} to ${line.end != null ? clockPlain(line.end) : 'Open'}. Edit` : `Add ${name} to the ${cell.date} shift`}>
+            {line ? <><span class={styles.times}>{clockShort(line.start)}{line.end != null ? `–${clockShort(line.end)}` : ''}</span>{line.end == null && <OpenPill />}{h != null && <b>{dec1(h)}h</b>}</> : <Icon name="plus" />}
           </button>
         );
       })}
@@ -149,7 +157,7 @@ function HoursDialog() {
   return (
     <dialog ref={ref} class={styles.dialog} aria-labelledby="hd-title" onClose={close} onCancel={close} onClick={ev => { if (ev.target === ref.current) close(); }}>
       <form onSubmit={save} class={styles.dform}>
-        <header><h2 id="hd-title">{e.name}</h2><p>{weekdayShort(sh.date)}, {shortDate(sh.date)} · shift {clockPlain(sh.start)} – {clockPlain(sh.end)}</p></header>
+        <header><h2 id="hd-title">{e.name}</h2><p>{weekdayShort(sh.date)}, {shortDate(sh.date)} · shift {clockPlain(sh.start)}{sh.end != null ? ` – ${clockPlain(sh.end)}` : ' · Open'}</p></header>
         <div class={styles.two}>
           <TimeField label="Start" value={start} onChange={setStart} />
           <TimeField label="End" value={end} pm={false} onChange={setEnd} />

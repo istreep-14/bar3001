@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { nowOnRuler, place, rulerFor, tickLabel } from '../src/lib/ruler.ts';
+import { nightRuler, nowOnRuler, place, placeSpan, rulerFor, tickLabel } from '../src/lib/ruler.ts';
 
 test('evening shifts get a noon ruler long enough for the latest end', () => {
   const r = rulerFor([{ start: 18 * 60, end: 150 }, { start: 16 * 60, end: 150 }]);
@@ -31,4 +31,23 @@ test('now sits on an evening ruler after midnight, and is gone in the morning', 
   assert.ok(night > 0 && night < 100);
   assert.ok(late > night);
   assert.equal(nowOnRuler(r, at(10)), null);
+});
+
+test('a single night starts at the first hour, not noon', () => {
+  const r = nightRuler([{ start: 17 * 60, end: 23 * 60 }, { start: 18 * 60, end: 22 * 60 }]);
+  assert.equal(r.origin, 17 * 60);
+  assert.equal(tickLabel(r.ticks[0]!), '5 PM');
+  const a = place(17 * 60, 23 * 60, r)!;
+  assert.ok(a.left < 5);
+  assert.ok(a.width > 50);
+});
+
+test('an open night bar runs from start toward now', () => {
+  const r = nightRuler([{ start: 17 * 60, end: null }]);
+  assert.equal(r.origin, 17 * 60);
+  const open = placeSpan(17 * 60, null, r, 20 * 60)!;
+  assert.equal(open.open, true);
+  assert.ok(open.left < 5);
+  assert.ok(open.width > 20 && open.width < 90);
+  assert.equal(placeSpan(null, 20 * 60, r), null);
 });

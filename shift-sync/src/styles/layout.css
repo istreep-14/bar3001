@@ -37,6 +37,7 @@
 @media (min-width: 56rem) {
   .fill { flex: 1; min-height: 0; }
   .fill > .split { flex: 1; min-height: 0; align-items: stretch; grid-template-rows: auto minmax(0, 1fr); }
+  .fill > .panel-body { flex: 1; min-height: 0; }
   .fill .body { min-height: 0; display: flex; flex-direction: column; }
 }
 @media (min-width: 64rem) {
