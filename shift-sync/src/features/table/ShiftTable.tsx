@@ -81,17 +81,19 @@ export function ShiftTable() {
   const by = groupBy.value;
   const groupKey = (v: ShiftView) => (by === 'month' ? monthKey(v.shift.date) : by === 'week' ? weekStart(v.shift.date) : '');
   const groups = useMemo(() => (by === 'none' ? null : groupShifts(rows, by)), [rows, by]);
-  const bandFor = (key: string) => {
+  const bandCells = (key: string) => {
     const g = groups?.find(x => x.key === key);
-    if (!g) return null;
+    if (!g) return {};
     const n = g.views.length;
-    return (
-      <span class={styles.band}>
-        <span class={styles.bandName}>{g.label}</span>
-        <span class={styles.bandMeta}>{n} {n === 1 ? 'shift' : 'shifts'}</span>
-        <span class={`fig fig-key ${styles.bandTotal}`}>{g.done ? dollars(g.total) : DASH}</span>
-      </span>
-    );
+    return {
+      date: (
+        <span class={styles.band}>
+          <span class={styles.bandName}>{g.label}</span>
+          <span class={styles.bandMeta}>{n} {n === 1 ? 'shift' : 'shifts'}</span>
+        </span>
+      ),
+      total: <span class="fig fig-key">{g.done ? dollars(g.total) : DASH}</span>
+    };
   };
 
   const columns: Column<ShiftView>[] = [
@@ -123,7 +125,7 @@ export function ShiftTable() {
             ? <EmptyState title="No shifts match">Clear the search or a filter.</EmptyState>
             : <Table log fill paginate label="Shift table" rows={rows} columns={columns} rowKey={v => v.shift.id} onRow={v => openSheet(v.shift.id)}
                 selectedId={sheet.value} tone={v => (done(v) ? undefined : 'muted')} defaultSort={{ key: 'date', dir: 'desc' }}
-                group={by === 'none' ? undefined : groupKey} groupLabel={by === 'none' ? undefined : bandFor} />}
+                group={by === 'none' ? undefined : groupKey} groupCells={by === 'none' ? undefined : bandCells} holdGroups={by === 'none' ? undefined : 'date'} />}
         </>;
 
   const groupControl = (
