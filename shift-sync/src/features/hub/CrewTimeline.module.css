@@ -1,8 +1,8 @@
 /* One night-style coverage strip per day: who on the left, a shared hour grid, a coloured bar for their hours. */
-.tl { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-4); background: var(--surface); }
+.tl { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-4); }
 .row { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr); align-items: center; column-gap: var(--s-3); }
 .headRow { position: sticky; top: 0; z-index: 1; margin: 0 calc(-1 * var(--s-4)); padding: var(--s-2) var(--s-4); background: var(--th-bg); border-bottom: 1px solid var(--th-line); }
-.whoHead { font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--th-ink); }
+.whoHead { font-size: var(--fs-meta); font-weight: var(--fw-med); color: var(--th-ink); }
 .ticks { position: relative; height: 1.125rem; }
 .tick { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--ink-3); white-space: nowrap; }
 .tick:first-child { transform: none; }
@@ -38,3 +38,17 @@
 @media (prefers-reduced-motion: reduce) {
   .nowChip i { animation: none; }
 }
+
+/* One night, nested in an All-shifts date band: ticks + lanes, no week chrome.
+   Keep whoHead in the grid (hidden, not display:none) so ticks line up with the tracks. */
+.compact { padding: var(--s-2) 0 0; gap: var(--s-1); }
+.compact .headRow { position: static; margin: 0; padding: 0 0 2px; background: transparent; border: 0; }
+.compact .whoHead { visibility: hidden; }
+.compact .row, .compact .person { grid-template-columns: 8.5rem minmax(0, 1fr); }
+.compact .ticks { height: 0.95rem; }
+.compact .tick { font-size: 0.625rem; }
+.compact .block { padding: 0; }
+.compact .block + .block { border: 0; }
+.compact .dayHead { min-height: 0; }
+.compact .track { height: 1.5rem; }
+.compact .bar { top: 2px; bottom: 2px; }

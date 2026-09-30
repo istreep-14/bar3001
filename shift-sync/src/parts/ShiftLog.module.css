@@ -24,6 +24,7 @@
 .row { width: 100%; min-height: 1.75rem; padding-block: 0 !important; border: 0; margin: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: -0.011em; text-align: left; border-radius: 0; cursor: pointer; }
 .row:hover { background: var(--surface-2); }
 .item[data-selected] .row { background: var(--sel-bg); box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
+.item[data-jump]:not([data-selected]) .row { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 /* Tips and the total are the two figures that count. Wage and other stay quiet. */
 .tips, .total { font-weight: var(--fw-semi); color: var(--ink); }
 .quiet { color: var(--ink-3); font-weight: var(--fw-med); }
@@ -48,6 +49,16 @@
 .item[data-status='scheduled'] .row { color: var(--ink-3); }
 /* the shift's times, on the same line as the date */
 .times { font-size: var(--fs-meta); font-weight: var(--fw-med); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.times :global(.status-pill) { margin-left: var(--s-2); vertical-align: middle; }
+
+/* The Log page: roomier rows, sentence-case heads, a chip on the day. Dashboard's compact list leaves this off. */
+.air { flex: 1; min-height: 0; overflow: auto; padding: var(--s-2) var(--s-3) var(--s-3); border: 1px solid var(--line-soft); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.air .groups { height: 1.5rem; font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0; text-transform: none; }
+.air .head { top: 1.5rem; min-height: 2.25rem; font-size: var(--fs-meta); font-weight: var(--fw-med); }
+.air .item { contain-intrinsic-size: auto 3rem; }
+.air .row { min-height: 3rem; font-size: var(--fs-body); letter-spacing: 0; }
+.air .when { display: flex; align-items: center; gap: var(--s-2); }
+.air .grid > span.crew { --crew-h: 2.5rem; --crew-scale: 1; }
 
 /* Opened: the row and its card are one white block with the accent ring, lifted off the list. */
 .item[data-open] { margin: var(--s-2) 0 var(--s-3); border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-panel); }

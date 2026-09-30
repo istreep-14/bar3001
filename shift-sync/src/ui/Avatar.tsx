@@ -20,21 +20,22 @@ export function avatarColor(id: string, color?: string | null): { value: string;
 
 /** A person's circle: their photo when they have one, else their letters on their colour. `status` adds a dot on its
  *  lower right edge, green for active and red for inactive (the word goes with it for anyone who can't tell them apart).
- *  A photo is drawn down to a shared 48px thumb, so a list does not decode the stored image on every circle. */
+ *  List sizes share a 48px thumb; `lg` (the drawer) uses the stored photo so the circle is not an upscaled thumbnail. */
 export type AvatarSize = 'sm' | 'md' | 'lg';
 export const Avatar = memo(function Avatar({ id, name, look, size = 'sm', status }: { id: string; name: string; look?: AvatarLook; size?: AvatarSize; status?: 'active' | 'inactive' }) {
   const c = avatarColor(id, look?.avatar_color);
   const photo = look?.photo || null;
-  const [src, setSrc] = useState<string | null>(() => (photo ? thumbNow(id, photo) : null));
+  const [src, setSrc] = useState<string | null>(() => (photo ? (size === 'lg' ? photo : thumbNow(id, photo) ?? null) : null));
   useEffect(() => {
     if (!photo) { setSrc(null); return; }
+    if (size === 'lg') { setSrc(photo); return; }
     const hit = thumbNow(id, photo);
     if (hit) { setSrc(hit); return; }
     setSrc(null);
     let live = true;
     void thumbUrl(id, photo).then(url => { if (live) setSrc(url); });
     return () => { live = false; };
-  }, [id, photo]);
+  }, [id, photo, size]);
   // a colour picked by hex is painted exactly, with black or white letters, whichever reads better on it
   const ink = c.custom ? onColor(c.value) : null;
   const circle = (

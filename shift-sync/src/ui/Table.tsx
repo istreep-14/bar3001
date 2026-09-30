@@ -214,7 +214,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
               return (
                 <Fragment key={id}>
                   {group && first && ((groupCells || groupLabel)
-                    ? <tr class="tbl-band" aria-hidden="true">{groupCells
+                    ? <tr class="tbl-band">{groupCells
                         ? bandPieces(group(r)).map(p => <td key={p.key} colSpan={p.span} class={p.align}>{p.content}</td>)
                         : <td colSpan={columns.length}>{groupLabel!(group(r))}</td>}</tr>
                     : i > 0 && <tr class="tbl-sep" aria-hidden="true"><td colSpan={columns.length} /></tr>)}

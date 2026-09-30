@@ -18,3 +18,10 @@ export const PartyIcon = () => <span class="tbadge" data-kind="party" title="Par
 export const PartyBadge = ({ bare }: { bare?: boolean }) => <span class="badge" data-kind="party">{!bare && <Icon name="star" />}Party</span>;
 
 export const SourceBadge = ({ source }: { source: string }) => <span class="badge" data-kind={source}><i class="dot" />{source}</span>;
+
+/** A status word in a pill, so colour is never the only signal. */
+export function StatusPill({ status, children }: { status: string; children: string }) {
+  return <span class="status-pill" data-status={status}><i />{children}</span>;
+}
+/** A crew line or shift still on the clock: start is known, end is not. */
+export const OpenPill = () => <StatusPill status="open">Open</StatusPill>;

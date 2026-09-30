@@ -1,10 +1,11 @@
 import { hoursWorked } from '../core/core.generated.js';
 import { personById } from '../data/store.ts';
-import { DASH, clockPlain, dec1, hours, money, perHour } from '../lib/format.ts';
+import { clockPlain, dec1, hours, money, perHour } from '../lib/format.ts';
 import { incomeParts } from '../lib/groups.ts';
 import type { ShiftView } from '../lib/stats.ts';
 import { PersonAvatar } from './PersonAvatar.tsx';
 import { MixBar, MixKey } from '../ui/MixBar.tsx';
+import { OpenPill } from '../ui/Badges.tsx';
 import { MeBadge } from '../ui/MeBadge.tsx';
 import styles from './ShiftDetails.module.css';
 
@@ -26,8 +27,8 @@ export function ShiftDetails({ v, layout, onEdit }: { v: ShiftView; layout: 'sta
         <section class={styles.list} aria-label="Time">
           {cap('Time', 'time', 'the times')}
           <dl class={styles.kv}>
-            <div><dt>Start</dt><dd class="num">{clockPlain(sh.start) || DASH}</dd></div>
-            <div><dt>End</dt><dd class="num">{clockPlain(sh.end) || DASH}</dd></div>
+            <div><dt>Start</dt><dd class="num">{clockPlain(sh.start) || ''}</dd></div>
+            <div><dt>End</dt><dd class="num">{sh.end != null ? clockPlain(sh.end) : sh.start != null ? <OpenPill /> : ''}</dd></div>
             <div><dt>Hours</dt><dd class="num">{hours(v.hours)}</dd></div>
           </dl>
         </section>
@@ -40,7 +41,7 @@ export function ShiftDetails({ v, layout, onEdit }: { v: ShiftView; layout: 'sta
                 return (
                   <div key={c.id}>
                     <dt><PersonAvatar id={c.staff_id} fallback={c.name} size="sm" />{p?.name ?? c.name ?? 'Unknown'}{p?.is_user && <MeBadge />}{c.location && <span class="spot" data-spot={c.location}>{c.location}</span>}</dt>
-                    <dd class="num"><small>{clockPlain(c.start) || DASH} – {clockPlain(c.end) || DASH}</small>{h == null ? DASH : `${dec1(h)}h`}</dd>
+                    <dd class="num"><small>{clockPlain(c.start)}{c.end != null ? ` – ${clockPlain(c.end)}` : ''}</small>{c.end == null && c.start != null ? <OpenPill /> : h == null ? '' : `${dec1(h)}h`}</dd>
                   </div>
                 );
               })}

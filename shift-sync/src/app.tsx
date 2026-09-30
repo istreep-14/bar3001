@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
     { id: 'log', label: 'Log' }, { id: 'table', label: 'Table' }, { id: 'calendar', label: 'Calendar' },
     { id: 'hub/income', label: 'Other income' }] },
   { id: 'crew', label: 'Crew', icon: 'users', pages: [
-    { id: 'hub/week', label: 'Crew', tabs: [{ id: 'hub/week', label: 'Week' }, { id: 'hub/crew', label: 'Every shift' }] },
+    { id: 'hub/week', label: 'Crew', tabs: [{ id: 'hub/week', label: 'This week' }, { id: 'hub/crew', label: 'All shifts' }] },
     { id: 'people', label: 'People' }] },
   { id: 'settings', label: 'Settings', icon: 'settings', pages: [
     { id: 'settings/wages', label: 'Settings', also: ['settings/roles', 'settings/look', 'settings/sync', 'settings/data'] }] }
