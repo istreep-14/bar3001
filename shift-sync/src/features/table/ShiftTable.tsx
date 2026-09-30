@@ -31,7 +31,8 @@ import styles from './ShiftTable.module.css';
  * is a column, not a second line tucked under the day. Columns size to what they say and sit together; the spare
  * width of the panel goes to the trailing chevron, not into gaps between the numbers.
  *   Grouped by month or week, a band names the period once ("September 2026") and the rows under it only say the
- *   day, the way Crew names a shift once and lists the people under it. Flat, the row says the month itself.
+ *   day, the way Crew names a shift once and lists the people under it. The band's total sits in the Total column.
+ *   Sorting a column reorders the rows inside a period; the periods stay together. Flat, the row says the month itself.
  *   Tips is the figure that says how the shift went; Rate is tips over hours. Wage, Other and Total sit with them.
  *   A shift short of its numbers reads muted. Search: notes, crew names and the date as written. */
 const query = signal('');
