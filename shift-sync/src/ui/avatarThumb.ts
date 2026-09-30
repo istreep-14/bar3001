@@ -1,5 +1,5 @@
-/* Circle avatars (24–56px) share one 48px blob per person, so a roster does not decode the stored photo on every row.
-   Crew figures keep the stored photo: they are large enough that the face has to be the original. */
+/* Circle avatars (24–32px) share one 48px blob per person, so a roster does not decode the stored photo on every row.
+   Large circles (the person drawer) use the stored photo: CSS-scaling the 48px thumb to 56px is what made faces blurry. */
 const THUMB = 48;
 const thumbs = new Map<string, { photo: string; url: string }>();
 const inflight = new Map<string, Promise<string>>();

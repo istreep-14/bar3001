@@ -6,7 +6,7 @@ import type { GroupBy } from '../lib/groups.ts';
 import { rateContext } from '../lib/stats.ts';
 import type { RateContext, ShiftView } from '../lib/stats.ts';
 import { closeSheet, openForm, openSheet } from '../router.ts';
-import { PartyIcon } from '../ui/Badges.tsx';
+import { OpenPill, PartyIcon } from '../ui/Badges.tsx';
 import { ColumnMenu } from '../ui/ColumnMenu.tsx';
 import { DayCell } from '../ui/DayCell.tsx';
 import { Icon } from '../ui/Icon.tsx';
@@ -37,8 +37,9 @@ export const LOG_COLUMNS: { key: LogCol; head: string; width: string; align?: 'r
 ];
 
 /** `inline` = rows open into a card in place (the Log). Off, a row opens the drawer instead (the Dashboard's short list). */
+/** `air` is the Log page's roomier sheet; the Dashboard's compact list leaves it off. */
 /** `onHidden` puts the Columns menu in the head's right corner, to show and hide columns. */
-export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidden }: { views: ShiftView[]; by: GroupBy; openId: string | null; inline?: boolean; hidden?: LogCol[]; onHidden?: (h: LogCol[]) => void }) {
+export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidden, air, jumpDate }: { views: ShiftView[]; by: GroupBy; openId: string | null; inline?: boolean; hidden?: LogCol[]; onHidden?: (h: LogCol[]) => void; air?: boolean; jumpDate?: string | null }) {
   const groups = groupShifts(views, by);
   const grouped = by !== 'none';
   const ctx = rateContext(views);
@@ -48,7 +49,7 @@ export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidd
   const tipsAt = at('tips'), totalAt = at('total');
   const grid = { '--log-cols': `minmax(11rem, 1.4fr) ${cols.map(c => c.width).join(' ')} 1.5rem` };
   return (
-    <div class={styles.log} style={grid} onKeyDown={moveFocus}>
+    <div class={`${styles.log} ${air ? styles.air : ''}`} style={grid} onKeyDown={moveFocus}>
       <div class={`${styles.grid} ${styles.groups}`} aria-hidden="true">
         {columnBands(cols).map(b => <span key={b.label || 'end'} style={{ gridColumn: `span ${b.span}` }}>{b.label}</span>)}
       </div>
@@ -70,7 +71,7 @@ export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidd
             </div>
           )}
           <div class={styles.rows} role="list" aria-label={g.label || 'Shifts'}>
-            {g.views.map(v => <Row key={v.shift.id} v={v} open={inline && openId === v.shift.id} selected={openId === v.shift.id} ctx={ctx} cols={cols} />)}
+            {g.views.map(v => <Row key={v.shift.id} v={v} open={inline && openId === v.shift.id} selected={openId === v.shift.id} jump={jumpDate === v.shift.date} ctx={ctx} cols={cols} air={air} />)}
           </div>
         </div>
       ))}
@@ -78,7 +79,7 @@ export function ShiftLog({ views, by, openId, inline = true, hidden = [], onHidd
   );
 }
 
-function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; selected: boolean; ctx: RateContext; cols: typeof LOG_COLUMNS }) {
+function Row({ v, open, selected, jump, ctx, cols, air }: { v: ShiftView; open: boolean; selected: boolean; jump?: boolean; ctx: RateContext; cols: typeof LOG_COLUMNS; air?: boolean }) {
   const sh = v.shift, id = sh.id;
   const status = shiftStatus(v);
   const done = status === 'done';
@@ -90,8 +91,12 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
   const shown = v.crew.slice(0, CREW_SHOWN);
   const names = v.crew.map(c => personById(c.staff_id)?.name ?? c.name).filter(Boolean);
   const crewSays = names.length ? names.join(', ') + (v.crewCount > names.length ? ` and ${v.crewCount - names.length} more` : '') : undefined;
+  const openShift = sh.start != null && sh.end == null;
   const time = sh.start != null && sh.end != null ? `${clockTight(sh.start)} → ${clockTight(sh.end)}`
-    : sh.start != null ? `${clockTight(sh.start)} →` : sh.end != null ? `→ ${clockTight(sh.end)}` : null;
+    : sh.start != null ? clockTight(sh.start) : sh.end != null ? `→ ${clockTight(sh.end)}` : null;
+  const timeLine = (time || openShift) ? (
+    <span class={styles.times}>{time}{openShift && <OpenPill />}</span>
+  ) : null;
   // The column heads are drawn for the eye only (the row is one button), so each figure carries its column's name for a
   // screen reader, and a shift short of its money says where it stands.
   const named = (label: string, figure: ComponentChildren) => <><span class="sr-only">{label} </span>{figure}</>;
@@ -107,11 +112,11 @@ function Row({ v, open, selected, ctx, cols }: { v: ShiftView; open: boolean; se
     crew: () => <>{v.crewCount > 0 && <CrewPhotos crew={shown} more={v.crewCount - shown.length} />}{crewSays && <span class="sr-only">{crewSays}</span>}</>
   };
   return (
-    <div class={styles.item} data-open={open ? '' : undefined} data-selected={selected && !open ? '' : undefined} data-status={status} role="listitem">
+    <div class={styles.item} data-open={open ? '' : undefined} data-selected={selected && !open ? '' : undefined} data-jump={jump ? '' : undefined} data-date={sh.date} data-status={status} role="listitem">
       <button type="button" class={`${styles.grid} ${styles.row}`} data-row aria-expanded={open} onClick={() => openSheet(id)} title={fullDate(sh.date)}>
         <span class={styles.when}>
-          <DayCell date={sh.date} />
-          {time && <span class={styles.times}>{time}</span>}
+          <DayCell date={sh.date} chip={air} sub={air ? timeLine : undefined} />
+          {!air && timeLine}
           {!done && <span class="sr-only">, {STATUS_LABEL[status].toLowerCase()}</span>}
         </span>
         {cols.map(c => c.key === 'crew'

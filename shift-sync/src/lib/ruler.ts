@@ -17,6 +17,41 @@ export function rulerFor(spans: Span[], minLength = 12 * 60): Ruler {
   return { origin, length, ticks };
 }
 
+/** One night's hours (about 4pm–2am): origin at the first start's hour, not a noon-origin week scale. */
+export function nightRuler(spans: Span[], minLength = 8 * 60): Ruler {
+  const starts = spans.map(x => x.start).filter((s): s is number => s != null);
+  if (starts.length === 0) return rulerFor(spans, minLength);
+  const timed = spans.filter((x): x is { start: number; end: number } => x.start != null && x.end != null);
+  const origin = Math.min(...starts.map(s => Math.floor(s / 60) * 60));
+  const last = Math.max(
+    origin + minLength,
+    ...timed.map(x => Math.ceil(endOf(x.start, x.end) / 60) * 60),
+    ...starts.map(s => Math.ceil((s + 4 * 60) / 60) * 60)
+  );
+  const length = last - origin;
+  const step = length <= 10 * 60 ? 120 : 180;
+  const ticks: number[] = [];
+  for (let m = origin; m <= last; m += step) ticks.push(m);
+  return { origin, length, ticks };
+}
+
+/** Open (no end) bars run from start to `now` when that is on the ruler, otherwise to the ruler's end. */
+export function placeSpan(start: number | null, end: number | null, r: Ruler, nowMin?: number): { left: number; width: number; open: boolean } | null {
+  if (start == null) return null;
+  if (end != null) {
+    const p = place(start, end, r);
+    return p ? { ...p, open: false } : null;
+  }
+  let close = r.origin + r.length;
+  if (nowMin != null) {
+    let n = nowMin < r.origin ? nowMin + 1440 : nowMin;
+    if (n > r.origin && n < close) close = n;
+  }
+  const endClock = close >= 1440 ? close - 1440 : close;
+  const p = place(start, endClock, r);
+  return p ? { ...p, open: true } : null;
+}
+
 /** Where a span sits on the ruler, in percent. Null without both times. */
 export function place(start: number | null, end: number | null, r: Ruler): { left: number; width: number } | null {
   if (start == null || end == null) return null;

@@ -1,3 +1,4 @@
+import { signal } from '@preact/signals';
 import { oneOf, persisted } from '../../data/persisted.ts';
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
@@ -15,7 +16,9 @@ import { ShiftCard } from './ShiftCard.tsx';
 import { LOG_COLUMNS, ShiftLog } from '../../parts/ShiftLog.tsx';
 import type { LogCol } from '../../parts/ShiftLog.tsx';
 import { EmptyPeriod, FirstShiftEmpty } from '../../ui/EmptyState.tsx';
-import { SideStats, periodItems } from '../../ui/SideStats.tsx';
+import { KpiStrip } from '../../ui/kpi.tsx';
+import { periodChips } from '../../ui/SideStats.tsx';
+import { WeekStrip } from '../../ui/WeekStrip.tsx';
 import styles from './LogScreen.module.css';
 
 /* The Log: every shift in the period, grouped by month or week (or flat). Desktop is the dense table, rows opening
@@ -26,6 +29,7 @@ const [groupBy, setGroupBy] = persisted<GroupBy>('log-group', oneOf(GROUP_BYS.ma
 /** The columns switched off in the Columns menu, remembered per device. */
 const LOG_KEYS = LOG_COLUMNS.map(c => c.key);
 const [hiddenCols, setHiddenCols] = persisted<LogCol[]>('log-hidden', (v): v is LogCol[] => Array.isArray(v) && v.every(k => LOG_KEYS.includes(k)), []);
+const jumpDay = signal<string | null>(null);
 
 export function LogScreen() {
   const all = liveViews.value;
@@ -36,6 +40,7 @@ export function LogScreen() {
   const selected = sheet.value;
   const desktop = isDesktop.value;
   const ctx = rateContext(views);
+  const workedDays = [...new Set(views.map(v => v.shift.date))].sort();
 
   const alerts = <>
     {state.value === 'failed' && (
@@ -62,13 +67,24 @@ export function LogScreen() {
     </div>
   );
 
+  const jumpTo = (d: string) => {
+    jumpDay.value = jumpDay.value === d ? null : d;
+    const el = document.querySelector(`[data-date="${d}"]`);
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+
   return (
-    <Page title="Shift log" id="log-title" fill={desktop} flush={desktop} bodyClass={desktop ? `${styles.body} ${styles.scroll}` : styles.body}
-      tools={<>{groupControl}<ScopeControl /></>}
-      side={desktop ? <SideStats items={periodItems(s)} note="Rate is tips over hours. Total also includes wage and other income." /> : undefined}>
+    <Page title="Shift log" id="log-title" fill={desktop} flush={desktop} bodyClass={desktop ? `list-sheet ${styles.body} ${styles.scroll}` : styles.body}
+      tools={<>{groupControl}<ScopeControl /></>}>
+      {desktop && <KpiStrip items={periodChips(s, ['Shifts', 'Hours', 'Tips', 'Rate'])} />}
+      {desktop && workedDays.length > 0 && (
+        <div class={styles.days}>
+          <WeekStrip dates={workedDays} selected={jumpDay.value} onSelect={jumpTo} label="Jump to a day" />
+        </div>
+      )}
       {alerts}
       {empty ?? (desktop
-        ? <ShiftLog views={views} by={by} openId={selected} hidden={hiddenCols.value} onHidden={setHiddenCols} />
+        ? <ShiftLog views={views} by={by} openId={selected} hidden={hiddenCols.value} onHidden={setHiddenCols} air jumpDate={jumpDay.value} />
         : groupShifts(views, by === 'none' ? 'week' : by).map(g => (
           <section key={g.key} class={styles.week} aria-label={g.label}>
             <div class={styles.weekHead}>

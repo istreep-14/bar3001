@@ -66,6 +66,24 @@ export function KpiChip({ label, value, pct, hint, icon, neutral }: {
   );
 }
 
+export type KpiItem = {
+  label: string; value: ComponentChildren; pct?: number | null; hint?: string; icon: IconName; neutral?: boolean;
+};
+
+/** A row of chips for list pages. Styled via `.kstrip` so the Dashboard's own chips keep their look. */
+export function KpiStrip({ items, label = 'This period' }: { items: KpiItem[]; label?: string }) {
+  if (items.length === 0) return null;
+  return (
+    <div class="kstrip" role="list" aria-label={label}>
+      {items.map(k => (
+        <div key={k.label} role="listitem">
+          <KpiChip label={k.label} value={k.value} pct={k.pct} hint={k.hint} icon={k.icon} neutral={k.neutral} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** label · value · delta · spark, on one line. */
 export function MiniStat({ label, value, pct, neutral, spark, hint }: { label: string; value: ComponentChildren; pct?: number | null; neutral?: boolean; spark?: (number | null)[]; hint?: string }) {
   return (

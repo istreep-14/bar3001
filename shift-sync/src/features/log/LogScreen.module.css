@@ -6,6 +6,7 @@
 
 .body { min-height: 0; }
 .scroll { overflow: auto; }
+.days { flex: none; padding: 0 var(--s-1); }
 /* phone: the group label is the week or month once, with its total on the same line */
 .bandName { margin: 0; font-size: var(--fs-meta); font-weight: var(--fw-semi); color: var(--ink); }
 .weekHead { display: flex; justify-content: space-between; align-items: baseline; min-height: 1.5rem; padding: 0 var(--s-2); font-size: var(--fs-meta); background: color-mix(in srgb, var(--ink) 4%, var(--surface)); box-shadow: inset 0 -1px 0 var(--line-soft); }
