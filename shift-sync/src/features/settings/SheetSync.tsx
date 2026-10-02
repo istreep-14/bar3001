@@ -32,10 +32,10 @@ export function SheetSync() {
         </p>
         <form class={styles.form} onSubmit={save}>
           <label class="field"><span class="label-text">Web app URL</span>
-            <input class="input" type="url" value={api} placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" onInput={e => setApi(e.currentTarget.value)} />
+            <input class="input" id="sheet-sync-url" name="sheet-sync-url" type="url" value={api} placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" onInput={e => setApi(e.currentTarget.value)} />
           </label>
           <label class="field"><span class="label-text">Token</span>
-            <input class="input" type="password" value={token} autocomplete="off" onInput={e => setToken(e.currentTarget.value)} />
+            <input class="input" id="sheet-sync-token" name="sheet-sync-token" type="password" value={token} autocomplete="off" onInput={e => setToken(e.currentTarget.value)} />
             <span class="hint">Run setup in the Apps Script editor to see your token.</span>
           </label>
           <div class={styles.actions}>

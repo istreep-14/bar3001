@@ -1,43 +1,16 @@
-/* Dashboard: one panel. Numbers across the top, the last two weeks under them, this week's sections beside that.
-   What you act on (the week strip, the day capsules, a best-night tile) sits on the content surface. */
-.grid { display: grid; gap: var(--shell-gap); align-items: start; min-width: 0; }
-@media (min-width: 64rem) { .grid { grid-template-columns: minmax(0, 1fr) 20rem; } }
-.main, .side { display: grid; gap: var(--shell-gap); min-width: 0; align-content: start; }
-
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--s-2); margin: 0; }
-
-.card { display: grid; gap: var(--s-3); min-width: 0; }
-.cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
-.cardTitle { margin: 0; display: grid; font-size: var(--fs-body); font-weight: var(--fw-semi); color: var(--ink); }
-.cardSub { font-size: var(--fs-meta); font-weight: var(--fw-normal); color: var(--ink-2); }
-.card :global(.linkbtn) { white-space: nowrap; }
-
-.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--s-1); height: 8.5rem; padding: var(--s-3) var(--s-2) var(--s-2); border-radius: var(--r-md); background: var(--surface); }
-.day { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: var(--s-1); height: 100%; padding: 0; border: 0; background: transparent; color: var(--ink-2); font: inherit; cursor: pointer; }
-.day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
-.capsule { display: block; width: 1.5rem; height: 1.5rem; flex: none; border-radius: var(--r-pill); background: color-mix(in srgb, var(--accent) 38%, var(--surface)); }
-.day[data-empty] .capsule { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); }
-.day[data-pending] .capsule { background: transparent; box-shadow: inset 0 0 0 1.5px var(--accent); }
-.day[aria-pressed='true'] .capsule { background: var(--accent); }
-.day:hover .capsule { background: color-mix(in srgb, var(--accent) 60%, var(--surface)); }
-.day[data-empty]:hover .capsule { background: var(--surface-2); }
-.dow { font-size: var(--fs-meta); font-weight: var(--fw-semi); }
-.day[data-today] .dow { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-
-.list { display: grid; margin: 0; }
-.list > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); }
-.list > div:last-child { border-bottom: 0; }
-.list dt { color: var(--ink-2); }
-.who { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; }
-.list dd { margin: 0; font-weight: var(--fw-semi); color: var(--ink); }
-
-.best { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
-.bestTile { display: grid; gap: 2px; justify-items: start; padding: var(--s-3); border: 0; border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
-.bestTile:hover { box-shadow: inset 0 0 0 1.5px var(--line-strong); }
-.bestTile[data-top] { background: var(--accent); color: var(--on-accent); }
-.bestRate { font-size: var(--fs-title); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
-.bestDate { font-size: var(--fs-meta); }
-
-.todo { display: grid; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
-.todo li { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface); }
-.todo li > span { display: flex; align-items: center; gap: var(--s-2); }
+/* Home: last 7 days across the top, then the week list beside the shift chart, the month beside recent shifts,
+   then tips by week. The blocks are cards of their own, so the page has no panel card around them. */
+.dash { gap: var(--s-5); padding-bottom: var(--s-5); }
+.board { display: grid; gap: var(--s-5); align-items: start; }
+.span { min-width: 0; }
+@media (min-width: 64rem) {
+  .board { grid-template-columns: minmax(18rem, 1fr) minmax(0, 1.35fr); }
+  .span { grid-column: 1 / -1; }
+}
+.side { display: grid; gap: var(--s-5); min-width: 0; }
+.hero :global(.plot) { margin-top: var(--s-1); }
+.side { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
+.readout {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3);
+  margin: var(--s-4) 0 0; color: var(--ink); font-size: var(--fs-body); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums;
+}

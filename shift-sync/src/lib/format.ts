@@ -95,3 +95,16 @@ export const weekLabel = (d: string): string => {
   const same = a.slice(0, 7) === b.slice(0, 7);
   return `${longMonthDay(a)} – ${same ? at(b).toLocaleDateString(undefined, { day: 'numeric' }) : longMonthDay(b)}, ${b.slice(0, 4)}`;
 };
+
+/** A band's short name for the week (Monday to Sunday) that contains d, short enough for a day column: 'Sep 21 – 27',
+ *  or 'Sep 28 – Oct 4' when it runs into the next month. The year is the band title's job (`weekLabel`). */
+export const weekShort = (d: string): string => {
+  const a = weekStart(d), b = addDays(a, 6);
+  return `${shortDate(a)} – ${a.slice(0, 7) === b.slice(0, 7) ? String(+b.slice(8, 10)) : shortDate(b)}`;
+};
+/** A band's short name for a month ('2026-09' or any date in it): 'September', with the year only when it is not this
+ *  year ('September 2025'). The full 'September 2026' goes in the band's title. */
+export const monthShort = (key: string): string => {
+  const d = key.slice(0, 7) + '-15';
+  return at(d).toLocaleDateString(undefined, isPastYear(d) ? { month: 'long', year: 'numeric' } : { month: 'long' });
+};

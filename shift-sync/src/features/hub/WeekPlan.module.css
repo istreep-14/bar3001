@@ -1,0 +1,109 @@
+/* Plan the week (HubWeek.tsx): day cards across the top, a row per bartender, hours at the ends. No table lines: cells
+   are rounded slots on the glass, like the week strip on Home. A phone scrolls it sideways under a sticky name column. */
+.nav { display: inline-flex; align-items: center; gap: var(--s-2); }
+.step {
+  display: inline-grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--ink-2); box-shadow: var(--shadow-chip); cursor: pointer;
+}
+.step:hover { background: var(--surface); color: var(--ink); }
+.step :global(.icon) { width: 0.875rem; height: 0.875rem; }
+.range { display: grid; min-width: 7rem; line-height: 1.15; text-align: center; }
+.range b { font-size: var(--fs-body); font-weight: var(--fw-semi); }
+.range small { color: var(--ink-3); font-size: var(--fs-micro); }
+
+.body { display: flex; flex-direction: column; gap: var(--s-3); min-height: 0; }
+.sum :global(.btn) { margin-right: var(--s-3); }
+.sum { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); margin: 0; color: var(--ink-3); font-size: var(--fs-meta); }
+.sum b { color: var(--ink); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.scroll { min-width: 0; overflow: auto; container-type: inline-size; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.grid { --who-w: 11rem; display: grid; gap: var(--s-1); min-width: calc(var(--who-w) + 7 * 6.5rem + 4rem); }
+@media (max-width: 40rem) { .grid { --who-w: 7.5rem; } }
+.row { display: grid; grid-template-columns: var(--who-w) repeat(7, minmax(6.5rem, 1fr)) 4rem; column-gap: var(--s-2); align-items: stretch; }
+.row[data-you] { border-radius: var(--r-md); background: var(--me-wash); }
+.row[data-foot] { margin-top: var(--s-1); padding-top: var(--s-2); border-top: 1px dashed var(--line); }
+
+/* the name column and the corner stay put while the days scroll under them */
+.corner, .who { position: sticky; left: 0; z-index: 2; }
+/* only once the days are scrolling under it does the name column need a backing */
+@container (max-width: 66rem) {
+  .corner, .who { background: linear-gradient(90deg, var(--glass-solid) 88%, transparent); }
+  .row[data-you] .who { background: linear-gradient(90deg, color-mix(in srgb, var(--me-wash) 100%, var(--glass-solid)) 88%, transparent); }
+}
+.corner { align-self: end; padding: 0 var(--s-2) var(--s-2); color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.who { display: flex; align-items: center; gap: var(--s-2); min-width: 0; padding: 0 var(--s-2); font-size: var(--fs-meta); font-weight: var(--fw-med); }
+.row[data-foot] .who { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.totHead { align-self: end; padding-bottom: var(--s-2); color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-align: right; text-transform: uppercase; }
+.tot { display: flex; align-items: center; justify-content: flex-end; padding-right: var(--s-2); color: var(--ink-2); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
+.row[data-foot] .tot { justify-content: center; color: var(--ink-3); }
+.row[data-foot] .tot:last-child { justify-content: flex-end; color: var(--ink); }
+
+/* ── a day card ── */
+.day {
+  display: grid; align-content: start; gap: var(--s-1); padding: var(--s-2); border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: var(--glass-hi);
+}
+.day[data-when='today'] { background: var(--inverse-bg); color: var(--inverse-ink); box-shadow: var(--shadow-glass); }
+.dayName { display: flex; align-items: baseline; gap: var(--s-1); padding: 0 2px; }
+.dayName span { color: var(--ink-3); font-size: var(--fs-meta); }
+.dayName b { font-size: var(--fs-title); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.day[data-when='today'] .dayName span { color: var(--inverse-ink-2); }
+.shift {
+  display: flex; align-items: center; gap: var(--s-1); width: 100%; min-height: 2rem; padding: 0 var(--s-2); border: 0; border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font-size: var(--fs-meta); cursor: pointer; box-shadow: var(--shadow-chip);
+}
+.shift :global(.icon) { width: 0.8rem; height: 0.8rem; color: var(--night-ink); }
+.shift b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.shift small { margin-left: auto; padding: 0 5px; border-radius: var(--r-pill); background: var(--accent-wash); color: var(--accent); font-size: var(--fs-chip); font-weight: var(--fw-bold); text-transform: uppercase; }
+.shift[data-status='scheduled'] { background: color-mix(in srgb, var(--surface) 55%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
+.shift[data-status='scheduled'] b { color: var(--accent); }
+.shift[data-status='worked'] { background: var(--hatch), var(--surface); }
+.shift:hover { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.book {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 2rem; border: 1px dashed var(--line-strong); border-radius: var(--r-md);
+  background: transparent; color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-semi); cursor: pointer;
+}
+.book :global(.icon) { width: 0.8rem; height: 0.8rem; }
+.book:hover { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); }
+.day[data-when='today'] .book { border-color: var(--inverse-line); color: var(--inverse-ink-2); }
+.day[data-when='today'] .shift { background: var(--inverse-dim); color: var(--inverse-ink); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--inverse-accent) 55%, transparent); }
+.day[data-when='today'] .shift b { color: var(--inverse-accent); }
+.day[data-when='today'] .shift :global(.icon) { color: var(--inverse-accent); }
+
+/* ── a person's day ── */
+.cell { display: grid; gap: 3px; min-width: 0; padding: 2px 0; }
+.slot {
+  display: grid; gap: 1px; width: 100%; min-height: 2.5rem; padding: var(--s-1) var(--s-2); border: 0; border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--ink); text-align: left; cursor: pointer;
+}
+.slot[data-when='ahead'] { background: color-mix(in srgb, var(--surface) 60%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+.slot[data-when='today'] { background: var(--inverse-bg); color: var(--inverse-ink); }
+.slot:hover { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.slot:focus-visible, .empty:focus-visible, .shift:focus-visible, .book:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.times { font-size: var(--fs-meta); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.slotFoot { display: flex; align-items: center; gap: var(--s-1); color: var(--ink-3); font-size: var(--fs-micro); }
+.slotFoot b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.slot[data-when='today'] .slotFoot { color: var(--inverse-ink-2); }
+.station { margin-left: auto; font-size: var(--fs-chip); font-style: normal; font-weight: var(--fw-bold); letter-spacing: 0.03em; text-transform: uppercase; }
+.empty {
+  display: grid; place-items: center; width: 100%; min-height: 2.5rem; border: 1px dashed var(--line); border-radius: var(--r-md);
+  background: transparent; color: var(--ink-4); cursor: pointer;
+}
+.empty :global(.icon) { width: 0.8rem; height: 0.8rem; }
+.empty:hover { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); }
+.off { display: block; width: 100%; min-height: 2.5rem; border-radius: var(--r-md); background: var(--hatch); opacity: 0.55; }
+.none { grid-column: 1 / -1; margin: 0; padding: var(--s-4); color: var(--ink-3); font-size: var(--fs-meta); text-align: center; }
+
+.add { display: inline-flex; align-items: center; gap: var(--s-2); align-self: start; color: var(--ink-3); }
+.add :global(.icon) { width: 0.9rem; height: 0.9rem; }
+.add select { min-width: 15rem; }
+
+/* the dialogs' choices: station, day or night, party */
+.choices { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; border: 0; }
+.choices legend { margin-bottom: var(--s-1); }
+.choice {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 2rem; padding: 0 var(--s-3); border: 0; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink-2); font-size: var(--fs-meta); font-weight: var(--fw-med); cursor: pointer;
+}
+.choice :global(.icon) { width: 0.85rem; height: 0.85rem; }
+.choice[aria-checked='true'] { background: var(--inverse-bg); color: var(--inverse-ink); }

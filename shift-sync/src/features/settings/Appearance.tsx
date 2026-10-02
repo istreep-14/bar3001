@@ -23,7 +23,7 @@ function ExactPick({ k, label, what, fallback, perPerson }: { k: ExactKey; label
   return (
     <span class={styles.exactItem}>
       <label class={styles.swatch} data-on={on ? '' : undefined} title={`Pick the ${what} for ${label.toLowerCase()} mode`}>
-        <input type="color" value={on ? v : fallback} onInput={e => saveSettings({ [k]: e.currentTarget.value })} aria-label={`${label} mode ${what}`} />
+        <input type="color" id={`exact-${k}`} name={`exact-${k}`} value={on ? v : fallback} onInput={e => saveSettings({ [k]: e.currentTarget.value })} aria-label={`${label} mode ${what}`} />
         <i class={!on && perPerson ? `${styles.twin} ${styles.unset}` : styles.twin} style={on || !perPerson ? { background: on ? v : fallback } : undefined} /><span>{label}</span>
       </label>
       {on && <button type="button" class="btn btn-quiet" onClick={() => saveSettings({ [k]: '' })} aria-label={`Clear the ${label.toLowerCase()} mode ${what}`}>{v.toUpperCase()} ×</button>}
@@ -60,7 +60,7 @@ export function Appearance() {
             </label>
           ))}
           <label class={styles.swatch} title="Pick any colour">
-            <input type="color" value={custom ? s.accent : resolveAccent(s.accent, 'light')} onInput={e => saveSettings({ accent: e.currentTarget.value })} aria-label="Custom primary colour" />
+            <input type="color" id="accent-custom" name="accent-custom" value={custom ? s.accent : resolveAccent(s.accent, 'light')} onInput={e => saveSettings({ accent: e.currentTarget.value })} aria-label="Custom primary colour" />
             <i class={styles.custom} style={custom ? { background: resolveAccent(s.accent, m) } : undefined} /><span>Custom</span>
           </label>
         </div>
@@ -81,7 +81,7 @@ export function Appearance() {
           <span class={styles.exactLabel}>Exact colour</span>
           {MODES.map(md => <ExactPick key={md.mode} k={keyFor('bg', md.mode)} label={md.label} what="page colour" fallback={stock(md.mode)['--bg']!} />)}
         </div>
-        <p class={styles.p}>The grey page shows around the navigation and the title. Cards sit on it, a step lighter, so the content is what stands out. An exact colour is used as it is for that mode, on every page; the cards and text follow it.</p>
+        <p class={styles.p}>The page shows around the navigation and the title, washed with soft blooms of your primary colour. Cards are frosted glass on it, a step lighter, so the content is what stands out. An exact colour is used as it is for that mode, on every page; the cards and text follow it.</p>
       </section>
 
       <section class={styles.sec} aria-labelledby="ap-av">

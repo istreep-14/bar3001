@@ -55,7 +55,7 @@ export function CrewPicker({ people, selected, onAdd, onRemove }: {
           ))}
         </ul>
       )}
-      <input class={`input ${styles.search}`} type="search" placeholder="Name or nickname" autocomplete="off" role="combobox"
+      <input class={`input ${styles.search}`} id={`${listId}-search`} name={`${listId}-search`} type="search" placeholder="Name or nickname" autocomplete="off" role="combobox"
         aria-label="Find someone to add" aria-expanded={hits.length > 0} aria-controls={listId} aria-autocomplete="list"
         aria-activedescendant={hits[cursor] ? `${listId}-${hits[cursor]!.person.id}` : undefined}
         value={q} onInput={e => setQ(e.currentTarget.value)} onKeyDown={onKey} />

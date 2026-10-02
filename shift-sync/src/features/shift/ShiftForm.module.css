@@ -1,8 +1,8 @@
 /* The shift form: a dialog over the page, so entering a shift is one level down from browsing.
    Tabbed pages in groups down the left, the selected page's input on the right, Back / Next / Save in the footer. */
-.modal { display: none; width: min(67.5rem, calc(100vw - 2rem)); height: min(50rem, calc(100dvh - 3rem)); max-width: none; max-height: none; margin: auto; padding: 0; overflow: hidden; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.modal { display: none; width: min(67.5rem, calc(100vw - 2rem)); height: min(50rem, calc(100dvh - 3rem)); max-width: none; max-height: none; margin: auto; padding: 0; overflow: hidden; border: 1px solid var(--glass-line); border-radius: var(--r-lg); background: var(--glass-sheet); color: var(--ink); box-shadow: var(--glass-hi), var(--shadow); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); }
 .modal[open] { display: block; }
-.modal::backdrop { background: var(--overlay); }
+.modal::backdrop { background: var(--overlay); backdrop-filter: var(--scrim-filter); -webkit-backdrop-filter: var(--scrim-filter); }
 .form { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
 .head { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
@@ -15,7 +15,7 @@
 .error { flex: none; margin: var(--s-3) var(--s-5) 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-sm); background: var(--danger-soft); border: 1px solid var(--danger-line); font-size: var(--fs-body); }
 
 .body { display: grid; flex: 1 1 auto; grid-template-columns: 14.75rem minmax(0, 1fr); min-height: 0; }
-.steps { overflow-y: auto; padding: var(--s-2) var(--s-2) var(--s-4); border-right: 1px solid var(--line); background: var(--surface-2); }
+.steps { overflow-y: auto; padding: var(--s-2) var(--s-2) var(--s-4); border-right: 1px solid var(--line-soft); background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
 .group { display: grid; gap: 2px; }
 .group + .group { margin-top: var(--s-2); }
 .gname { padding: var(--s-3) var(--s-4) var(--s-1); }

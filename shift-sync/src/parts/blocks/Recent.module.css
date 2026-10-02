@@ -1,0 +1,72 @@
+/* Home's recent figures and shifts (Recent.tsx). */
+
+/* ── the five figures: take-home leads, wider; the rest share the row ── */
+.figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); margin: 0; }
+@media (min-width: 40rem) { .figs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 64rem) { .figs { grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)); } }
+.fig {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'l s' 'v v' 'd d'; align-content: start; gap: 2px var(--s-2);
+  min-width: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: var(--glass-hi);
+}
+.fig[data-lead] { background: var(--inverse-bg); color: var(--inverse-ink); box-shadow: var(--shadow-glass); }
+@media (max-width: 39.99rem) { .fig[data-lead] { grid-column: 1 / -1; } }
+.fig dt { grid-area: l; align-self: center; color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.fig dd { margin: 0; }
+.fv { grid-area: v; font-size: var(--fs-tile); font-weight: var(--fw-semi); letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fig[data-lead] .fv { font-size: var(--fs-block); font-weight: var(--fw-normal); }
+.fd { grid-area: d; display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-2); }
+.fs { grid-area: s; color: var(--accent); }
+.fs { justify-self: end; width: 100%; max-width: 88px; }
+.fs :global(.spark) { display: block; width: 100%; height: auto; }
+.from { color: var(--ink-3); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; }
+.nil { color: var(--ink-3); font-size: var(--fs-micro); }
+.fig[data-lead] :is(dt, .from, .nil) { color: var(--inverse-ink-2); }
+.fig[data-lead] .fs { color: var(--inverse-accent); }
+.fig[data-lead] :global(.spark-line) { stroke: var(--inverse-accent); }
+.fig[data-lead] :global(.spark-area) { fill: color-mix(in srgb, var(--inverse-accent) 18%, transparent); }
+.fig[data-lead] :global(.spark-dot) { fill: var(--inverse-accent); }
+
+/* ── recent shifts: one row each; the comparison at the end ── */
+.list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.row {
+  display: grid; grid-template-columns: minmax(7.5rem, 1.3fr) minmax(4rem, 0.8fr) minmax(5rem, 1fr) minmax(6.5rem, 1.2fr); align-items: center; gap: var(--s-3);
+  width: 100%; padding: var(--s-2) var(--s-3); border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink); text-align: left; cursor: pointer;
+}
+.row:hover { background: color-mix(in srgb, var(--surface) 75%, transparent); }
+.row[aria-pressed='true'] { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.when { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.type { display: inline-grid; flex: none; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink-2); }
+.type[data-type='day'] { color: var(--day-ink); }
+.type[data-type='night'] { color: var(--night-ink); }
+.type :global(.icon) { width: 0.85rem; height: 0.85rem; }
+.date { display: grid; min-width: 0; line-height: 1.2; }
+.date b { font-size: var(--fs-meta); font-weight: var(--fw-semi); white-space: nowrap; }
+.party { justify-self: start; padding: 0 6px; border-radius: var(--r-pill); background: var(--accent-wash); color: var(--accent); font-size: var(--fs-chip); font-weight: var(--fw-bold); letter-spacing: 0.03em; text-transform: uppercase; }
+.num { display: grid; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.num b { font-size: var(--fs-body); font-weight: var(--fw-semi); }
+.num small, .vs small { color: var(--ink-3); font-size: var(--fs-micro); }
+.vs { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.empty { margin: 0; padding: var(--s-4) 0; color: var(--ink-3); font-size: var(--fs-meta); }
+/* a phone: the day and its comparison on top, its tips and rate under them */
+@media (max-width: 30rem) {
+  .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'when vs' 'tips rate'; gap: var(--s-1) var(--s-3); }
+  .when { grid-area: when; } .vs { grid-area: vs; }
+  .num:nth-of-type(2) { grid-area: tips; padding-left: 2.25rem; } .num:nth-of-type(3) { grid-area: rate; justify-items: end; text-align: right; }
+}
+
+/* ── a period so far, then the pace ── */
+.sofar { display: grid; gap: var(--s-3); }
+.big { display: grid; gap: var(--s-1); }
+.bigV { font-size: var(--fs-display); font-weight: var(--fw-normal); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.bigN { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); color: var(--ink-3); font-size: var(--fs-meta); }
+.rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); margin: 0; }
+.rows > div { display: grid; gap: 2px; padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.rows dt { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.rows dd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); margin: 0; }
+.rows b { font-size: var(--fs-body); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.pace { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--s-3); margin: 0; padding-top: var(--s-3); border-top: 1px dashed var(--line); font-size: var(--fs-meta); }
+.pace > span { color: var(--ink-2); }
+.pace > b { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; text-align: right; }
+.pace > b small { color: var(--ink-3); font-weight: var(--fw-med); }
+.pace > small { grid-column: 1 / -1; color: var(--ink-3); font-size: var(--fs-micro); }

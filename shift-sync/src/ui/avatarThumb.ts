@@ -1,5 +1,7 @@
-/* Circle avatars (24–32px) share one 48px blob per person, so a roster does not decode the stored photo on every row.
-   Large circles (the person drawer) use the stored photo: CSS-scaling the 48px thumb to 56px is what made faces blurry. */
+/* Circle avatars (24–48px) share one blob per person, so a roster does not decode the stored photo on every row.
+   Large circles (the person drawer) use the stored photo: CSS-scaling the 48px thumb to 56px is what made faces
+   blurry there. Drawn at only 48 physical pixels, the same thumb blurs on any retina screen once CSS scales it back
+   up to match the device's pixel ratio, so the canvas is sized in device pixels, not CSS ones. */
 const THUMB = 48;
 const thumbs = new Map<string, { photo: string; url: string }>();
 const inflight = new Map<string, Promise<string>>();
@@ -40,12 +42,13 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 
 async function makeThumb(photo: string): Promise<string> {
   const img = await loadImage(photo);
+  const size = Math.round(THUMB * Math.min(window.devicePixelRatio || 1, 3));
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = THUMB;
+  canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   if (!ctx) return photo;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, 0, 0, THUMB, THUMB);
+  ctx.drawImage(img, 0, 0, size, size);
   const blob = await new Promise<Blob | null>(r => canvas.toBlob(b => r(b), 'image/webp', 0.8))
     ?? await new Promise<Blob | null>(r => canvas.toBlob(b => r(b), 'image/jpeg', 0.8));
   return blob ? URL.createObjectURL(blob) : photo;

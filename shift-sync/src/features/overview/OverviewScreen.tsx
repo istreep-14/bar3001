@@ -1,6 +1,7 @@
 import { liveViews, ready } from '../../data/store.ts';
 import { today } from '../../lib/dates.ts';
 import { byRecent } from '../../lib/stats.ts';
+import { isPending } from '../../lib/groups.ts';
 import type { ShiftView } from '../../lib/stats.ts';
 import { WEEKDAY_NAMES, WEEKDAY_SHORT, dateCell, dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
 import { groupBy, weekdayIndex } from '../../lib/periods.ts';
@@ -9,14 +10,17 @@ import { focusWindow, histogram, hoursPerWeek, inDates, pctChange, slotInsight, 
 import type { Focus } from '../../lib/trends.ts';
 import { ComboChart, ColumnChart, HBars, Histogram, Tiles } from '../../ui/charts.tsx';
 import { DeltaPill } from '../../ui/kpi.tsx';
-import { Stack } from '../../ui/Stack.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { PartyBadge, TypeBadge } from '../../ui/Badges.tsx';
 import { Page } from '../../ui/Page.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
 import { openSheet } from '../../router.ts';
-import { MiniCalendar } from './MiniCalendar.tsx';
+import { MiniMonth } from '../../parts/MiniMonth.tsx';
+import { Block } from '../../parts/blocks/Block.tsx';
+import { DayChips, DayHeatmap } from '../../parts/blocks/Compact.tsx';
+import { IncomeStack } from '../../parts/blocks/IncomeStack.tsx';
+import { RateDots, RateTrend, RunningMonth } from '../../parts/blocks/Widgets.tsx';
 import { oneOf, persisted } from '../../data/persisted.ts';
 import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
 
@@ -33,7 +37,7 @@ const [trend, setTrend] = persisted<number>('ov:trend', oneOf(TREND.map(t => t.n
 export function OverviewScreen() {
   const all = liveViews.value;
   return (
-    <Page title="Insights" id="ov-title" tools={
+    <Page title="Insights" id="ov-title" quiet tools={
       <>
         <div class="seg" role="radiogroup" aria-label="Recent span">
           {FOCUS.map(f => <label key={f.id}><input type="radio" name="ov-focus" checked={focus.value === f.id} onChange={() => setFocus(f.id)} /><span>{f.label}</span></label>)}
@@ -72,14 +76,20 @@ function Body({ all }: { all: ShiftView[] }) {
   const histo = histogram(inTrend.filter(v => v.tph != null).map(v => v.tph!));
   const skewed = histo && histo.mean > histo.median * 1.05;
   const byDay = groupBy(inTrend, WEEKDAY_SHORT.map((l, i) => ({ key: String(i), label: l })), v => String(weekdayIndex(v.shift.date)));
-  const recent = [...all].sort(byRecent).slice(0, 8);
+  // the latest shifts with their money in: a booked shift has nothing to show here yet
+  const recent = all.filter(v => !isPending(v)).sort(byRecent).slice(0, 8);
 
+  // The latest shifts as a small data sheet: whole dollars, rates with cents, the shift's type beside its date.
   const columns: Column<ShiftView>[] = [
-    { key: 'date', head: 'Shift', cell: v => (
-      <Stack title={<>{weekdayShort(v.shift.date)} {dateCell(v.shift.date)}</>} lines={[`${dec1(v.hours)} hr`]}
-        extra={(v.shift.shift_type || v.shift.party) ? <span class="stack-row">{v.shift.shift_type ? <TypeBadge type={v.shift.shift_type} /> : null}{v.shift.party ? <PartyBadge /> : null}</span> : undefined} />
+    { key: 'date', head: 'Shift', className: 'fit', cell: v => (
+      <span class="with"><span class="daylabel">{weekdayShort(v.shift.date)}</span><b>{dateCell(v.shift.date)}</b>
+        {v.shift.shift_type ? <TypeBadge type={v.shift.shift_type} /> : null}{v.shift.party ? <PartyBadge /> : null}</span>
     ) },
-    { key: 'total', head: 'Total', className: 'fit', cell: v => <Stack title={dollars(v.total)} lines={[`Tips ${dollars(v.shift.tips)} · ${perHour(v.tph)}`]} /> }
+    { key: 'hours', head: 'Hours', className: 'r fit', cell: v => v.hours == null ? '—' : <span class="fig">{dec1(v.hours)}<span class="fig-unit">h</span></span> },
+    { key: 'tips', head: 'Tips', className: 'r fit', cell: v => dollars(v.shift.tips) },
+    { key: 'rate', head: 'Rate', className: 'r fit', cell: v => v.tph == null ? '—' : money(v.tph) },
+    { key: 'total', head: 'Total', className: 'r fit strong', cell: v => dollars(v.total) },
+    { key: 'go', head: '', className: 'chev when', cell: () => <Icon name="chevron" /> }
   ];
 
   return (
@@ -97,6 +107,19 @@ function Body({ all }: { all: ShiftView[] }) {
           <DeltaPill pct={slot.pct} /><span class="muted">vs {`${slot.n === 1 ? `your previous ${slot.label}` : `your last ${slot.n} ${slot.label}s`} (${perHour(slot.base)})`}</span>
         </p>
       )}
+
+      {/* small widgets: the same blocks the Dashboard uses, so a trend reads the same on both pages */}
+      <Block title="Day by day" sub="The last three weeks and the days ahead: tips once they're in, start times for what's booked" to="calendar" toLabel="Open the calendar">
+        <DayChips views={all} today={now} back={20} ahead={6} />
+      </Block>
+
+      <div class="ov-blocks">
+        <Block title="This month so far" sub="Running total against last month"><RunningMonth views={all} today={now} height={120} /></Block>
+        <Block title="Rate trend" sub="Tips per hour, smoothed"><RateTrend views={all} today={now} weeks={12} height={120} /></Block>
+        <Block tone="inverse" title="Which nights pay" sub="Tips per hour, last 12 weeks"><RateDots views={all} today={now} weeks={12} /></Block>
+        <Block class="ov-wide" title="Every day, a year" sub="Tips per hour, one square a day; deeper is better"><DayHeatmap views={all} today={now} weeks={52} metric="rate" /></Block>
+        <Block class="ov-wide" title="Income by week" sub="Tips, estimated wage and every other source" to="income" toLabel="Open income"><IncomeStack views={all} today={now} weeks={12} height={160} /></Block>
+      </div>
 
       <ComboChart title="Tips and rate by week" sub="Mon–Sun weeks; the line is tips per hour over that week and the 3 before it"
         fmtBar={moneyWhole} fmtLine={moneyWhole} barLabel="Tips" lineLabel="Tips per hour" smoothLabel="Smoothed (4-week) tips per hour"
@@ -121,10 +144,10 @@ function Body({ all }: { all: ShiftView[] }) {
       </div>
 
       <div class="ovtwo">
-        <MiniCalendar views={all} onOpen={id => openSheet(id)} />
+        <div class="chartcard"><MiniMonth views={all} title="Tips by day" figures="tips" /></div>
         <figure class="viz">
-          <figcaption class="viz-cap"><h4>Latest shifts</h4><a class="linkbtn" href="#/log">Open log</a></figcaption>
-          <Table label="Latest shifts" rows={recent} columns={columns} rowKey={v => v.shift.id} onRow={v => openSheet(v.shift.id)} />
+          <figcaption class="viz-cap"><h4>Latest shifts</h4><a class="linkbtn" href="#/table">Open shifts</a></figcaption>
+          <div class="data-sheet ov-sheet"><Table log label="Latest shifts" rows={recent} columns={columns} rowKey={v => v.shift.id} onRow={v => openSheet(v.shift.id)} /></div>
         </figure>
       </div>
       <p class="muted">Rate is tips over hours worked and nothing else. Wage is estimated from your hourly rate; Total per hour includes it.</p>

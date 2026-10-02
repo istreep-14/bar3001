@@ -24,6 +24,21 @@ test('every text step keeps its contrast on every surface, in every combination'
     }
 });
 
+test('text stays readable on the canvas blooms and on glass over them', () => {
+  for (const mode of ['light', 'dark'])
+    for (const tint of TINTS) for (const c of ['soft', 'standard', 'high']) for (const a of ACCENTS) {
+      const t = buildTheme({ mode, accent: a.id, tint: tint.id, contrast: c });
+      const label = `${mode}/${tint.id}/${c}/${a.id}`;
+      for (const m of ['--mesh-a', '--mesh-b', '--mesh-c']) {
+        // the bare canvas where a bloom has faded to 60% (page titles, the nav), and a pane (--glass-pane-a, the lighter
+        // frost) of --surface over a bloom at full strength
+        assert.ok(contrast(t['--ink-3'], mix(t['--bg'], t[m], 0.6)) >= 4.5, `ink-3 on the canvas under ${m} ${label}`);
+        assert.ok(contrast(t['--ink-3'], mix(t[m], t['--surface'], 0.56)) >= 4.5, `ink-3 on glass over ${m} ${label}`);
+      }
+      assert.ok(contrast(t['--on-accent'], t['--accent-2']) >= 4.5, `on-accent across the button's sheen ${label}`);
+    }
+});
+
 test('the surfaces are a ramp, not two extremes', () => {
   const l = buildTheme({ mode: 'light', accent: 'teal', tint: 'teal', contrast: 'standard' });
   const d = buildTheme({ mode: 'dark', accent: 'teal', tint: 'teal', contrast: 'standard' });

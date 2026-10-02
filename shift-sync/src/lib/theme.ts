@@ -100,10 +100,23 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
   const ts = Math.min(s, 24);   // text never takes on more colour than a soft tint, whatever the page
   // The page is a light grey canvas. Panels sit a step or two above it, close enough that the grey still reads
   // as one field; only content you act on (the table, a field, an opened row) reaches the near-white top step.
-  const bg = exact ?? hslToHex(h, s, base), surface = hslToHex(h, s, step(99.5, 13.5)), surface2 = hslToHex(h, s, step(96, 10));
-  const surface3 = hslToHex(h, s + 2, step(86, 18));
+  // Dark spreads the steps wider than light: a few lightness points read as one colour near black, so the panel and the
+  // content on it would melt into the page.
+  const bg = exact ?? hslToHex(h, s, base), surface = hslToHex(h, s, step(99.5, 15.5)), surface2 = hslToHex(h, s, step(96, 10.5));
+  const surface3 = hslToHex(h, s + 2, step(86, 20));
   const lines = dark ? [step(0, 24 + k * 2), step(0, 30 + k * 3), step(0, 40 + k * 5)] : [step(92 - k * 2, 0), step(88 - k * 3, 0), step(78 - k * 5, 0)];
-  const grounds = [bg, surface, surface2, surface3];
+  // The canvas under the glass: three soft blooms over the page colour, taken from the accent — its own hue, a neighbour
+  // and a warm opposite (teal gets periwinkle and rose, indigo gets violet and peach). Pastel in light, a dim glow in dark.
+  // The two companions skip the yellow-greens (50-150°), which read as murk behind glass: they turn the other way instead.
+  // Ink is solved against what text actually sits on: a pane of glass (--glass-pane-a of --surface) over a bloom at full
+  // strength, and the bare canvas where a bloom has faded to 60% (their centres sit at the screen's edges, past the text).
+  const ah = hexToHsl(resolveAccent(o.accent, o.mode)), ms = clamp(ah.s * 0.85, 26, 72);
+  const murk = (x: number) => { const d = ((x % 360) + 360) % 360; return d > 50 && d < 150; };
+  const hb = murk(ah.h + 52) ? ah.h + 308 : ah.h + 52, hc = murk(ah.h + 160) ? ah.h + 200 : ah.h + 160;
+  const mesh = dark
+    ? [hslToHex(ah.h, ms, step(0, 22)), hslToHex(hb, ms * 0.9, step(0, 19)), hslToHex(hc, ms * 0.75, step(0, 17))]
+    : [hslToHex(ah.h, ms, step(79, 0)), hslToHex(hb, ms * 0.95, step(83, 0)), hslToHex(hc, ms * 0.9, step(85, 0))];
+  const grounds = [bg, surface, surface2, surface3, ...mesh.flatMap(m => [mix(bg, m, 0.6), mix(m, surface, 0.56)])];
   const ink = solve(grounds, h, Math.min(ts + 6, 24), dark ? 94 : 12, dark ? 1 : -1, [12, 14, 16][k]!);
   const ink2 = solve(grounds, h, ts, dark ? 78 : 30, dark ? 1 : -1, [5.4, 6.6, 8.2][k]!);
   const ink3 = solve(grounds, h, ts, dark ? 66 : 42, dark ? 1 : -1, [4.6, 5.2, 6.2][k]!);
@@ -113,6 +126,11 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
   if (contrast(accent, surface) < 4.5) { const a = hexToHsl(accent); accent = solve([surface, bg], a.h, a.s, a.l, dark ? 1 : -1, 4.5); }
   const a = hexToHsl(accent);
   const onAccent = contrast('#ffffff', accent) >= 4.5 ? '#ffffff' : '#0a1210';
+  // the far end of a filled button's sheen: the accent turned a little round the wheel (away from the yellow-greens),
+  // held to on-accent's ratio
+  const h2 = murk(a.h + 24) ? a.h + 336 : a.h + 24;
+  let accent2 = hslToHex(h2, a.s, a.l);
+  if (contrast(onAccent, accent2) < 4.5) accent2 = solve([onAccent], h2, a.s, a.l, onAccent === '#ffffff' ? -1 : 1, 4.5);
   // the site-wide avatar fill, only when set (ui.css falls back to each person's own); letters black or white on the fill
   const avatar: Record<string, string> = {};
   if (isHex(o.avatarBg)) { avatar['--avatar-bg'] = o.avatarBg; avatar['--avatar-ink'] = onColor(o.avatarBg); }
@@ -123,7 +141,14 @@ export function buildTheme(o: ThemeOpts): Record<string, string> {
     '--ink': ink, '--ink-2': ink2, '--ink-3': ink3, '--ink-4': ink4,
     '--accent': accent, '--accent-hover': hslToHex(a.h, a.s, clamp(a.l + (dark ? 8 : -7), 0, 100)),
     '--accent-soft': mix(surface, accent, dark ? 0.2 : 0.13), '--accent-wash': mix(surface, accent, dark ? 0.09 : 0.06),
-    '--on-accent': onAccent,
+    '--on-accent': onAccent, '--accent-2': accent2,
+    // the accent on an inverse (dark) block: its dark-mode form in light mode, so it reads on charcoal
+    '--inverse-accent': dark ? accent : resolveAccent(o.accent, 'dark'),
+    '--mesh-a': mesh[0]!, '--mesh-b': mesh[1]!, '--mesh-c': mesh[2]!,
+    // what a pane averages to over the canvas: sticky cells and rings inside glass are painted solid in this
+    '--mesh-mid': mix(mix(bg, mesh[0]!, 0.35), mix(mesh[1]!, mesh[2]!, 0.5), 0.3),
+    // a pane's shadow: the accent's hue, deep and faint, so it reads as light through tinted glass rather than grey
+    '--glass-shade': hslToHex(ah.h, dark ? 30 : 35, dark ? 2 : 24),
     '--rail-bg': 'transparent', '--rail-ink': ink2, '--rail-ink-hi': ink
   };
 }

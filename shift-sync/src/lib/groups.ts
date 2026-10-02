@@ -1,7 +1,7 @@
 import { CATEGORIES } from '../core/core.generated.js';
 import type { Category } from '../core/core.generated.js';
-import { monthKey, weekStart } from './dates.ts';
-import { weekLabel } from './format.ts';
+import { addDays, monthKey, weekStart } from './dates.ts';
+import { monthShort, weekLabel, weekShort } from './format.ts';
 import type { ShiftView } from './stats.ts';
 
 /* How the Log groups its rows. A group names its month or week once (the band), and the rows under it only say
@@ -105,3 +105,26 @@ export function partsOf(tips: number | null, wage: number | null, lines: { categ
 
 /** A saved shift's parts. They always add up to the view's total. */
 export const incomeParts = (v: ShiftView): IncomePart[] => partsOf(v.shift.tips, v.wage, v.income, v.shift.other);
+
+/** Whether a row's date still names its month. A month band already names it, and so does a week band that stays in one
+ *  month; a week that runs into the next month still names it ("2" under "Sep 28 – Oct 4" would belong to either). */
+export function monthInRow(date: string, by: GroupBy): boolean {
+  if (by === 'none') return true;
+  if (by === 'month') return false;
+  const start = weekStart(date);
+  return start.slice(0, 7) !== addDays(start, 6).slice(0, 7);
+}
+
+/** A band's two names: `name`, short enough for a day column ('September', 'Sep 28 – Oct 4'), and `title`, the long
+ *  form for its hover title ('September 2026', 'September 28 – October 4, 2026'). */
+export function bandLabel(key: string, by: GroupBy): { name: string; title: string } {
+  if (by === 'month') return { name: monthShort(key), title: new Date(key.slice(0, 7) + '-15T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) };
+  if (by === 'week') return { name: weekShort(key), title: weekLabel(key) };
+  return { name: '', title: '' };
+}
+
+/** A band's count line: '21 shifts · 1 awaiting tips · 1 upcoming', the pending parts only when there are any. */
+export function groupCount(g: Pick<ShiftGroup, 'views' | 'worked' | 'scheduled'>): string {
+  const n = g.views.length;
+  return [`${n} ${n === 1 ? 'shift' : 'shifts'}`, g.worked ? `${g.worked} awaiting tips` : '', g.scheduled ? `${g.scheduled} upcoming` : ''].filter(Boolean).join(' · ');
+}

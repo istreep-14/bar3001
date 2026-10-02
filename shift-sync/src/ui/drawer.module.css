@@ -1,8 +1,8 @@
 /* One drawer, two hosts. panel: fills the floating card in the reserved column. dialog: phone bottom sheet.
    Inside, sections are flat (label + content, hairline between); the only boxes are small income-line cards. */
 .panel { height: 100%; min-height: 0; }
-.dialog { border: 0; padding: 0; margin: auto auto 0; width: 100%; max-width: 32rem; max-height: 94dvh; background: var(--surface); color: var(--ink); border-radius: var(--r-lg) var(--r-lg) 0 0; box-shadow: var(--shadow); overflow: hidden; animation: up var(--dur) var(--ease); }
-.dialog::backdrop { background: var(--overlay); animation: fade var(--dur) var(--ease); }
+.dialog { border: 1px solid var(--glass-line); padding: 0; margin: auto auto 0; width: 100%; max-width: 32rem; max-height: 94dvh; background: var(--glass-sheet); color: var(--ink); border-radius: var(--r-lg) var(--r-lg) 0 0; box-shadow: var(--glass-hi), var(--shadow); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); overflow: hidden; animation: up var(--dur) var(--ease); }
+.dialog::backdrop { background: var(--overlay); backdrop-filter: var(--scrim-filter); -webkit-backdrop-filter: var(--scrim-filter); animation: fade var(--dur) var(--ease); }
 .dialogInner { display: flex; flex-direction: column; max-height: 94dvh; }
 .column { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .formBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }

@@ -1,0 +1,11 @@
+.faces { --av-overlap: 0.15rem; display: inline-flex; align-items: center; vertical-align: middle; }
+.faces :global(.avatar) { width: var(--sheet-thumb); height: var(--sheet-thumb); font-size: var(--fs-micro); }
+.faces[data-sm] :global(.avatar) { width: 1.5rem; height: 1.5rem; }
+.who { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: var(--s-2); padding: 5px 6px; border-radius: var(--r-sm); }
+.who:hover { background: var(--surface-2); }
+.who :global(.avatar) { width: 1.625rem; height: 1.625rem; }
+.whoName { display: inline-flex; align-items: center; min-width: 0; font-weight: var(--fw-med); }
+.whoSpot { min-width: 2.6rem; font-size: var(--fs-micro); font-weight: var(--fw-med); color: var(--ink-3); }
+.who > :global(.fig) { font-size: var(--fs-meta); color: var(--ink-2); }
+.foot { display: flex; justify-content: space-between; margin-top: var(--s-1); padding: 7px 6px 2px; border-top: 1px solid var(--line-soft); font-size: var(--fs-meta); color: var(--ink-3); }
+.foot b { font-weight: var(--fw-med); color: var(--ink); }

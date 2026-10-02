@@ -28,10 +28,10 @@ export function WageRates() {
         {rates.map(w => (
           <div class={styles.wageRow} key={w.id + w.date}>
             <label class="field"><span class="label-text">From</span>
-              <input class="input" type="date" value={w.date} onChange={e => { const d = e.currentTarget.value; if (d) void run(() => saveWage({ id: w.id, date: d, rate: w.rate, note: w.note })); }} />
+              <input class="input" id={`wage-date-${w.id}`} name={`wage-date-${w.id}`} type="date" value={w.date} onChange={e => { const d = e.currentTarget.value; if (d) void run(() => saveWage({ id: w.id, date: d, rate: w.rate, note: w.note })); }} />
             </label>
             <label class="field"><span class="label-text">$ / hour</span>
-              <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={w.rate}
+              <input class="input num" id={`wage-rate-${w.id}`} name={`wage-rate-${w.id}`} type="number" inputMode="decimal" step="0.01" min="0" value={w.rate}
                 onChange={e => { const r = e.currentTarget.value; if (valid(r)) void run(() => saveWage({ id: w.id, date: w.date, rate: Number(r), note: w.note })); }} />
             </label>
             <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove the wage from ${w.date}`}
@@ -41,10 +41,10 @@ export function WageRates() {
         {draft && (
           <form class={styles.wageRow} onSubmit={e => { e.preventDefault(); if (draft.date && valid(draft.rate)) void run(async () => { await saveWage({ date: draft.date, rate: Number(draft.rate) }); setDraft(null); }); }}>
             <label class="field"><span class="label-text">From</span>
-              <input class="input" type="date" value={draft.date} onInput={e => setDraft({ ...draft, date: e.currentTarget.value })} required />
+              <input class="input" id="wage-date-new" name="wage-date-new" type="date" value={draft.date} onInput={e => setDraft({ ...draft, date: e.currentTarget.value })} required />
             </label>
             <label class="field"><span class="label-text">$ / hour</span>
-              <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={draft.rate} placeholder="0.00" onInput={e => setDraft({ ...draft, rate: e.currentTarget.value })} required autoFocus />
+              <input class="input num" id="wage-rate-new" name="wage-rate-new" type="number" inputMode="decimal" step="0.01" min="0" value={draft.rate} placeholder="0.00" onInput={e => setDraft({ ...draft, rate: e.currentTarget.value })} required autoFocus />
             </label>
             <button type="submit" class="btn btn-primary">Add</button>
           </form>

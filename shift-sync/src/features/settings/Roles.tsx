@@ -42,7 +42,7 @@ export function Roles() {
         </div>
       )}
       <form class={styles.addRole} onSubmit={e => { e.preventDefault(); if (name.trim()) void add(name.trim()).then(() => setName('')); }}>
-        <input class="input" type="text" value={name} placeholder="New role" aria-label="New role" autocomplete="off" onInput={e => setName(e.currentTarget.value)} />
+        <input class="input" id="new-role-name" name="new-role-name" type="text" value={name} placeholder="New role" aria-label="New role" autocomplete="off" onInput={e => setName(e.currentTarget.value)} />
         <button type="submit" class="btn" disabled={!name.trim()}><Icon name="plus" /> Add role</button>
       </form>
     </section>
@@ -62,7 +62,7 @@ function RoleRow({ r, first, last, people, run }: { r: Role; first: boolean; las
       </summary>
       <div class={styles.roleBody}>
         <label class="field"><span class="label-text">Name</span>
-          <input class="input" type="text" value={r.name} key={r.name} autocomplete="off"
+          <input class="input" id={`role-name-${r.id}`} name={`role-name-${r.id}`} type="text" value={r.name} key={r.name} autocomplete="off"
             onChange={e => { const n = e.currentTarget.value.trim(); if (n && n !== r.name) void save({ name: n }); }} />
           {people > 0 && <span class="hint">Renaming it renames it on {people === 1 ? 'the one person who has it' : `the ${people} people who have it`}.</span>}
         </label>

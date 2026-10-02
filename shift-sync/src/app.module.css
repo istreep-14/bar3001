@@ -1,19 +1,29 @@
-.shell { min-height: 100dvh; background: var(--bg); }
+.shell {
+  min-height: 100dvh;
+  /* the canvas: the page colour with three soft blooms of the accent's family (tokens --mesh-*), the light the glass frosts */
+  background:
+    radial-gradient(64rem 46rem at -4% -10%, var(--mesh-a), transparent 66%),
+    radial-gradient(56rem 44rem at 102% 6%, var(--mesh-b), transparent 64%),
+    radial-gradient(68rem 48rem at 62% 116%, var(--mesh-c), transparent 66%),
+    radial-gradient(40rem 32rem at 30% 70%, color-mix(in srgb, var(--mesh-b) 60%, transparent), transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
+}
 .skip { position: absolute; left: var(--s-3); top: -4rem; z-index: var(--z-skip); padding: var(--s-2) var(--s-3); background: var(--ink); color: var(--bg); border-radius: var(--r-sm); font-weight: var(--fw-semi); }
 .skip:focus { top: var(--s-3); }
 
 /* ── phone: a header, a strip of this group's pages, the page, and a tab bar that sits on the canvas. The side panel is
    the desktop's; the tab bar and strip are its phone form. ── */
-.rail { position: fixed; left: var(--shell-pad); right: var(--shell-pad); bottom: calc(var(--shell-pad) + env(safe-area-inset-bottom)); z-index: var(--z-nav); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-lg); }
+.rail { position: fixed; left: var(--shell-pad); right: var(--shell-pad); bottom: calc(var(--shell-pad) + env(safe-area-inset-bottom)); z-index: var(--z-nav); border-radius: var(--r-lg); background: var(--glass-sheet); border: 1px solid var(--glass-line); box-shadow: var(--glass-hi), var(--shadow-glass); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); }
 .side { display: none; }
-.links { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
+.links { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; padding: 0; list-style: none; }
 .link { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 3.5rem; padding: var(--s-2) 0; border: 0; background: transparent; color: var(--ink-2); text-decoration: none; font-size: var(--fs-micro); font-weight: var(--fw-semi); }
 .link :global(.icon) { width: 1.25rem; height: 1.25rem; }
 .link[aria-current='page'] { color: var(--ink); }
 .link[aria-current="page"] :global(.icon) { stroke-width: 2.4; }
 
 .main { min-width: 0; display: flex; flex-direction: column; }
-.head { position: sticky; top: 0; z-index: var(--z-pop); display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: var(--topbar-h); padding: var(--s-3) var(--s-4); padding-top: calc(var(--s-3) + env(safe-area-inset-top)); background: var(--bg); }
+.head { position: sticky; top: 0; z-index: var(--z-pop); display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: var(--topbar-h); padding: var(--s-3) var(--s-4); padding-top: calc(var(--s-3) + env(safe-area-inset-top)); background: var(--glass-pane); box-shadow: inset 0 -1px 0 var(--glass-line); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); }
 /* the page's name is in the strip or the tab bar on a phone, so the header there shows just its tools; the h1 stays for
    screen readers */
 .heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -22,13 +32,13 @@
 .tools { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); flex: 1; min-width: 0; }
 .strip { display: flex; gap: var(--s-2); overflow-x: auto; padding: var(--s-2) var(--s-4) 0; background: transparent; }
 .stripLink { flex: none; padding: var(--s-2) var(--s-3); border-radius: var(--r-pill); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); text-decoration: none; white-space: nowrap; }
-.stripLink[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--shadow-sm); }
+.stripLink[aria-current='page'] { background: var(--glass-sheet); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--glass-hi), var(--shadow-chip); }
 
 /* a page with two views: its tab row sits on the canvas above the panel */
 .tabs { display: flex; gap: var(--s-1); padding: var(--s-2) 0; }
 .tab { padding: var(--s-2) var(--s-4); border-radius: var(--r-md); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); text-decoration: none; }
 .tab:hover { color: var(--ink); }
-.tab[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--shadow-sm); }
+.tab[aria-current='page'] { background: var(--glass-sheet); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--glass-hi), var(--shadow-chip); }
 .page { flex: 1; width: 100%; margin: 0 auto; padding: 0 var(--s-4) calc(6.5rem + env(safe-area-inset-bottom)); min-width: 0; outline: none; display: flex; flex-direction: column; }
 .page > * { min-width: 0; }
 .long { display: none; }
@@ -42,7 +52,10 @@
   .rail, .strip { display: none; }
 
   /* The nav has no surface of its own: it sits on the canvas. */
-  .side { display: flex; flex-direction: column; min-height: 0; padding: var(--s-3) var(--s-2) var(--s-4) var(--s-3); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  .side { position: relative; display: flex; flex-direction: column; min-height: 0; padding: var(--s-3) var(--s-2) var(--s-4) var(--s-3); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  .resize { position: absolute; top: var(--s-4); right: 0; bottom: var(--s-4); z-index: 2; width: 0.4rem; margin: 0; padding: 0; border: 0; background: transparent; cursor: col-resize; }
+  .resize::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--line); opacity: 0; }
+  .resize:hover::after, .resize:focus-visible::after { opacity: 1; }
   .me { flex: none; margin-bottom: var(--s-4); }
   .groups { display: flex; flex-direction: column; }
   .group { display: flex; flex-direction: column; gap: 0.375rem; }
@@ -51,11 +64,14 @@
   /* a page: glyph, name, a count or state on the right. Only the current one is filled: a white chip, lifted. */
   .navlink { display: flex; align-items: center; gap: var(--s-3); width: 100%; min-height: 2.25rem; padding: 0 var(--s-2) 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-normal); text-align: left; text-decoration: none; cursor: pointer; }
   .navlink :global(.icon) { flex: none; width: 1rem; height: 1rem; stroke-width: 1.75; color: var(--ink-2); }
-  .navlink:hover { background: color-mix(in srgb, var(--surface) 55%, transparent); color: var(--ink); }
+  .navlink:hover { background: var(--glass-pane); color: var(--ink); }
   .navlink:hover :global(.icon) { color: var(--ink); }
-  .navlink[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--shadow-chip); }
+  .navlink[aria-current='page'] {
+    background: var(--glass-sheet); color: var(--ink); font-weight: var(--fw-semi);
+    box-shadow: var(--glass-hi), var(--shadow-chip);
+  }
   .navlink[aria-current='page'] .navtag { background: var(--accent-soft); color: var(--ink); }
-  .navlink[aria-current='page'] :global(.icon) { color: var(--ink); stroke-width: 2.25; }
+  .navlink[aria-current='page'] :global(.icon) { color: var(--accent); stroke-width: 2.25; }
   .navlabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .navtag { flex: none; min-width: 1.5rem; height: 1.125rem; padding: 0 0.4rem; border-radius: var(--r-pill); background: var(--surface-3); color: var(--ink-2); font-size: var(--fs-micro); font-weight: var(--fw-med); font-variant-numeric: tabular-nums; line-height: 1.125rem; text-align: center; }
   /* the foot: the theme switch */
@@ -65,10 +81,13 @@
      canvas, never white), 8px apart. A list page's table is one container, under its view tabs; search and filters
      are icon buttons on that same row. A page of several parts (`.parts`, Settings) gives each part its own container. */
   .main { min-height: 0; margin: var(--s-2) var(--s-2) var(--s-2) 0; overflow: hidden; gap: var(--s-2); }
-  .head { position: static; flex: none; align-items: center; gap: var(--s-5); min-height: 0; padding: var(--s-2) var(--s-2) var(--s-1); background: transparent; }
+  .head { position: static; flex: none; align-items: center; gap: var(--s-5); min-height: 0; padding: var(--s-2) var(--s-2) var(--s-1); background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
   .page > :global(.panel) { gap: var(--s-2); }
   /* the table's own container: its rows bleed 8px into the padding (ui.css .data-sheet), so its words sit 20px in */
-  .page > :global(.panel) :global(.data-sheet) { padding: var(--s-2) var(--s-5) var(--s-1); background: var(--surface-2); border-radius: var(--r-side); overflow: hidden; }
+  .page > :global(.panel) :global(.data-sheet) {
+    padding: 0 var(--s-5) var(--s-1); border-radius: var(--r-side); overflow: hidden;
+    background: var(--glass-sheet); border: 1px solid var(--glass-line); box-shadow: var(--glass-hi), var(--shadow-glass); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter);
+  }
   .heading { position: static; display: grid; gap: 3px; width: auto; height: auto; min-width: 0; overflow: visible; clip-path: none; white-space: normal; }
   .tools { flex: none; justify-content: flex-end; margin-left: auto; }
 
@@ -84,5 +103,5 @@
   .drawer { position: fixed; top: var(--s-2); right: var(--s-2); bottom: var(--s-2); z-index: var(--z-drawer); width: var(--drawer-w); animation: slide var(--dur) var(--ease); }
   @keyframes slide { from { transform: translateX(1.5rem); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .drawer { animation: none; } }
-  .card { height: 100%; display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-side); box-shadow: var(--shadow); }
+  .card { height: 100%; display: flex; flex-direction: column; min-height: 0; overflow: hidden; border-radius: var(--r-side); background: var(--glass-sheet); border: 1px solid var(--glass-line); box-shadow: var(--glass-hi), var(--shadow-glass); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); }
 }

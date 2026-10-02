@@ -4,6 +4,7 @@ import type { Summary } from '../lib/stats.ts';
 import type { IconName } from './Icon.tsx';
 import type { KpiItem } from './kpi.tsx';
 import { StatList } from './kpi.tsx';
+import { isDesktop } from './viewport.ts';
 
 interface Item { label: string; value: ComponentChildren; hint?: string }
 
@@ -22,10 +23,14 @@ const PERIOD_ICONS: Record<string, IconName> = { Shifts: 'log', Hours: 'clock', 
 export const periodChips = (s: Summary, keys?: string[]): KpiItem[] =>
   periodItems(s).filter(it => !keys || keys.includes(it.label)).map(it => ({ ...it, icon: PERIOD_ICONS[it.label] ?? 'chart', neutral: it.label === 'Hours' }));
 
-/** A page's side column: optional content (an open shift, say), then a label, its figures, and a line of explanation. */
-export function SideStats({ label = 'This period', items, note, children, ariaLabel }: {
-  label?: string; items?: Item[]; note?: ComponentChildren; children?: ComponentChildren; ariaLabel?: string;
+/** A page's side column: optional content (an open shift, say), then a label, its figures, and a line of explanation.
+ *  `phone`: only on a phone, stacked over the page; a desktop gives the table the width instead. */
+export function SideStats({ label = 'This period', items, note, children, after, ariaLabel, phone }: {
+  label?: string; items?: Item[]; note?: ComponentChildren; children?: ComponentChildren;
+  /** Under the figures: a block that belongs with them, like the mini calendar. */
+  after?: ComponentChildren; ariaLabel?: string; phone?: boolean;
 }) {
+  if (phone && isDesktop.value) return null;
   return (
     <aside class="panel-body side" aria-label={ariaLabel ?? label}>
       {children}
@@ -36,6 +41,7 @@ export function SideStats({ label = 'This period', items, note, children, ariaLa
           {note && <p class="muted side-note">{note}</p>}
         </div>
       )}
+      {after}
     </aside>
   );
 }

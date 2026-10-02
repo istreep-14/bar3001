@@ -168,14 +168,14 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
 
         <section class={styles.section}>
           <label class="field"><span class="label-text">Name</span>
-            <input class="input" type="text" value={form.name} autocomplete="off" aria-invalid={!!error && !form.name.trim() && !form.first.trim()} onInput={e => set({ name: e.currentTarget.value })} />
+            <input class="input" id={`person-name-${host}`} name={`person-name-${host}`} type="text" value={form.name} autocomplete="off" aria-invalid={!!error && !form.name.trim() && !form.first.trim()} onInput={e => set({ name: e.currentTarget.value })} />
             <span class="hint">The short name you use on the floor. Must be unique. Blank uses the first name.</span>
           </label>
           <div class={styles.two}>
             <label class="field"><span class="label-text">First name</span>
-              <input class="input" type="text" value={form.first} autocomplete="off" onInput={e => set({ first: e.currentTarget.value })} /></label>
+              <input class="input" id={`person-first-${host}`} name={`person-first-${host}`} type="text" value={form.first} autocomplete="off" onInput={e => set({ first: e.currentTarget.value })} /></label>
             <label class="field"><span class="label-text">Last name</span>
-              <input class="input" type="text" value={form.last} autocomplete="off" onInput={e => set({ last: e.currentTarget.value })} /></label>
+              <input class="input" id={`person-last-${host}`} name={`person-last-${host}`} type="text" value={form.last} autocomplete="off" onInput={e => set({ last: e.currentTarget.value })} /></label>
           </div>
           <div class="field" role="group" aria-label="Also known as"><span class="label-text">Also known as</span>
             {form.aliases.length > 0 && (
@@ -188,20 +188,20 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
               </div>
             )}
             <div class={styles.inline}>
-              <input class="input" type="text" value={newAlias} placeholder="A nickname, a short name, a misspelling" aria-label="Add an alias" autocomplete="off"
+              <input class="input" id={`person-alias-${host}`} name={`person-alias-${host}`} type="text" value={newAlias} placeholder="A nickname, a short name, a misspelling" aria-label="Add an alias" autocomplete="off"
                 onInput={e => setNewAlias(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAlias(); } }} />
               <button type="button" class="btn" onClick={addAlias} disabled={!newAlias.trim()}><Icon name="plus" /> Add</button>
             </div>
             <span class="hint">Other names they go by. Typing any of them finds this person.</span>
           </div>
           <label class="field"><span class="label-text">ID number</span>
-            <input class="input" type="text" value={form.id_number} autocomplete="off" onInput={e => set({ id_number: e.currentTarget.value })} /></label>
+            <input class="input" id={`person-idnum-${host}`} name={`person-idnum-${host}`} type="text" value={form.id_number} autocomplete="off" onInput={e => set({ id_number: e.currentTarget.value })} /></label>
         </section>
 
         <section class={styles.section}>
           <label class="field"><span class="label-text">Main role</span>
             <span class={styles.inline}>
-              <select class="input" value={form.role} onChange={e => setMain(e.currentTarget.value)}>
+              <select class="input" id={`person-role-${host}`} name={`person-role-${host}`} value={form.role} onChange={e => setMain(e.currentTarget.value)}>
                 <option value="">None</option>
                 {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -214,7 +214,7 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
               {otherOptions.map(r => <button key={r} type="button" class="tog" aria-pressed={form.roles.includes(r)} onClick={() => toggleRole(r)}>{r}</button>)}
             </div>
             <div class={styles.inline}>
-              <input class="input" type="text" value={newRole} placeholder="A role not listed" aria-label="Add a role not listed" autocomplete="off"
+              <input class="input" id={`person-newrole-${host}`} name={`person-newrole-${host}`} type="text" value={newRole} placeholder="A role not listed" aria-label="Add a role not listed" autocomplete="off"
                 onInput={e => setNewRole(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addRole(); } }} />
               <button type="button" class="btn" onClick={addRole} disabled={!newRole.trim()}><Icon name="plus" /> Add</button>
             </div>
@@ -226,13 +226,13 @@ export function PersonEditor({ id, host }: { id: string; host: 'panel' | 'dialog
               ))}
             </div>
           </div>
-          <label class={styles.check}><input type="checkbox" checked={form.manager} onChange={e => set({ manager: e.currentTarget.checked })} /> Manager</label>
-          <label class={styles.check}><input type="checkbox" checked={form.is_user} onChange={e => set({ is_user: e.currentTarget.checked })} /> This is me <span class={styles.hintInline}>(only one person can be)</span></label>
+          <label class={styles.check}><input type="checkbox" id={`person-manager-${host}`} name={`person-manager-${host}`} checked={form.manager} onChange={e => set({ manager: e.currentTarget.checked })} /> Manager</label>
+          <label class={styles.check}><input type="checkbox" id={`person-isuser-${host}`} name={`person-isuser-${host}`} checked={form.is_user} onChange={e => set({ is_user: e.currentTarget.checked })} /> This is me <span class={styles.hintInline}>(only one person can be)</span></label>
         </section>
 
         <section class={styles.section}>
           <label class="field"><span class="label-text">Notes</span>
-            <textarea class="input" value={form.notes} onInput={e => set({ notes: e.currentTarget.value })} rows={3} /></label>
+            <textarea class="input" id={`person-notes-${host}`} name={`person-notes-${host}`} value={form.notes} onInput={e => set({ notes: e.currentTarget.value })} rows={3} /></label>
         </section>
       </div>
       <footer class={styles.foot}>
@@ -287,7 +287,7 @@ function AvatarFields({ id, form, set }: { id: string; form: Form; set: (patch: 
       <div class={styles.avatarEdit}>
         <Avatar id={id} name={name} look={{ photo: form.photo, avatar_color: form.avatar_color, avatar_text: form.avatar_text }} size="lg" />
         <div class={styles.avatarActions}>
-          <input ref={file} type="file" accept="image/*" hidden onChange={e => { void pick(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
+          <input ref={file} id={`person-photo-${id}`} name={`person-photo-${id}`} type="file" accept="image/*" hidden onChange={e => { void pick(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
           <button type="button" class="btn" disabled={!!busy} onClick={() => file.current?.click()}><Icon name="plus" /> {form.photo ? 'Change photo' : 'Add photo'}</button>
           {form.photo && !busy && (cut && original.current
             ? <button type="button" class="btn btn-quiet" onClick={() => void use(original.current!, false)}>Keep the background</button>
@@ -301,7 +301,7 @@ function AvatarFields({ id, form, set }: { id: string; form: Form; set: (patch: 
         <ColorPicker label="Avatar colour" none="Auto" value={form.avatar_color} onChange={v => set({ avatar_color: v })} />
       </div>
       <label class="field"><span class="label-text">Letters</span>
-        <input class={`input ${styles.letters}`} type="text" maxLength={3} value={form.avatar_text} placeholder={initials(name)} autocomplete="off"
+        <input class={`input ${styles.letters}`} id={`person-letters-${id}`} name={`person-letters-${id}`} type="text" maxLength={3} value={form.avatar_text} placeholder={initials(name)} autocomplete="off"
           onInput={e => set({ avatar_text: e.currentTarget.value })} />
         <span class="hint">Up to 3. Blank uses their initials.</span>
       </label>

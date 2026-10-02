@@ -21,7 +21,10 @@ Bar2.000's dashboard (its `styles.css`, `viz.js`, `calendar.js`, `stepper.js`), 
   `#/journal`, `#/log/multi`, `#/settings`, `#/hub`) land on their replacement.
 
 ## Tokens (`tokens.css`)
-- **Surfaces:** canvas `--bg` < panel `--surface-2` (1px `--line`, soft shadow) < content you act on `--surface` < raised (dialog, drawer, tooltip: `--shadow`).
+- **Surfaces (glass):** canvas `--bg` washed with three blooms of the accent's family (`--mesh-a/b/c`, from `theme.ts`) < panel `--glass-pane`
+  (a see-through step of `--surface`, blurred) < content you act on `--glass-sheet` (the denser frost: data sheets, drawer, form, menus) < raised
+  (`--shadow`). Every pane has a `--glass-line` edge, a lit top lip (`--glass-hi`) and `--shadow-glass` in the accent's hue. Sticky cells and
+  avatar rings inside a sheet paint `--glass-solid` so what scrolls under them stays hidden.
   `--surface-3` is the pressed or inset shade. Dark mode is written twice (a test keeps the two blocks identical).
 - **Type:** Poppins, self-hosted. Title 16, body 14, small 12, labels 12 semibold (sentence case). Tiles are `--fs-tile` (22) and `--fs-stat` (30); chart labels are `--fs-axis`. Those four stay put when a mouse densifies the rest of the ladder. `--fs-lead` follows `--fs-body`.
 - **Selection:** `--sel-bg`, `--sel-bar`, `--sel-bar-w`. One recipe for a selected table row, a person, and a log card.
@@ -71,7 +74,7 @@ has it; removing one leaves it on people as plain text. Roles people have that a
 empty list offers the usual roles. It syncs to the Roles tab.
 
 ## Rail, groups and pages
-Rail one is three groups: **Shifts** (Dashboard, Insights, Log, Table, Calendar, Other income), **Crew** (Crew, People) and **Settings** (one page). A page
+Rail one is three groups: **Shifts** (Home, Plan week, Insights, Log, Table, Calendar, Other income), **Crew** (Crew, People) and **Settings** (one page). A page
 with two views has a tab row on the canvas above its panel, each view its own route: Insights is *Trends* (`#/overview`) and *Totals*
 (`#/summary`); Crew is *Week* (`#/hub/week`) and *Every shift* (`#/hub/crew`). Settings is one page whose areas are still linked
 (`#/settings/wages` and so on). Retired pages land somewhere sensible: `#/journal` and `#/log/multi` open the Log. Below the groups:
@@ -80,23 +83,28 @@ under the top bar.
 
 ## Colour (`lib/theme.ts`, applied by `data/settings.ts`)
 No white-on-black extremes. The page, the panel, the tints and the lines are steps of one ramp built from the background tint (Soft grey, the
-default, then Mint, Slate, Stone, Neutral). The canvas is a light grey, panels sit a step or two above it, and only what you act on (the table,
+default, then Mint, Slate, Stone, Neutral). The canvas is a light grey under soft accent blooms, panels are frosted glass a step or two above it, and only what you act on (the table,
 a field, an opened row) reaches the near-white top step;
-text is four steps (ink, ink-2, ink-3, ink-4) *solved* to keep 5.3:1 / 4.5:1 or better on every surface at every contrast setting (tests enforce it).
+text is four steps (ink, ink-2, ink-3, ink-4) *solved* to keep 5.3:1 / 4.5:1 or better on every surface, on the blooms and on glass over them, at every contrast setting (tests enforce it).
 The primary colour (presets or any custom colour) is deepened or lightened until it reads as text. `--accent-wash` is the faint primary tint used for
 grouped rows, hovers and filled cells. tokens.css holds only the static defaults and the status colours; never hard-code a neutral.
 
 ## Calendar, Totals, Crew, Other income
+Calendar has three views: Week (the week strip with its tips, income and people rows, then the week on the clock and eight weeks of
+income by source), Month
+(cells with no outlines: an empty day is a soft square, a booked shift leads with its start time, a shift waiting on tips is hatched, each
+shift has a time bar on the 10 AM–4 AM working day) and 3 months.
 - **Calendar:** on desktop the opened shift shows in the side column beside the month (`ShiftDetails`, so the floating drawer stays shut),
   with the month's numbers under it. `Month` (big cards) or `3 months` (three stacked months beside a KPI line, a month table, tips-and-rate by week, best and slowest by rate).
   A day is shaded by its tips per hour against the median of the shifts in view: above leans on the primary colour, below on amber, deeper = further out.
 - **Totals** (Overview's second view, `#/summary`): the shifts in the period folded into a table: by week, month, year, weekday, type or party, every column summed, change pills for time groups.
-- **Crew** (*Week* and *Every shift* views) and **Other income:** *Week* as a **Timeline** (days down, one 12-hour ruler across from `lib/ruler.ts`, a bar per bartender, yours in the
-  accent; hours only) or a **Grid** (bartenders as rows, Mon–Sun across); click a bar or a cell to set start and end (`saveCrewLine`). *Every shift* and *Other income* are read-only lists in the Log's look
-  (`Table` with `log` and `group`), one line per crew or income line, a shift's lines one block that names the day once (crew: you
-  first, then by start; income: by source). No inputs in the rows and no form above the list: a line opens its shift in the drawer,
-  and editing is the shift form (its Crew or Other page). The one add control is *Add to a shift…* in the panel head: pick one of the
-  period's shifts and the form opens on the page that adds to it.
+- **Crew** (`#/crew`) and **Income** (`#/income`) are read-only sheets in the Log's look, with one header row (no group band above it).
+  One row per bartender, or per money line. A shift's rows are one block: the day (`DayLine`, type and party included) is said once,
+  you first then by start on Crew, tips then wage then other on Income. Your own crew line is the gold row. Hours are one decimal;
+  income amounts keep cents, tips strongest, wage quieter and noted Estimated. The foot counts the lines and sums hours or amount.
+  A row opens its shift; Add to a shift opens the form on Crew or Other. On Crew the columns are Shift, Station, then the clock.
+  Each bar holds the face and name on the left and the start–end on the right, in that person's colour, and the hours sit just
+  after the bar. A line with no end is dashed. Planning the week stays on Plan week.
 
 ## KPI parts (`ui/kpi.tsx`)
 One small vocabulary, used wherever a number needs context instead of a bigger box: `Spark` (a few points, no axes), `DeltaPill` (▲/▼ + %,
@@ -105,14 +113,48 @@ delta, spark on one line). Used by the Overview tiles, the Calendar's month line
 Add a KPI by composing these, not by adding a card.
 
 
-## Dashboard
-The landing page (`#/dashboard`, and anything unknown): one week at a glance and a door to every other page. The week is this week once it
-has a shift with money in, else last week, and a switch picks either. Across the top, six figures (tips, tips/hr, hours, shifts, other,
-total) against the week before (weeks run Monday to Sunday everywhere, `WEEK_START` in `lib/dates.ts`); a running week is compared with the same days of last week (`lib/dashboard.ts`, tested). Under them, that
-week and the one before as the Log's own grouped list (rows open the drawer here). Beside them: day capsules (height = hours, outlined = no
-shift, accent outline = waiting on tips), best nights by tips/hr over 12 weeks (shifts of 2h or more, `rankable` in `lib/stats.ts`, the
-same floor as the Calendar's best and slowest), shifts awaiting tips (or upcoming) with Fill in tips, and the crew with
-hours only. Each card is the part its full page uses and ends in a link to that page.
+## Blocks (`parts/blocks/`, numbers in `lib/blocks.ts`, tested)
+Rounded cards that each hold one idea, after the HR-dashboard family the app follows: a title top left, a round ↗ to the page behind it top
+right, big thin figures, pill splits, one dark (`inverse`) card per group for today or what needs you, hatching (`--hatch`) for a day off, a
+day outside the month or a week still running. Pieces: `Block` (glass / inverse / bare), `WeekCards` (the week as seven squarish
+cards across — a day to come leads with its start time, a day worked with its tips and rate, a day off is hatched — with optional rows
+lined up under the cards, one cell per day: time, hours, tips, income by source, the crew listed down each day, or one row per bartender
+with their own times; a Details switch shows or hides the rows and the page remembers it), `WeekAgenda` (kept for later: the same week as
+seven rows down on a date rail —
+days to come lead with their start time, days gone with what they paid, a day off is a hatched strip that adds a shift — and the week in
+three figures under it), `WeekTimeline` (the week on one clock, a block per shift from start to end and a hairline per bartender on with
+you), `IncomeStack` (income per week stacked by source, one pill per source), `RateDots` (weekday × week dot matrix of tips/hr),
+`RunningMonth` (this month's running total against last month's), `RateTrend` (tips/hr with its 4-week average), `WeekBars`, `HoursRing`,
+`PillSplit`, `BigStats`, and the compact calendars (`Compact.tsx`): `DayChips` (a run of small date tiles — two-digit day, weekday,
+that day's tips or a booked start time, today lifted in the accent), `DayHeatmap` (GitHub-style, a column a week and a row a weekday,
+squares shaded by quartile of tips, rate or hours) and `MiniMonth figures="tips"` (a small month with each day's tips written in its
+square). Shades come from `levelScale` (quartiles of the days in view) so one big night doesn't wash out the rest. Lines are monotone curves (`ui/smooth.ts`) so a running total never dips. Every chart has a "View as table".
+
+## Home (`#/dashboard`, numbers in `lib/home.ts`, tested)
+One selected shift, shared by the week list, the month, the bars and the recent table. Selecting does not open the drawer.
+Clicking the selected recent row opens it. A shift waiting on tips offers Fill in tips. The tips chart has the full width and is the
+tall piece. Under it, on a wide screen, the week and the month stack beside the recent shifts. The month opens on the selected
+shift, and a shift outside the usual three weeks pulls the bars with it. Tips by week runs the full width under that:
+- **Last 7 days** (`Figures`): take-home (the dark lead), tips, hours, tips/h and total/h, each against the 7 days before, with a spark
+  of the last 8 weeks.
+- **This week** (`WeekAgenda`, compact): seven short rows. A day worked leads with its tips, a clocked-out shift with no tips says
+  Tips?, a day ahead leads with its start time, a day off is one thin line. Plan week and Log shift sit on the block. Stepping the
+  week is the list's own arrows.
+- **Tips per shift**: one bar per shift from 21 days ago through 7 days ahead, or centered on the selected shift when that falls outside. Bars are tips (`ComboChart`). The dots are that shift's
+  tips per hour and the line is the average of the last four rates. A shift with no tips yet is a gap, not a zero. View as table sits
+  under it. The line under the chart names the selected shift.
+- **Month** (`MiniMonth`): opens on the selected shift's month. Picking a day selects its shift (the one already selected, otherwise the first). An empty day still starts
+  a shift.
+- **Recent shifts**: the latest finished shifts, each against shifts like it on tips/h. "Like it" (`similarShifts`): always the same
+  day or night, the same party-or-not, and the same weekday when there are 4 or more of those; with too few it drops the weekday,
+  then the party.
+- **Tips by week**: eight weeks, tips as bars and tips per hour as the line, with the 4-week average. This is the Insights chart, shorter.
+
+## Plan week (`#/hub/week`)
+The schedule comes Monday to Sunday all at once, so it goes in here at once: day cards across the top (a shift's start, type and party,
+or Book), a row per bartender with their own times and station per day (tap to set; a dashed + adds them to that day's shift), hours
+along each row and down each day. Book asks only start, day or night (guessed from the start) and party, and puts you on the crew.
+An empty week offers "Book it like last week" (days, starts, crew and stations; no ends or tips), undoable.
 
 ## Insights (was Overview)
 Recent first, and trends over noise. Its own two controls (not the Log's period): the span (this week, 2 weeks, this month) and the trend

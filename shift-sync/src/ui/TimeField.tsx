@@ -16,12 +16,12 @@ export function TimeField({ label, value, onChange, invalid, pm: startPm = true,
     <fieldset class={compact ? 'timefield compact' : 'timefield'} aria-invalid={invalid || undefined}>
       <legend class={compact ? 'sr-only' : 'label-text'}>{label}</legend>
       <div class="timefield-row">
-        <select class="input" aria-label={`${label} hour`} value={t ? String(t.h) : ''} onChange={e => set({ h: +e.currentTarget.value })}>
+        <select class="input" id={`${id}-hour`} name={`${id}-hour`} aria-label={`${label} hour`} value={t ? String(t.h) : ''} onChange={e => set({ h: +e.currentTarget.value })}>
           {!t && <option value="">–</option>}
           {Array.from({ length: 12 }, (_, i) => i + 1).map(h => <option key={h} value={String(h)}>{h}</option>)}
         </select>
         <span aria-hidden="true">:</span>
-        <select class="input" aria-label={`${label} minutes`} value={t ? String(t.m) : ''} disabled={!t} onChange={e => set({ m: +e.currentTarget.value })}>
+        <select class="input" id={`${id}-minute`} name={`${id}-minute`} aria-label={`${label} minutes`} value={t ? String(t.m) : ''} disabled={!t} onChange={e => set({ m: +e.currentTarget.value })}>
           {!t && <option value="">––</option>}
           {minuteOptions(t?.m ?? null).map(m => <option key={m} value={String(m)}>{String(m).padStart(2, '0')}</option>)}
         </select>

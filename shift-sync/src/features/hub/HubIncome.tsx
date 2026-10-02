@@ -3,15 +3,21 @@ import { CATEGORIES } from '../../core/core.generated.js';
 import type { Category } from '../../core/core.generated.js';
 import { scopedViews } from '../../data/scope.ts';
 import { liveViews, ready } from '../../data/store.ts';
-import { DASH, fullDate, money, moneyWhole, yearTag } from '../../lib/format.ts';
-import { dayBadge } from '../../lib/groups.ts';
+import { DASH, money, moneyWhole } from '../../lib/format.ts';
+import { today } from '../../lib/dates.ts';
+import { inDates } from '../../lib/trends.ts';
+import { summarize } from '../../lib/stats.ts';
+import { StatList } from '../../ui/kpi.tsx';
 import type { ShiftView } from '../../lib/stats.ts';
+import { DayLine } from '../../parts/DayLine.tsx';
 import { openSheet, sheet } from '../../router.ts';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { MixKey } from '../../ui/MixBar.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { SideStats } from '../../ui/SideStats.tsx';
+import { MiniMonth } from '../../parts/MiniMonth.tsx';
+import { isDesktop } from '../../ui/viewport.ts';
 import { Switcher } from '../../ui/Switcher.tsx';
 import { TableTabs } from '../../ui/TableTabs.tsx';
 import { Table } from '../../ui/Table.tsx';
@@ -37,18 +43,9 @@ const typeFilter = signal<'' | Category | 'Other'>('');
 const KINDS: Kind[] = ['Tips', 'Wage', 'Other'];
 const order = (c: Category | 'Other') => (c === 'Other' ? 99 : CATEGORIES.indexOf(c));
 const nil = <span class="nil">{DASH}</span>;
-
-function DayLine({ date }: { date: string }) {
-  const { month, day, weekday } = dayBadge(date);
-  const year = yearTag(date);
-  return (
-    <span class={styles.day} title={fullDate(date)}>
-      <span class={styles.wd}>{weekday}</span>
-      <span class={styles.date}>{month} {day}</span>
-      {year && <span class={styles.year}>{year}</span>}
-    </span>
-  );
-}
+const amountClass = (k: Kind) => (k === 'Tips' ? 'fig fig-key' : k === 'Wage' ? 'fig fig-q' : 'fig fig-semi');
+/** Date and start first, so the Shift column orders the blocks by when they were; the id keeps two shifts that start together apart. */
+const byShift = (r: Row) => r.v.shift.date + String(r.v.shift.start ?? 0).padStart(4, '0') + '\0' + r.v.shift.id;
 
 /** Tips and wage are derived from the shift; Other rows are Income lines (plus a legacy shift.other if still set). */
 function linesOf(v: ShiftView): Row[] {
@@ -58,7 +55,7 @@ function linesOf(v: ShiftView): Row[] {
     out.push({ id: `${sid}:tips`, v, category: 'Tips', type: null, amount: v.shift.tips, note: '' });
   }
   if (v.wage != null) {
-    out.push({ id: `${sid}:wage`, v, category: 'Wage', type: null, amount: v.wage, note: '' });
+    out.push({ id: `${sid}:wage`, v, category: 'Wage', type: null, amount: v.wage, note: 'Estimated' });
   }
   for (const line of [...v.income].sort((a, b) => order(a.category) - order(b.category) || b.amount - a.amount)) {
     out.push({ id: line.id, v, category: 'Other', type: line.category, amount: line.amount, note: line.note ?? '' });
@@ -77,18 +74,18 @@ export function HubIncome() {
   const shifts = new Set(rows.map(r => r.v.shift.id)).size;
 
   const columns: Column<Row>[] = [
-    { key: 'date', group: 'Shift', head: 'Shift', className: 'fit', sort: r => r.v.shift.date + (r.v.shift.start ?? 0).toString().padStart(4, '0'),
-      cell: r => <DayLine date={r.v.shift.date} /> },
-    { key: 'category', group: 'Line', groupStart: true, head: 'Category', className: 'fit', sort: r => KINDS.indexOf(r.category),
+    { key: 'date', head: 'Shift', className: 'fit', once: true, sort: byShift,
+      cell: r => <DayLine v={r.v} variant="line" showYear /> },
+    { key: 'category', head: 'Category', className: 'fit', sort: r => KINDS.indexOf(r.category),
       cell: r => <span class="fig">{r.category}</span> },
-    { key: 'type', group: 'Line', head: 'Type', className: 'fit', sort: r => (r.type ? order(r.type) : -1), cell: r => {
+    { key: 'type', head: 'Type', className: 'fit', sort: r => (r.type ? order(r.type) : -1), cell: r => {
       if (r.category !== 'Other' || !r.type) return nil;
       const token = r.type === 'Other' ? '--cat-other' : `--cat-${r.type.toLowerCase()}`;
       return <span class={styles.source}><MixKey token={token} />{r.type}</span>;
     } },
-    { key: 'amount', group: 'Line', head: 'Amount', className: 'r fit', sort: r => r.amount,
-      cell: r => <span class="fig fig-key">{money(r.amount)}</span> },
-    { key: 'note', group: 'Line', head: 'Note', className: 'notes when', cell: r => r.note || nil },
+    { key: 'amount', head: 'Amount', className: 'r fit', sort: r => r.amount,
+      cell: r => <span class={amountClass(r.category)}>{money(r.amount)}</span> },
+    { key: 'note', head: 'Note', className: 'notes when', cell: r => r.note || nil },
     { key: 'go', head: '', className: 'chev when', cell: () => <Icon name="chevron" /> }
   ];
 
@@ -96,6 +93,11 @@ export function HubIncome() {
     : rows.length === 0 ? <EmptyState title="No income in this period">Widen the period, or log tips / other income on a shift.</EmptyState>
     : <Table log fill paginate label="Income table" rows={rows} columns={columns} rowKey={r => r.id}
         onRow={r => openSheet(r.v.shift.id)} selected={r => r.v.shift.id === sheet.value}
+        group={byShift} holdGroups="date"
+        foot={{
+          date: <span class="foot-label">{rows.length} line{rows.length === 1 ? '' : 's'} · {shifts} shift{shifts === 1 ? '' : 's'}</span>,
+          amount: <span class="fig fig-key">{money(sum)}</span>
+        }}
         defaultSort={{ key: 'date', dir: 'desc' }} />;
 
   return (
@@ -112,8 +114,22 @@ export function HubIncome() {
             </>} />
           <div class={`data-sheet ${styles.body} ${styles.sheet}`}>{table}</div>
         </div>
-        <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Shifts', value: shifts || DASH }, { label: 'Total', value: moneyWhole(sum) }]} />
+        <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Shifts', value: shifts || DASH }, { label: 'Total', value: moneyWhole(sum) }]}
+          after={<>{isDesktop.value && <MiniMonth views={views} title="Calendar" />}<TaxYear /></>} />
       </div>
     </section>
+  );
+}
+
+/* A stub for the tax year: this calendar year's money so far, by kind. The full summary (the tip deduction, an export
+ * for whoever does your taxes) comes later; this is where it will live. */
+function TaxYear() {
+  const t = today(), y = t.slice(0, 4), s = summarize(inDates(liveViews.value, `${y}-01-01`, t));
+  return (
+    <div class="side-block">
+      <h3 class="label">Tax year {y} so far</h3>
+      <StatList items={[{ label: 'Tips', value: moneyWhole(s.tips) }, { label: 'Wage (est.)', value: moneyWhole(s.wage) }, { label: 'Other', value: moneyWhole(s.extra) }, { label: 'Total', value: moneyWhole(s.total) }]} />
+      <p class="muted side-note">A full tax summary, with the tip deduction and an export, is coming.</p>
+    </div>
   );
 }

@@ -1,0 +1,64 @@
+/* The mini calendar block (parts/MiniMonth.tsx): a month name with its arrows, a 7-column grid of round days, the month's
+   three figures, and the shading key. It sits inside whatever card holds it, so it draws no card of its own. */
+.block { display: grid; gap: var(--s-2); min-width: 0; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.name { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-semi); color: var(--ink); }
+.nav { display: inline-flex; gap: 2px; }
+.step {
+  display: inline-grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: var(--r-pill);
+  background: transparent; color: var(--ink-2); cursor: pointer;
+}
+.step:hover { background: var(--glass-sheet); color: var(--ink); box-shadow: var(--glass-hi), var(--shadow-chip); }
+.step :global(.icon) { width: 0.9rem; height: 0.9rem; }
+
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.dow { padding-bottom: 2px; color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); text-align: center; }
+.day {
+  position: relative; display: grid; place-items: center; justify-self: center; width: 100%; max-width: 2.125rem; aspect-ratio: 1; min-width: 0; padding: 0; border: 0;
+  border-radius: var(--r-pill); background: transparent; color: var(--ink-3);
+  font: inherit; font-size: var(--fs-meta); font-variant-numeric: tabular-nums; cursor: pointer;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.day[data-out] { color: var(--ink-4); opacity: 0.5; cursor: default; }
+button.day:not([data-has]):hover { background: var(--glass-pane); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.day[data-has] { background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--ink); font-weight: var(--fw-semi); box-shadow: var(--glass-hi); }
+.day[data-has][data-side='hi'] { background: color-mix(in srgb, var(--accent) calc(12% + var(--heat, 0) * 30%), var(--surface)); }
+.day[data-has][data-side='lo'] { background: color-mix(in srgb, var(--warn) calc(12% + var(--heat, 0) * 26%), var(--surface)); }
+.day[data-pending] { background: transparent; box-shadow: inset 0 0 0 1.5px var(--accent); }
+.day[data-has]:hover { box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.day[data-today] { color: var(--accent); font-weight: var(--fw-bold); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.day[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-accent); }
+.day:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* the shift's type: a dot under the number, amber for a day shift, indigo for a night, both when the day had both */
+.dot { position: absolute; bottom: 12%; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--night); }
+.dot[data-type='day'] { background: var(--day); }
+.dot[data-type='both'] { width: 8px; margin-left: -4px; border-radius: 2px; background: linear-gradient(90deg, var(--day) 50%, var(--night) 50%); }
+.day[aria-pressed='true'] .dot { background: var(--on-accent); }
+
+.foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); margin: 0; padding-top: var(--s-2); border-top: 1px solid var(--line-soft); }
+.foot > div { display: grid; gap: 1px; min-width: 0; }
+.foot dt { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.foot dd { margin: 0; color: var(--ink); font-size: var(--fs-body); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.unit { color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-med); }
+
+.key { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-3); }
+.scale { display: inline-flex; align-items: center; gap: var(--s-1); color: var(--ink-3); font-size: var(--fs-micro); }
+.scale i { width: 0.625rem; height: 0.625rem; border-radius: 50%; }
+.scale i[data-side='lo'] { background: color-mix(in srgb, var(--warn) 45%, var(--surface)); }
+.scale i[data-side='hi'] { margin-left: var(--s-1); background: color-mix(in srgb, var(--accent) 50%, var(--surface)); }
+
+/* the tips calendar (figures="tips"): square cells, the date small in the corner, the day's tips in the middle, shaded by
+   quartile of the month's days on the accent ramp */
+.block[data-figures] .grid { gap: 4px; }
+.block[data-figures] .day { max-width: none; aspect-ratio: 1 / 0.92; border-radius: var(--r-sm); place-items: stretch; }
+.block[data-figures] .day[data-has] { display: grid; grid-template-rows: auto 1fr; padding: 3px 4px; text-align: left; box-shadow: none; }
+.fn { font-size: var(--fs-chip); font-weight: var(--fw-semi); line-height: 1; opacity: 0.8; }
+.ff { align-self: end; justify-self: center; font-size: var(--fs-micro); font-weight: var(--fw-bold); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.block[data-figures] .day[data-lv='1'] { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.block[data-figures] .day[data-lv='2'] { background: color-mix(in srgb, var(--accent) 34%, var(--surface)); }
+.block[data-figures] .day[data-lv='3'] { background: color-mix(in srgb, var(--accent) 58%, var(--surface)); }
+.block[data-figures] .day[data-lv='4'] { background: var(--accent); color: var(--on-accent); }
+.block[data-figures] .day[data-pending] { background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent); }
+.block[data-figures] .day[data-today] { box-shadow: inset 0 0 0 2px var(--ink); }
+.block[data-figures] .day[aria-pressed='true'] { box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-chip); }

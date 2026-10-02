@@ -1,9 +1,6 @@
-.scope { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
-.scope :global(.seg) { flex: 1 1 auto; }
-.custom { display: inline-flex; align-items: center; gap: var(--s-2); }
+/* the period's own length or dates, in the Range switcher's panel */
+.custom { display: flex; align-items: center; gap: var(--s-2); }
 .word { font-size: var(--fs-body); color: var(--ink-2); }
 .n { width: 4.25rem; padding-right: var(--s-1); text-align: center; }
 .unit { width: auto; min-width: 6.5rem; }
 .date { width: auto; }
-.resolved { font-size: var(--fs-meta); color: var(--ink-2); white-space: nowrap; }
-@media (min-width: 56rem) { .scope :global(.seg) { flex: none; } }

@@ -1,0 +1,131 @@
+/* The horizontal week strip (WeekCards.tsx): seven squarish day cards in a row, and rows under them that line up with the
+   cards, one cell per day. With rows, a label column leads every row (sticky when the strip scrolls sideways on a phone). */
+.wrap { display: grid; gap: var(--s-3); min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
+.nav { display: inline-flex; align-items: center; gap: var(--s-2); }
+.navName { display: grid; min-width: 6.5rem; line-height: 1.15; text-align: center; }
+.navName b { font-size: var(--fs-body); font-weight: var(--fw-semi); }
+.navName small { color: var(--ink-3); font-size: var(--fs-micro); }
+.step {
+  display: inline-grid; place-items: center; width: 1.875rem; height: 1.875rem; padding: 0; border: 0; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--ink-2); box-shadow: var(--shadow-chip); cursor: pointer;
+}
+.step:hover { background: var(--surface); color: var(--ink); }
+.step :global(.icon) { width: 0.875rem; height: 0.875rem; }
+.sum { color: var(--ink-3); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
+.sum b { color: var(--ink); font-weight: var(--fw-semi); }
+.toggle {
+  display: inline-flex; align-items: center; gap: var(--s-1); margin-left: auto; min-height: 2rem; padding: 0 var(--s-3); border: 0; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); font-size: var(--fs-meta); font-weight: var(--fw-semi); cursor: pointer;
+}
+.toggle[aria-expanded='true'] { background: var(--inverse-bg); color: var(--inverse-ink); }
+.toggle :global(.icon) { width: 0.8rem; height: 0.8rem; }
+.tools { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin-left: auto; }
+.toggle + .tools { margin-left: 0; }
+
+/* the grid: 7 day columns, a label column first when rows show. A phone scrolls it sideways, cards snapping. */
+.scroll { min-width: 0; overflow-x: auto; container-type: inline-size; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+/* a day column never narrows past a readable card (7rem): below that the strip scrolls sideways instead */
+.grid { --label-w: 0px; --day-min: 7rem; display: grid; gap: var(--s-1) 0; }
+.grid[data-rows] { --label-w: 8.5rem; }
+@media (max-width: 40rem) { .grid[data-rows] { --label-w: 5.5rem; } }
+.row { display: grid; grid-template-columns: var(--label-w) repeat(7, minmax(var(--day-min), 1fr)); column-gap: var(--s-2); align-items: stretch; }
+.grid:not([data-rows]) .row { grid-template-columns: repeat(7, minmax(var(--day-min), 1fr)); }
+/* the corner over the label column: the week in three figures */
+.corner { position: sticky; left: 0; z-index: 2; display: grid; align-content: center; gap: var(--s-2); margin: 0; }
+.corner > div { display: grid; line-height: 1.15; }
+.corner dt { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.corner dd { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.cell { min-width: 0; }
+/* when the strip is narrower than seven cards and scrolls, the label column stays put over the cards sliding under it */
+@container (max-width: 64rem) {
+  .grid[data-rows] :is(.label, .corner) { background: linear-gradient(90deg, var(--glass-solid) 85%, transparent); }
+}
+
+/* ── a day card: squarish, the weekday and date, its one figure, a footer ── */
+.card {
+  position: relative; display: grid; grid-template-rows: auto 1fr auto auto; align-content: space-between; gap: var(--s-1);
+  width: 100%; height: 100%; aspect-ratio: 1 / 1.05; min-height: 8.5rem; padding: var(--s-3); border: 0; border-radius: var(--r-lg);
+  background: var(--surface); color: var(--ink); text-align: left; cursor: pointer;
+  box-shadow: var(--glass-hi), var(--shadow-chip); transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.card:hover { transform: translateY(-2px); }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card[aria-pressed='true'] { box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-chip); }
+.cTop { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-1); }
+.cHead { display: grid; line-height: 1.05; }
+.cWd { color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-med); }
+.cDay { font-size: var(--fs-title); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.cType { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.cType[data-type='day'] { color: var(--day-ink); }
+.cType[data-type='night'] { color: var(--night-ink); }
+.cType :global(.icon) { width: 0.8rem; height: 0.8rem; }
+.cCrew { align-self: center; }
+.card:not(:has(.cCrew)) .cTop { grid-row: 1 / span 2; }
+.cMain { align-self: end; font-size: var(--fs-tile); font-weight: var(--fw-semi); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-2); color: var(--ink-3); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; }
+.cRate { padding: 1px 6px; border-radius: var(--r-pill); background: var(--accent-wash); color: var(--accent); font-weight: var(--fw-semi); }
+.cGuess { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.card[data-tone='today'] .cGuess { color: var(--inverse-ink-2); }
+.cMore { position: absolute; right: var(--s-3); bottom: var(--s-3); padding: 0 5px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--ink) 8%, transparent); font-size: var(--fs-micro); font-weight: var(--fw-bold); }
+
+/* tones: done (the surface), booked (an accent outline, the start time in the accent), waiting (hatched), today (dark), off (hatched, quiet) */
+.card[data-tone='scheduled'] { background: color-mix(in srgb, var(--surface) 55%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
+.card[data-tone='scheduled'] .cMain { color: var(--accent); }
+.card[data-tone='worked'] { background: var(--hatch), var(--surface); }
+.card[data-tone='today'] { background: var(--inverse-bg); color: var(--inverse-ink); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--inverse-accent) 55%, transparent), var(--shadow-glass); }
+.card[data-tone='today'] :is(.cWd, .cFoot) { color: var(--inverse-ink-2); }
+.card[data-tone='today'] .cType { background: var(--inverse-dim); color: var(--inverse-accent); }
+.card[data-tone='today'] .cRate { background: var(--inverse-dim); color: var(--inverse-accent); }
+.card[data-tone='today'] .cGuess { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.card[data-tone='today'] .cGuess { color: var(--inverse-ink-2); }
+.cMore { background: var(--inverse-dim); }
+.card:is([data-tone='off'], [data-tone='today-off']) { background: var(--hatch), color-mix(in srgb, var(--surface) 30%, transparent); box-shadow: none; }
+.card[data-tone='today-off'] { box-shadow: inset 0 0 0 2px var(--accent); }
+.cOff { align-self: end; color: var(--ink-3); font-size: var(--fs-body); font-weight: var(--fw-med); }
+.cAdd { display: inline-flex; align-items: center; gap: 3px; opacity: 0; color: var(--accent); font-size: var(--fs-micro); font-weight: var(--fw-semi); transition: opacity var(--dur) var(--ease); }
+.cAdd :global(.icon) { width: 0.75rem; height: 0.75rem; }
+.card:hover .cAdd, .card:focus-visible .cAdd { opacity: 1; }
+
+/* ── rows under the cards ── */
+.label {
+  position: sticky; left: 0; z-index: 2; align-self: stretch; display: flex; align-items: center; gap: var(--s-2); min-width: 0; padding-right: var(--s-2);
+  color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase;
+}
+.row:not([data-kind]) + .row { margin-top: var(--s-2); }
+.row[data-kind] { padding: var(--s-2) 0; border-top: 1px dashed var(--line); }
+.row[data-kind='people-head'] { padding-bottom: 0; }
+.row[data-kind='person'] { padding: 3px 0; border-top: 0; }
+.rcell { display: flex; align-items: center; min-width: 0; padding: 0 var(--s-1); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
+.rcell[data-span] { grid-column: 2 / -1; }
+.rcell b { font-size: var(--fs-body); font-weight: var(--fw-semi); }
+.rcell small { color: var(--ink-3); font-size: var(--fs-micro); }
+.nil { color: var(--ink-4); }
+.stackList { display: grid; gap: 1px; color: var(--ink-2); white-space: nowrap; }
+.money { display: grid; line-height: 1.2; }
+.src { display: grid; gap: 3px; width: 100%; }
+.srcBar { display: flex; gap: 2px; height: 0.625rem; min-width: 0.625rem; }
+.srcBar i { min-width: 3px; border-radius: 3px; background: var(--c); }
+.crew { display: grid; align-content: start; gap: 4px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.crew li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 5px; min-width: 0; }
+.crew :global(.avatar) { width: 1.375rem; height: 1.375rem; font-size: var(--fs-chip); }
+.crewName { display: inline-flex; align-items: center; gap: 2px; min-width: 0; overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.row[data-kind='crew'] .rcell { align-items: flex-start; }
+
+/* people: a bartender per row, their own times in each day's column */
+.row[data-kind='person'] .label { color: var(--ink); font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0; text-transform: none; }
+.row[data-kind='person'] .label small { margin-left: auto; color: var(--ink-3); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; }
+.row[data-kind='person'] :global(.avatar) { flex: none; width: 1.5rem; height: 1.5rem; font-size: var(--fs-chip); }
+.personName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row[data-you] { border-radius: var(--r-md); background: var(--me-wash); }
+.slot {
+  display: inline-flex; align-items: center; gap: 4px; width: 100%; min-height: 1.75rem; padding: 0 var(--s-2); border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--ink); font-size: var(--fs-micro); font-weight: var(--fw-semi); white-space: nowrap; overflow: hidden;
+}
+.slot[data-when='ahead'] { background: color-mix(in srgb, var(--surface) 60%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+.slot[data-when='today'] { background: var(--inverse-bg); color: var(--inverse-ink); }
+.station { margin-left: auto; color: var(--ink-3); font-size: var(--fs-chip); font-style: normal; font-weight: var(--fw-bold); letter-spacing: 0.03em; text-transform: uppercase; }
+.slot[data-when='today'] .station { color: var(--inverse-ink-2); }
+.slotOff { display: block; width: 100%; height: 1.75rem; border-radius: var(--r-sm); background: var(--hatch); opacity: 0.6; }
+
+@media (prefers-reduced-motion: reduce) { .card:hover { transform: none; } }

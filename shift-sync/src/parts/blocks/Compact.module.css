@@ -1,0 +1,60 @@
+/* The compact calendars (Compact.tsx). The five shades are the accent stepped toward the surface, so they follow the
+   theme; level 0 is a quiet tint of the ink, a waiting day is outlined, a day still to come is barely there. */
+.chips, .heat { --lv0: color-mix(in srgb, var(--ink) 7%, transparent);
+  --lv1: color-mix(in srgb, var(--accent) 22%, var(--surface)); --lv2: color-mix(in srgb, var(--accent) 45%, var(--surface));
+  --lv3: color-mix(in srgb, var(--accent) 70%, var(--surface)); --lv4: var(--accent); }
+
+/* ── day chips: a run of small tiles ── */
+.chips { display: flex; gap: var(--s-1); min-width: 0; overflow-x: auto; padding: 2px 2px var(--s-1); scrollbar-width: none; scroll-behavior: smooth; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  position: relative; display: grid; justify-items: center; align-content: center; gap: 1px; flex: 0 0 3.25rem; height: 4.25rem; padding: 0;
+  border: 0; border-radius: var(--r-md); background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); cursor: pointer;
+  box-shadow: var(--glass-hi); transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.chip:hover { transform: translateY(-1px); background: var(--surface); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cn { font-size: var(--fs-body); font-weight: var(--fw-semi); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cw { color: var(--ink-3); font-size: var(--fs-micro); line-height: 1.1; }
+.cf { min-height: 0.9rem; margin-top: 2px; color: var(--ink-2); font-size: var(--fs-chip); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+/* a worked day: a bar of its shade under the tile's figure */
+.chip:not([data-lv='0'])::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 5px; height: 3px; border-radius: 2px; background: var(--lv1); }
+.chip[data-lv='2']::after { background: var(--lv2); }
+.chip[data-lv='3']::after { background: var(--lv3); }
+.chip[data-lv='4']::after { background: var(--lv4); }
+.chip[data-state='off'] { background: transparent; box-shadow: none; }
+.chip[data-state='off'] .cn { color: var(--ink-3); font-weight: var(--fw-med); }
+.chip[data-state='scheduled'] { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
+.chip[data-state='scheduled'] .cf { color: var(--accent); }
+.chip[data-state='worked'] { background: var(--hatch), var(--surface); }
+.chip[data-today] { background: var(--grad-accent); color: var(--on-accent); box-shadow: var(--shadow-accent); }
+.chip[data-today] :is(.cw, .cf, .cn) { color: var(--on-accent); }
+.chip[data-today]::after { background: color-mix(in srgb, var(--on-accent) 70%, transparent); }
+.chip[aria-pressed='true']:not([data-today]) { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* ── heatmap: weeks across, weekdays down ── */
+.heat { display: grid; gap: var(--s-2); min-width: 0; margin: 0; }
+.hScroll { min-width: 0; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+/* the squares fill the block's width (never smaller than 0.75rem, never bigger than 1.375rem); a phone scrolls */
+.hGrid { display: grid; grid-template-columns: 1.75rem repeat(var(--weeks), minmax(0.75rem, 1.375rem)); gap: 3px; justify-content: space-between; width: 100%; min-width: min-content; }
+.hMonth { position: relative; overflow: visible; color: var(--ink-3); font-size: var(--fs-micro); line-height: 1.2; white-space: nowrap; }
+.hWd { align-self: center; color: var(--ink-3); font-size: var(--fs-micro); line-height: 1; }
+.hCell { display: block; width: 100%; aspect-ratio: 1; height: auto; padding: 0; border: 0; border-radius: 3px; background: var(--lv0); cursor: pointer; }
+button.hCell:hover { outline: 1.5px solid var(--ink-2); outline-offset: 1px; }
+.hCell:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hCell[data-lv='1'] { background: var(--lv1); }
+.hCell[data-lv='2'] { background: var(--lv2); }
+.hCell[data-lv='3'] { background: var(--lv3); }
+.hCell[data-lv='4'] { background: var(--lv4); }
+.hCell[data-lv='pending'] { background: transparent; box-shadow: inset 0 0 0 1.5px var(--accent); }
+.hCell[data-lv='future'] { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent); cursor: default; }
+.hCell[data-today] { box-shadow: 0 0 0 1.5px var(--ink); }
+.hFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-3); color: var(--ink-3); font-size: var(--fs-meta); }
+.hSum b { color: var(--ink); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; }
+.hKey { display: inline-flex; align-items: center; gap: 3px; font-size: var(--fs-micro); }
+.hKey i { width: 0.75rem; height: 0.75rem; border-radius: 3px; background: var(--lv0); }
+.hKey i[data-lv='1'] { background: var(--lv1); } .hKey i[data-lv='2'] { background: var(--lv2); }
+.hKey i[data-lv='3'] { background: var(--lv3); } .hKey i[data-lv='4'] { background: var(--lv4); }
+.hKey i:first-of-type { margin-left: 3px; } .hKey i:last-of-type { margin-right: 3px; }
+
+@media (prefers-reduced-motion: reduce) { .chip:hover { transform: none; } .chips { scroll-behavior: auto; } }

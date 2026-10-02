@@ -1,6 +1,5 @@
 import { useEffect } from 'preact/hooks';
 import type { Screen } from '../../router.ts';
-import { Page } from '../../ui/Page.tsx';
 import { Appearance } from './Appearance.tsx';
 import { Roles } from './Roles.tsx';
 import { SheetSync } from './SheetSync.tsx';
@@ -8,8 +7,10 @@ import { WageRates } from './WageRates.tsx';
 import { YourData } from './YourData.tsx';
 import styles from './SettingsScreen.module.css';
 
-/* Settings is one page of sections: Hourly wage, Roles, Google Sheet, Appearance, Your data. The second rail still links each
- * one (#/settings/wages and so on); following a link scrolls its section to the top, so every setting stays a link. */
+/* Settings is one page of sections: Hourly wage, Roles, Google Sheet, Appearance, Your data, one link in the side panel.
+ * Each section is still a link of its own (#/settings/wages and so on); landing on one scrolls it to the top. The page is
+ * made of separate parts (`parts`), so each section is its own card on the canvas rather than one card around them all;
+ * the app header names the page. */
 const AREAS: { page: Screen; id: string; title: string; body: () => preact.JSX.Element }[] = [
   { page: 'settings/wages', id: 'set-wages', title: 'Hourly wage', body: () => <WageRates /> },
   { page: 'settings/roles', id: 'set-roles', title: 'Roles', body: () => <Roles /> },
@@ -24,13 +25,13 @@ export function SettingsScreen({ page }: { page: Screen }) {
     if (id) document.getElementById(id)?.scrollIntoView({ block: 'start' });
   }, [page]);
   return (
-    <Page title="Settings" id="settings-title" bodyClass={styles.screen}>
+    <div class={`${styles.screen} parts`}>
       {AREAS.map(a => (
-        <section key={a.id} id={a.id} class={styles.area} aria-labelledby={`${a.id}-h`} data-current={a.page === page ? '' : undefined}>
-          <h3 id={`${a.id}-h`} class={styles.areaTitle}>{a.title}</h3>
+        <section key={a.id} id={a.id} class={styles.area} aria-labelledby={`${a.id}-h`} data-current={a.page === page && page !== 'settings/wages' ? '' : undefined}>
+          <h2 id={`${a.id}-h`} class={styles.areaTitle}>{a.title}</h2>
           {a.body()}
         </section>
       ))}
-    </Page>
+    </div>
   );
 }

@@ -3,10 +3,12 @@
 /* A sheet, not a list of cards. Type is Poppins at the body size, medium weight. Rows stay one line, tall enough for a
    28px face (tokens --sheet-*), and the columns hug their text. */
 .sheet :global(.tbl-log) { --log-band: 1.5rem; padding: 0; }
-.sheet :global(.tbl-log) :global(.tbl) { font-size: var(--fs-sheet); line-height: 1.2; font-weight: var(--fw-med); letter-spacing: -0.011em; }
-.sheet :global(.tbl-log) :global(.tbl) :is(th, td) { padding: 0 var(--sheet-cell-x); }
+.sheet :global(.tbl-log) :global(.tbl) { font-size: var(--fs-meta); line-height: 1.15; font-weight: var(--fw-med); letter-spacing: 0; }
+.sheet :global(.tbl-log) :global(.tbl) :is(th, td) { padding: 0 0.2rem; }
 .sheet :global(.tbl-log) :global(.tbl) td { height: var(--sheet-row-h); }
-.sheet :global(.tbl-log) :global(.tbl) thead tr:not(:global(.gh)) th { height: var(--sheet-head-h); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+.sheet :global(.tbl-log) :global(.tbl) thead tr:not(:global(.gh)) th { height: var(--sheet-head-h); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0; text-transform: none; }
+.sheet :global(.fig-key) { font-size: var(--fs-sheet); }
+.sheet :global(.status-pill) { height: 1.125rem; padding: 0 0.35rem; font-size: var(--fs-micro); }
 /* The block names (Shift, Time, Pay, Rate, Crew) sit in a short strip above the columns they cover. The first of
    those cells spans several columns (Shift covers Day, Type and Party) but stays frozen along with the Day column
    beneath it, the same as the head row below it — otherwise scrolling leaves a blank patch over the frozen column. */
@@ -22,8 +24,8 @@
 .sheet :global(.tbl-log) :global(.tbl) tbody td:last-child { border-radius: 0; }
 /* Number heads sit over their figures; the sort arrow hangs on the inner side (ui.css .data-sheet .th-sort). */
 
-/* Overview: two lines in the shift, so the row is taller, and the sheet has no rules between columns or under the head. */
-.overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) td { height: 3.125rem; }
+/* Every data sheet uses the Crew row height (--sheet-row-h). */
+.sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td { height: var(--sheet-row-h); }
 .overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) thead th { box-shadow: none; }
 .overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) tfoot td { height: auto; padding-block: 0.4rem; }
 .overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td { height: var(--sheet-head-h); }
@@ -54,7 +56,7 @@
 .sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td {
   height: var(--sheet-head-h); padding: 0 var(--sheet-cell-x); white-space: nowrap;
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
-  box-shadow: inset 0 -1px 0 var(--line-soft);
+  box-shadow: none;
 }
 .sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td:first-child { padding-left: var(--s-2); }
 .band { display: flex; align-items: baseline; gap: var(--s-2); }
@@ -81,6 +83,6 @@
 .footLabel { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
 .sheet :global(.tbl-log) :global(.tbl) tfoot td {
   position: sticky; bottom: 0; z-index: 1; height: var(--sheet-head-h);
-  background: var(--sheet-bg); box-shadow: inset 0 1px 0 var(--line); font-weight: var(--fw-semi);
+  background: var(--glass-solid); box-shadow: inset 0 1px 0 var(--line-soft); font-weight: var(--fw-semi);
 }
 .sheet :global(.tbl-log) :global(.tbl) tfoot td:first-child { z-index: 2; }

@@ -1,173 +1,148 @@
-import { hoursWorked } from '../../core/core.generated.js';
-import { signal } from '@preact/signals';
-import { liveViews, personById, ready } from '../../data/store.ts';
-import { addDays, today } from '../../lib/dates.ts';
-import { bestShifts, waiting, weekCompare } from '../../lib/dashboard.ts';
-import { STATUS_LABEL, isPending, shiftStatus } from '../../lib/groups.ts';
-import { RANK_MIN_HOURS } from '../../lib/stats.ts';
-import { dec1, dollars, hours, money, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
-import { go, openForm, openSheet, sheet } from '../../router.ts';
-import type { Screen } from '../../router.ts';
-import { KpiChip } from '../../ui/kpi.tsx';
-import type { IconName } from '../../ui/Icon.tsx';
-import { Page } from '../../ui/Page.tsx';
-import { PersonAvatar } from '../../parts/PersonAvatar.tsx';
-import { ShiftLog } from '../../parts/ShiftLog.tsx';
-import type { LogCol } from '../../parts/ShiftLog.tsx';
+import { useState } from 'preact/hooks';
+import { liveViews, ready } from '../../data/store.ts';
+import { addDays, today as todayText } from '../../lib/dates.ts';
+import { dollars, hours, moneyWhole, perHour, shortDate, weekdayShort } from '../../lib/format.ts';
+import { STATUS_LABEL, shiftStatus } from '../../lib/groups.ts';
+import { tonight } from '../../lib/home.ts';
+import type { ShiftView } from '../../lib/stats.ts';
+import { weeklySeries } from '../../lib/trends.ts';
+import { MiniMonth } from '../../parts/MiniMonth.tsx';
+import { Block } from '../../parts/blocks/Block.tsx';
+import { Figures, RecentShifts } from '../../parts/blocks/Recent.tsx';
+import { WeekAgenda } from '../../parts/blocks/WeekAgenda.tsx';
+import { go, openForm, openSheet } from '../../router.ts';
+import { ComboChart } from '../../ui/charts.tsx';
+import type { ComboDatum } from '../../ui/charts.tsx';
+import { Icon } from '../../ui/Icon.tsx';
 import { FirstShiftEmpty } from '../../ui/EmptyState.tsx';
-import { MeBadge } from '../../ui/MeBadge.tsx';
 import styles from './DashboardScreen.module.css';
 
-/** The card is narrower than the Log: its list leaves out the two quiet money columns. */
-const NARROW: LogCol[] = ['wage', 'other'];
+/* Home: a short week list, then the chart. One selected shift is shared by the week, the month,
+ * the bars and the recent table. Clicking the selected recent row opens the shift. */
 
-/* Dashboard: this week at a glance, and a door to every other page. The numbers across the top are this week against
- * last week (the same Monday-to-Sunday weeks the Log groups by). Under them, the last two weeks as the Log's own grouped
- * list; beside them this week day by day, your best nights, shifts waiting on tips and who you worked with. Every card is
- * the same part the full page uses and ends in a link to that page. Opening a shift here opens the drawer. */
-/** Which week the top strip shows: null = pick for me (this week once it has a shift with money in, else last week). */
-const pinned = signal<0 | -1 | null>(null);
+const BACK = 21, AHEAD = 7;
+
+function chartShifts(all: ShiftView[], today: string, focus: string | null): ShiftView[] {
+  let from = addDays(today, -BACK), to = addDays(today, AHEAD);
+  if (focus && (focus < from || focus > to)) { from = addDays(focus, -14); to = addDays(focus, 7); }
+  return all.filter(v => v.shift.date >= from && v.shift.date <= to)
+    .sort((a, b) => a.shift.date.localeCompare(b.shift.date) || (a.shift.start ?? 0) - (b.shift.start ?? 0));
+}
+
+function trailing(rates: (number | null)[], i: number): number | null {
+  const slice = rates.slice(Math.max(0, i - 3), i + 1).filter((n): n is number => n != null);
+  return slice.length ? slice.reduce((a, b) => a + b, 0) / slice.length : null;
+}
+
+function shiftBars(rows: ShiftView[]): ComboDatum[] {
+  const rates = rows.map(v => (shiftStatus(v) === 'done' ? v.tph : null));
+  return rows.map((v, i) => {
+    const st = shiftStatus(v), done = st === 'done';
+    const title = `${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}`;
+    return {
+      xlabel: shortDate(v.shift.date),
+      title,
+      bar: done ? (v.shift.tips ?? 0) : 0,
+      line: done ? v.tph : null,
+      smooth: trailing(rates, i),
+      partial: !done,
+      rows: [
+        { name: done ? 'Tips' : 'Status', value: done ? dollars(v.shift.tips) : STATUS_LABEL[st], cls: 'k-acc' },
+        { name: 'Tips per hour', value: done ? perHour(v.tph) : '—' },
+        { name: 'Hours', value: hours(v.hours) },
+        ...(v.shift.party ? [{ name: 'Party', value: 'Yes' }] : [])
+      ]
+    };
+  });
+}
 
 export function DashboardScreen() {
-  const all = liveViews.value, t = today();
-  const auto = weekCompare(all, t).now.shifts > 0 ? 0 : -1;
-  const offset = pinned.value ?? auto;
-  const w = weekCompare(all, t, offset);
-  const recent = all.filter(v => v.shift.date >= addDays(w.start, -7) && v.shift.date <= addDays(w.start, 6));
-  const best = bestShifts(all, t);
-  const todo = waiting(all);
-  const open = sheet.value;
-
+  const all = liveViews.value, t = todayText();
+  const [picked, setPicked] = useState<string | null>(null);
   if (ready.value && all.length === 0) {
     return (
-      <Page title="Dashboard" id="dash-title">
-        <FirstShiftEmpty>
-          This week, your best nights and the crew fill in as you log shifts.
-        </FirstShiftEmpty>
-      </Page>
+      <section class="panel" aria-label="Home">
+        <div class="panel-body"><FirstShiftEmpty>Your week, the last 7 days and how each shift did fill in as you log shifts.</FirstShiftEmpty></div>
+      </section>
     );
   }
-
-  const kpis: { label: string; value: string; pct: number | null; hint: string; icon: IconName; neutral?: boolean }[] = [
-    { label: 'Tips', value: dollars(w.now.tips), pct: w.delta.tips, hint: 'against last week', icon: 'dollar' },
-    { label: 'Rate', value: w.now.tph == null ? '—' : money(w.now.tph), pct: w.delta.tph, hint: 'tips over hours', icon: 'trend' },
-    { label: 'Hours', value: hours(w.now.hours), pct: w.delta.hours, hint: 'hours worked', icon: 'clock', neutral: true },
-    { label: 'Shifts', value: String(w.now.shifts), pct: null, hint: 'with money in', icon: 'log' },
-    { label: 'Other income', value: dollars(w.now.extra), pct: w.delta.extra, hint: 'besides tips and wage', icon: 'plus' },
-    { label: 'Total', value: dollars(w.now.total), pct: w.delta.total, hint: 'tips, wage and other', icon: 'chart' }
-  ];
-  const maxH = Math.max(10, ...w.days.map(d => d.hours));
-  const bestDay = w.days.filter(d => d.hours).sort((a, b) => b.tips / b.hours - a.tips / a.hours)[0];
-
-  // Who was on this week's shifts: hours only, never money per person.
-  // Scheduled shifts (no money in yet) don't count, the same as the figures across the top.
-  const crew = new Map<string, { id: string; name: string; you: boolean; shifts: number; hours: number }>();
-  for (const d of w.days) for (const v of d.views) if (!isPending(v)) for (const c of v.crew) {
-    const p = personById(c.staff_id);
-    const row = crew.get(c.staff_id) ?? { id: c.staff_id, name: p?.name ?? c.name ?? '?', you: !!p?.is_user, shifts: 0, hours: 0 };
-    row.shifts++; row.hours += hoursWorked(c.start, c.end) ?? 0;
-    crew.set(c.staff_id, row);
-  }
-  const crewRows = [...crew.values()].sort((a, b) => Number(b.you) - Number(a.you) || b.hours - a.hours);
+  const fallback = tonight(all, t).view?.shift.id ?? all.filter(v => shiftStatus(v) === 'done').sort((a, b) => b.shift.date.localeCompare(a.shift.date))[0]?.shift.id ?? null;
+  const id = picked && all.some(v => v.shift.id === picked) ? picked : fallback;
+  const chosen = all.find(v => v.shift.id === id) ?? null;
+  const bars = chartShifts(all, t, chosen?.shift.date ?? null);
+  const at = bars.findIndex(v => v.shift.id === id);
+  const span = bars.length ? `${shortDate(bars[0]!.shift.date)} – ${shortDate(bars.at(-1)!.shift.date)}` : '';
+  const weeks = weeklySeries(all, t, 8);
+  const select = (v: ShiftView) => setPicked(v.shift.id);
 
   return (
-    <Page title="Dashboard" id="dash-title" tools={
-      <>
-        <span class="muted num">{shortDate(w.start)} – {shortDate(addDays(w.start, 6))} · {w.partial ? 'so far, against the same days last week' : 'against the week before'}</span>
-        <div class="seg" role="radiogroup" aria-label="Week">
-          {([[0, 'This week'], [-1, 'Last week']] as const).map(([o, l]) => (
-            <label key={o}><input type="radio" name="dash-week" checked={offset === o} onChange={() => { pinned.value = o; }} /><span>{l}</span></label>
-          ))}
+    <section class={`panel ${styles.dash}`} aria-label="Home">
+      <div class={styles.board}>
+        <Block class={styles.span} title="Last 7 days" sub="Against the 7 days before · the line is the last 8 weeks" to="overview" toLabel="Open insights">
+          <Figures views={all} today={t} />
+        </Block>
+
+        <Block class={`${styles.span} ${styles.hero}`} title="Tips per shift" sub={`${span} · bars are tips, the line is tips per hour. A shift with no tips yet has no bar.`} to="overview" toLabel="Open insights">
+          <ComboChart title="Tips per shift" headed={false} wide
+            data={shiftBars(bars)} fmtBar={moneyWhole} fmtLine={moneyWhole} barLabel="Tips" lineLabel="Tips per hour" smoothLabel="Recent average"
+            rowHead="Shift" height={300} picked={at >= 0 ? at : undefined} onPick={i => { const v = bars[i]; if (v) select(v); }} />
+          {chosen && <Readout v={chosen} />}
+        </Block>
+
+        <div class={styles.side}>
+          <Block title="This week" to="calendar" toLabel="Open the calendar" tools={<>
+            <button type="button" class="btn" onClick={() => go('hub/week')}><Icon name="calendar" />Plan week</button>
+            <button type="button" class="btn btn-primary" onClick={() => openForm('new')}><Icon name="plus" />Log shift</button>
+          </>}>
+            <WeekAgenda views={all} today={t} compact selected={id ?? undefined} onSelect={select} />
+          </Block>
+          <Block title="Month" to="calendar" toLabel="Open the calendar">
+            <MiniMonth views={all} start={chosen?.shift.date.slice(0, 7)} picked={id ?? undefined} onPick={list => {
+              const keep = list.find(v => v.shift.id === id);
+              const v = keep ?? list[0];
+              if (v) select(v);
+            }} />
+          </Block>
         </div>
-      </>
-    }>
-      <div class={styles.grid}>
-        <div class={styles.main}>
-          <div class={styles.kpis} role="list" aria-label={offset === 0 ? 'This week against last week' : 'Last week against the week before'}>
-            {kpis.map(k => (
-              <div key={k.label} role="listitem">
-                <KpiChip label={k.label} value={k.value} pct={k.pct} hint={k.hint} icon={k.icon} neutral={k.neutral} />
-              </div>
-            ))}
-          </div>
 
-          <Card title="Last two weeks" to="log" link="Open the log">
-            <ShiftLog views={recent} by="week" openId={open} inline={false} hidden={NARROW} />
-          </Card>
-        </div>
+        <Block title="Recent shifts" sub="Tips per hour against shifts like each one. Click again to open." to="table" toLabel="Open shifts">
+          <RecentShifts views={all} take={6} selected={id ?? undefined} onSelect={select} />
+        </Block>
 
-        <aside class={styles.side} aria-label="This week">
-          <Card title={offset === 0 ? 'This week, day by day' : 'Last week, day by day'} to="calendar" link="Open the calendar">
-            <div class={styles.days} role="group" aria-label={offset === 0 ? 'Hours each day this week' : 'Hours each day last week'}>
-              {w.days.map(d => {
-                const first = d.views.find(v => !isPending(v)) ?? d.views[0], sel = !!first && d.views.some(v => v.shift.id === open);
-                const status = !first ? 'no shift' : d.views.every(isPending) ? STATUS_LABEL[shiftStatus(d.views[0]!)].toLowerCase() : `${hours(d.hours)}, ${dollars(d.tips)}`;
-                const label = `${weekdayShort(d.date)} ${shortDate(d.date)}: ${status}`;
-                return (
-                  <button type="button" key={d.date} class={styles.day} aria-label={first ? `${label}. Open` : `${label}. New shift`} aria-pressed={sel}
-                    data-empty={first ? undefined : ''} data-pending={first && d.views.every(isPending) ? '' : undefined} data-today={d.date === t ? '' : undefined}
-                    onClick={() => (first ? openSheet(first.shift.id) : openForm('new', d.date))}>
-                    <span class={styles.capsule} style={{ height: first && d.hours ? `${Math.max(18, (d.hours / maxH) * 100)}%` : undefined }} />
-                    <span class={styles.dow}>{weekdayShort(d.date).slice(0, 2)}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <dl class={styles.list}>
-              <div><dt>Hours</dt><dd class="num">{hours(w.now.hours)} <span class="muted">of 40</span></dd></div>
-              <div><dt>Best day</dt><dd class="num">{bestDay ? `${weekdayShort(bestDay.date)} · ${perHour(bestDay.tips / bestDay.hours)}` : '—'}</dd></div>
-            </dl>
-          </Card>
-
-          <Card title="Best nights" sub={`Tips per hour, last 12 weeks, shifts of ${RANK_MIN_HOURS}h or more`} to="overview" link="Open insights">
-            {best.length === 0 ? <p class="muted side-note">Nothing in the last 12 weeks yet.</p> : (
-              <div class={styles.best}>
-                {best.map((v, i) => (
-                  <button type="button" key={v.shift.id} class={styles.bestTile} data-top={i === 0 ? '' : undefined} onClick={() => openSheet(v.shift.id)}
-                    aria-label={`${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}, ${money(v.tph)} per hour. Open`}>
-                    <span class={`num ${styles.bestRate}`}>{moneyWhole(v.tph!)}</span>
-                    <span class={styles.bestDate}>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {todo.length > 0 && (
-            <Card title="Awaiting tips" to="log" link="Open the log">
-              <ul class={styles.todo}>
-                {todo.slice(0, 4).map(v => (
-                  <li key={v.shift.id}>
-                    <span><b>{weekdayShort(v.shift.date)} {shortDate(v.shift.date)}</b><span class="chip" data-kind="pending">{STATUS_LABEL[shiftStatus(v)]}</span></span>
-                    <button type="button" class="btn" onClick={() => openForm(v.shift.id)}>Fill in tips</button>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
-          <Card title={offset === 0 ? 'Crew this week' : 'Crew last week'} to="hub/week" link="Open crew week">
-            {crewRows.length === 0 ? <p class="muted side-note">No one logged on that week's shifts.</p> : (
-              <dl class={styles.list}>
-                {crewRows.map(r => <div key={r.id}><dt class={styles.who}><PersonAvatar id={r.id} fallback={r.name} />{r.name}{r.you && <MeBadge />}</dt><dd class="num"><span class="muted">{r.shifts} {r.shifts === 1 ? 'shift' : 'shifts'}</span> {dec1(r.hours)}h</dd></div>)}
-              </dl>
-            )}
-          </Card>
-        </aside>
+        <Block class={styles.span} title="Tips by week" sub="Bars are tips. The line is tips per hour, and the smooth line is the 4-week average." to="overview" toLabel="Open insights">
+          <ComboChart title="Tips by week" headed={false} height={180}
+            fmtBar={moneyWhole} fmtLine={moneyWhole} barLabel="Tips" lineLabel="Tips per hour" smoothLabel="4-week average"
+            data={weeks.map(p => ({
+              xlabel: shortDate(p.key),
+              title: `Week of ${shortDate(p.key)}${p.partial ? ' (so far)' : ''}`,
+              bar: p.tips, line: p.tph, smooth: p.smooth, partial: p.partial,
+              rows: [
+                { name: 'Tips', value: dollars(p.tips), cls: 'k-acc' },
+                { name: 'Tips per hour', value: perHour(p.tph) },
+                { name: '4-week average', value: perHour(p.smooth) },
+                { name: 'Hours', value: hours(p.hours) }
+              ]
+            }))} />
+        </Block>
       </div>
-    </Page>
+    </section>
   );
 }
 
-/** A dashboard card: a heading, the content, and the link to the page it summarises. */
-function Card({ title, sub, to, link, children }: { title: string; sub?: string; to: Screen; link: string; children: preact.ComponentChildren }) {
+function Readout({ v }: { v: ShiftView }) {
+  const st = shiftStatus(v);
+  const when = `${weekdayShort(v.shift.date)} ${shortDate(v.shift.date)}`;
+  const line = st === 'done'
+    ? `${when} · ${dollars(v.shift.tips)} tips · ${perHour(v.tph)}`
+    : st === 'worked'
+      ? `${when} · needs its tips`
+      : `${when} · ${STATUS_LABEL[st]}`;
   return (
-    <section class={styles.card} aria-label={title}>
-      <header class={styles.cardHead}>
-        <h3 class={styles.cardTitle}>{title}{sub && <span class={styles.cardSub}>{sub}</span>}</h3>
-        <a href={`#/${to}`} class="linkbtn" onClick={e => { e.preventDefault(); go(to); }}>{link}</a>
-      </header>
-      {children}
-    </section>
+    <p class={styles.readout}>
+      <span>{line}{v.shift.party ? ' · Party' : ''}</span>
+      {st === 'worked'
+        ? <button type="button" class="btn btn-primary" onClick={() => openForm(v.shift.id)}>Fill in tips</button>
+        : <button type="button" class="btn" onClick={() => openSheet(v.shift.id)}>Open shift</button>}
+    </p>
   );
 }

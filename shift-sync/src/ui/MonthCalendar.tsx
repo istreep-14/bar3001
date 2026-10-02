@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { addDays, today as todayText } from '../lib/dates.ts';
 import { byDate, monthGrid, rateScale } from '../lib/calendar.ts';
-import { MONTH_NAMES, WEEKDAY_SHORT, clockShort, hours, moneyWhole, perHour, perHourWhole, shortDate, weekdayShort } from '../lib/format.ts';
+import { MONTH_NAMES, WEEKDAY_SHORT, clockPlain, clockShort, hours, moneyWhole, perHour, perHourWhole, shortDate, weekdayShort } from '../lib/format.ts';
+import { shiftStatus } from '../lib/groups.ts';
 import { summarize } from '../lib/stats.ts';
 import type { ShiftView } from '../lib/stats.ts';
 import { pctChange } from '../lib/trends.ts';
@@ -16,6 +17,17 @@ const letter = (t: ShiftView['shift']['shift_type']) => (t ? LETTER[t] : '?');
 const typeName = (t: ShiftView['shift']['shift_type']) => (t ? NAME[t] : 'Shift');
 
 export interface Month { y: number; m: number }
+
+/* The time bar under a shift in a month cell: the shift's span on one working day, 10 AM to 4 AM the next morning, so a
+ * day shift sits left and a close runs to the right edge. No end yet: a typical six hours from the start. */
+const DAY_FROM = 10 * 60, DAY_SPAN = 18 * 60;
+function dayBar(start: number | null, end: number | null): { left: number; width: number } | null {
+  if (start == null) return null;
+  const a = start < DAY_FROM - 120 ? start + 1440 : start, e0 = end == null ? a + 360 : end <= start ? end + 1440 : end;
+  const e = e0 < a ? a : e0;
+  const left = Math.max(0, Math.min(100, ((a - DAY_FROM) / DAY_SPAN) * 100)), right = Math.max(0, Math.min(100, ((e - DAY_FROM) / DAY_SPAN) * 100));
+  return { left, width: Math.max(4, right - left) };
+}
 
 /* A month calendar that shows the shifts you have logged, in two sizes:
  *   pick    the Date page of the shift form: tap a day to set the shift's date. Days that already hold a shift carry
@@ -89,19 +101,24 @@ export function MonthCalendar({ mode, views, selected = null, exclude = null, mo
                 <button type="button" class="dayhit" onClick={() => onNew?.(c.date)} aria-label={`Log a shift on ${label}`} title={`Log a shift on ${shortDate(c.date)}`}>
                   <span class="dn">{n}</span><Icon name="plus" />
                 </button>
-              ) : list.map((v, i) => (
-                <button type="button" key={v.shift.id} class="sc" aria-label={`Open ${label}`} onClick={() => onOpen?.(v.shift.id)}
-                  data-side={scale?.at(v.tph)?.side} style={scale?.at(v.tph) ? { '--heat': String(scale.at(v.tph)!.mag) } : undefined}
-                  title={`${typeName(v.shift.shift_type)} · ${moneyWhole(v.shift.tips ?? 0)} tips · ${moneyWhole(v.total)} total`}>
-                  <span class="sc-top">
-                    {i === 0 && <span class="dn">{n}</span>}
-                    <span class="sc-tags"><TypeIcon type={v.shift.shift_type} />{v.shift.party && <PartyIcon />}</span>
-                  </span>
-                  <strong class="sc-total">{moneyWhole(v.total)}</strong>
-                  <span class="sc-sub">{v.tph != null && <b>{perHourWhole(v.tph)}</b>}{v.tph != null && v.hours ? ' · ' : ''}{v.hours ? hours(v.hours) : v.tph == null ? 'no hours' : ''}</span>
-                  {v.shift.start != null && v.shift.end != null && <span class="sc-time">{clockShort(v.shift.start)}–{clockShort(v.shift.end)}</span>}
-                </button>
-              ))}
+              ) : list.map((v, i) => {
+                // a shift still to come leads with its start time; one waiting on tips asks for them; a done one shows what it paid
+                const st = shiftStatus(v), bar = dayBar(v.shift.start, v.shift.end);
+                return (
+                  <button type="button" key={v.shift.id} class="sc" data-status={st} aria-label={`Open ${label}`} onClick={() => onOpen?.(v.shift.id)}
+                    data-side={st === 'done' ? scale?.at(v.tph)?.side : undefined} style={st === 'done' && scale?.at(v.tph) ? { '--heat': String(scale.at(v.tph)!.mag) } : undefined}
+                    title={st === 'done' ? `${typeName(v.shift.shift_type)} · ${moneyWhole(v.shift.tips ?? 0)} tips · ${moneyWhole(v.total)} total` : `${typeName(v.shift.shift_type)} · ${st === 'worked' ? 'waiting on tips' : 'starts ' + (clockPlain(v.shift.start) || 'at a time not set')}`}>
+                    <span class="sc-top">
+                      {i === 0 && <span class="dn">{n}</span>}
+                      <span class="sc-tags"><TypeIcon type={v.shift.shift_type} />{v.shift.party && <PartyIcon />}</span>
+                    </span>
+                    <strong class="sc-total">{st === 'scheduled' ? (clockPlain(v.shift.start) || 'Booked') : st === 'worked' ? 'Tips?' : moneyWhole(v.total)}</strong>
+                    <span class="sc-sub">{st === 'scheduled' ? 'Upcoming' : st === 'worked' ? hours(v.hours) : <>{v.tph != null && <b>{perHourWhole(v.tph)}</b>}{v.tph != null && v.hours ? ' · ' : ''}{v.hours ? hours(v.hours) : v.tph == null ? 'no hours' : ''}</>}</span>
+                    {v.shift.start != null && v.shift.end != null && <span class="sc-time">{clockShort(v.shift.start)}–{clockShort(v.shift.end)}</span>}
+                    {bar && <span class="sc-bar" aria-hidden="true"><i style={{ left: bar.left + '%', width: bar.width + '%' }} /></span>}
+                  </button>
+                );
+              })}
             </div>
           );
         })}

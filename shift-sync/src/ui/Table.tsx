@@ -26,6 +26,10 @@ export interface Column<T> {
   /** A share of the width: once any column has one, the table lays out to those shares (2 is twice as wide as 1), and the
    *  edges between them can be dragged. A column without one (a chevron) keeps its own small width. */
   weight?: number;
+  /** Replaces the head text (a ruler's tick marks, a Mon–Sun strip). Still a sort button when `sort` is set. */
+  headCell?: ComponentChildren;
+  /** On a fill column, the narrowest it may get, in rem. The leftover width still goes to it. */
+  minRem?: number;
   /** This column absorbs whatever width the other weighted columns don't use, instead of sharing it proportionally with
    *  them — so a wide screen widens the name column, say, not every numeric one alongside it. At most one column should
    *  set this; it needs no `weight` of its own. */
@@ -85,6 +89,7 @@ const cls = (c: Column<any>) => [c.groupStart && 'gs', c.className].filter(Boole
 const SHARE = 96;   // percent of the width the weighted columns split; the rest is the chevron's
 const REM_PER_WEIGHT = 5;   // with a `fill` column: a plain weighted column's own width, in rem per weight unit
 const widthsKey = (label: string) => `cols:${label}`;
+const slug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function readWidths(label: string): Record<string, number> {
   try { const v = JSON.parse(localStorage.getItem(widthsKey(label)) ?? '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
 }
@@ -117,12 +122,16 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
     const map = groupCells!(key);
     const last = columns.reduce((at, c, i) => (map[c.key] != null ? i : at), -1);
     const pieces: { key: string; span: number; content: ComponentChildren; align?: string }[] = [];
+    const gap = (i: number) => columns[i]!.className?.split(' ').includes('gap');
     for (let i = 0; i < columns.length;) {
       const has = map[columns[i]!.key] != null;
-      if (!has || i === last) { pieces.push({ key: columns[i]!.key, span: 1, content: has ? map[columns[i]!.key] : null, align: has && columns[i]!.className?.split(' ').includes('r') ? 'r' : undefined }); i++; continue; }
+      const names = columns[i]!.className?.split(' ') ?? [];
+      const align = has && names.includes('c') ? 'c' : has && names.includes('r') ? 'r' : undefined;
+      if (!has || i === last || gap(i)) { pieces.push({ key: columns[i]!.key, span: 1, content: has ? map[columns[i]!.key] : null, align }); i++; continue; }
       let j = i + 1;
-      while (j < columns.length && map[columns[j]!.key] == null) j++;
-      pieces.push({ key: columns[i]!.key, span: j - i, content: map[columns[i]!.key], align: j - i === 1 && columns[i]!.className?.split(' ').includes('r') ? 'r' : undefined });
+      while (j < columns.length && map[columns[j]!.key] == null && !gap(j)) j++;
+      const wide = j - i === 1 ? (columns[i]!.className?.split(' ') ?? []) : [];
+      pieces.push({ key: columns[i]!.key, span: j - i, content: map[columns[i]!.key], align: wide.includes('c') ? 'c' : wide.includes('r') ? 'r' : undefined });
       i = j;
     }
     return pieces;
@@ -181,7 +190,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
               // fill column's own remaining space instead of leaving it all to it (a chevron would otherwise end up
               // as wide as the name column it's supposed to trail). Every unweighted column but the fill one gets a
               // narrow utility width here; the fill column alone is left undefined, so it alone takes the rest.
-              return <col key={c.key} style={fillMode && !c.fill ? { width: '2.25rem' } : undefined} />;
+              return <col key={c.key} style={c.fill ? (c.minRem != null ? { minWidth: `${c.minRem}rem` } : undefined) : fillMode ? { width: '2.25rem' } : undefined} />;
             })}</colgroup>
           )}
           <thead data-grouped={colBands.length ? '' : undefined}>
@@ -195,8 +204,8 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
                   <th key={c.key} class={cls(c)} scope="col" title={[c.hint, c.derived && `Derived: ${c.derived}`].filter(Boolean).join(' · ') || undefined}
                     aria-sort={c.sort ? (active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}>
                     {c.sort
-                      ? <button type="button" class="th-sort" onClick={() => toggle(c)}>{c.head}<Icon name={active && sort!.dir === 'asc' ? 'up' : 'down'} /></button>
-                      : c.head}
+                      ? <button type="button" class="th-sort" onClick={() => toggle(c)}>{c.headCell ?? c.head}<Icon name={active && sort!.dir === 'asc' ? 'up' : 'down'} /></button>
+                      : (c.headCell ?? c.head)}
                     {c.weight && weighted.indexOf(c) < weighted.length - 1 && (
                       <span class="col-resize" aria-hidden="true" title="Drag to resize. Double-click to reset." onPointerDown={startResize(weighted.indexOf(c))} onDblClick={resetWidths} />
                     )}
@@ -248,7 +257,7 @@ export function Table<T>({ rows, columns, rowKey, onRow, selectedId, selected, g
         <div class="pager">
           {footer}
           {paged && rows.length > PAGE_SIZES[0] && <><label class="pager-size">Rows
-            <select class="input" value={size} aria-label="Rows per page"
+            <select class="input" id={`pagesize-${slug(label)}`} name={`pagesize-${slug(label)}`} value={size} aria-label="Rows per page"
               onChange={e => setPageSize(Number(e.currentTarget.value))}>
               {PAGE_SIZES.map(n => <option key={n} value={n}>{n === 0 ? 'All' : n}</option>)}
             </select>

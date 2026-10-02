@@ -20,19 +20,27 @@
   /* type: 4 weights (400 body, 500 figures, 600 labels, 700 hero) */
   --fs-micro: 0.6875rem; --fs-meta: 0.75rem; --fs-body: 0.875rem; --fs-lead: var(--fs-body);
   --fs-title: 1rem; --fs-hero: 1.25rem;
+  /* a page's name in the header over it, and the data sheets' cells (sized so a line fills a --sheet-row-h row) */
+  --fs-page: 1.375rem; --fs-sheet: 0.875rem;
   /* The Log's two figure sizes, in px in the contract (15 and 17). They stay put when a mouse densifies the ladder above.
      Axis, tile, stat and chip are fixed too: chart labels, the 22/30 tiles, and the day chip's month band. */
   --fs-fig: 0.9375rem; --fs-tips: 1.0625rem; --fs-kpi: 1.5rem;
   --fs-axis: 0.6875rem; --fs-tile: 1.375rem; --fs-stat: 1.875rem; --fs-chip: 0.5625rem;
+  /* the blocks' headline numbers (parts/blocks): a block's own figure, and the big thin figures across a page's top */
+  --fs-block: 2rem; --fs-display: 2.75rem;
   --fw-normal: 400; --fw-med: 500; --fw-semi: 600; --fw-bold: 700;
 
   /* spacing: 4px base */
   --s-1: 0.25rem; --s-2: 0.5rem; --s-3: 0.75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem;
-  --r-sm: 0.5rem; --r-md: 0.75rem; --r-lg: 1.375rem; --r-chip: 1rem; --r-pill: 999px;
+  --r-sm: 0.5rem; --r-md: 0.75rem; --r-lg: 1.375rem; --r-chip: 1rem; --r-pill: 999px; --r-block: 1.5rem;
 
   /* geometry */
   --ctl-h: 2.75rem; --row-h: 3.5rem; --row-h-head: 2rem;
-  --rail-w: 13.25rem; --topbar-h: 3.75rem; --drawer-w: 21rem;
+  /* the side panel: a card floating on the canvas — your card, then every page in its group */
+  --side-w: 13rem; --r-side: 1rem; --topbar-h: 3.75rem; --drawer-w: 21rem;
+  /* the data sheets (Shifts, Crew, Income, People): rows that hug a 28px face (3px above and below), two-line rows a
+     name over a role, a head row to match */
+  --sheet-row-h: 2.125rem; --sheet-row-tall: 2.75rem; --sheet-head-h: 1.75rem; --sheet-thumb: 1.75rem; --sheet-cell-x: 0.3rem;
   --shell-pad: 0.875rem; --shell-gap: 0.75rem;
   --inset-x: 1.15rem; --measure: 46rem;
   --dur: 150ms; --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -56,7 +64,7 @@
 
   /* the shift types and party. -ink is for text; the base is for drawn marks (bars, dots). */
   --day: #a15c07; --day-ink: #a15c07; --day-soft: #fdf0d8;
-  --night: #4f46e5; --night-soft: #e9e8fd;
+  --night: #4f46e5; --night-ink: var(--night); --night-soft: #e9e8fd;
   --party: #b4235f; --party-soft: #fde6ef;
   /* a cream fill, lighter and warmer than --surface, for a tag that should sit off the row without reading as a
      coloured status (the Table's weekday tag) */
@@ -90,10 +98,45 @@
   /* The rail sits on the canvas. These match the page ink so a tile is readable before the theme script runs. */
   --rail-bg: transparent; --rail-ink: var(--ink-2); --rail-ink-hi: var(--ink);
 
-  --overlay: rgb(10 25 24 / 0.58);
+  --overlay: color-mix(in srgb, var(--glass-shade) 34%, transparent);
   --shadow-panel: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 28px rgb(15 23 42 / 0.06);
   --shadow: 0 24px 60px rgb(10 25 24 / 0.28), 0 4px 12px rgb(10 25 24 / 0.12);
   --shadow-sm: 0 1px 2px rgb(15 31 30 / 0.06);
+  /* ── Glass. The canvas is the page colour with three soft blooms of the accent's family over it (theme.ts writes
+     --mesh-*; these are the fallbacks before it runs). Containers are frosted panes of --surface on it: see-through enough
+     that the blooms tint them, opaque enough that the ink solved for --surface still reads.
+       pane   panels, the side stats, settings areas: the lighter frost
+       sheet  what you act on — the data sheets, the drawer, the form, menus: the denser frost
+       solid  the sheet's colour as it looks over the canvas, for sticky cells and rings that must hide what scrolls under
+     Every pane has a hairline edge (--glass-line), a lit top lip (--glass-hi) and a soft shadow in the accent's hue. */
+  --mesh-a: #bfe6e0; --mesh-b: #cfd6f3; --mesh-c: #f3d3dd; --mesh-mid: #e1e6ec; --glass-shade: #275049;
+  --accent-2: #0d6a7a;
+  --glass-pane-a: 56%; --glass-sheet-a: 80%;
+  --glass-pane: color-mix(in srgb, var(--surface) var(--glass-pane-a), transparent);
+  --glass-sheet: color-mix(in srgb, var(--surface) var(--glass-sheet-a), transparent);
+  --glass-solid: color-mix(in srgb, var(--surface) var(--glass-sheet-a), var(--mesh-mid));
+  --glass-line: rgb(255 255 255 / 0.72);
+  --glass-hi: inset 0 1px 0 rgb(255 255 255 / 0.85);
+  --glass-filter: blur(24px) saturate(160%);
+  --shadow-glass: 0 1px 2px color-mix(in srgb, var(--glass-shade) 6%, transparent), 0 18px 40px -14px color-mix(in srgb, var(--glass-shade) 26%, transparent);
+  --scrim-filter: blur(6px) saturate(120%);
+  --grad-accent: linear-gradient(135deg, var(--accent), var(--accent-2));
+  /* ── Blocks (parts/blocks). An inverse block is the one dark card in a light group (today, what needs you): charcoal
+     leaning on the accent, white ink, and the accent in its bright form (--inverse-accent, from theme.ts) so it reads on
+     the dark. Hatching marks a day off, a day outside the month, a share that is only estimated. */
+  --inverse-accent: #4fd6c4;
+  --inverse-bg: color-mix(in srgb, var(--glass-shade) 22%, #17181c);
+  --inverse-ink: #ffffff; --inverse-ink-2: rgb(255 255 255 / 0.66); --inverse-line: rgb(255 255 255 / 0.12); --inverse-dim: rgb(255 255 255 / 0.13);
+  --hatch: repeating-linear-gradient(135deg, var(--line) 0 1px, transparent 1px 7px);
+  --shadow-accent: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 6px 18px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+  /* the side panel's current page: a white chip lifted just off the panel */
+  --shadow-chip: 0 1px 2px color-mix(in srgb, var(--glass-shade) 10%, transparent), 0 6px 16px -6px color-mix(in srgb, var(--glass-shade) 22%, transparent);
+  /* a segmented control's picked segment: raised off its track (in dark, a step lighter than the track, not darker) */
+  --seg-on: var(--surface);
+  /* the side panel's group names: a step quieter than its page names, still AA on the panel (mixes two inks, so it follows the theme) */
+  --side-cap: color-mix(in srgb, var(--ink-3) 55%, var(--ink-4));
+  /* a data sheet's column heads: the accent drawn toward the ink, so the head reads as the accent's without losing contrast */
+  --sheet-head-ink: color-mix(in srgb, var(--accent) 70%, var(--ink-2));
   /* the colour picker's own marks, the same in both modes: a swatch's hairline ring, and "any colour" as a rainbow */
   --swatch-ring: rgb(0 0 0 / 0.12);
   --any-colour: conic-gradient(#e11d48, #f59e0b, #16a34a, #0ea5e9, #6366f1, #e11d48);
@@ -112,13 +155,13 @@
 /* Dark: written twice (OS preference, manual override). Keep the two blocks identical. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #12131a; --surface: #212224; --surface-2: #18191d; --surface-3: #2b2d33;
+    --bg: #0f0f13; --surface: #23242c; --surface-2: #18181e; --surface-3: #2c2e3a;
     --line: #4a4c56; --line-soft: #3a3c44; --line-strong: #686c76;
     --ink: #ffffff; --ink-2: #c4c6ca; --ink-3: #a4a7ad; --ink-4: #747881;
     --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
     --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
     --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
-    --night: #7570e6; --night-soft: #23214d;
+    --night: #7570e6; --night-ink: #a5a1ff; --night-soft: #23214d;
     --party: #f58bb3; --party-soft: #3a1727;
     --cream: #322c1a;
     --me: #f2c14e; --mgr: #60a5fa;
@@ -126,21 +169,32 @@
     --cat-chump: #fb923c; --cat-cash: #4ade80; --cat-venmo: #67e8f9; --cat-consideration: #c4b5fd; --cat-overtime: #f472b6; --cat-wage: #60a5fa;
     --danger-soft: rgb(248 113 113 / 0.1); --danger-line: rgb(248 113 113 / 0.3);
     --warning-soft: rgb(251 191 36 / 0.16);
-    --overlay: rgb(0 0 0 / 0.62);
+    --overlay: rgb(0 0 0 / 0.5);
     --shadow-panel: 0 0 0 rgb(0 0 0 / 0);
     --shadow: 0 24px 60px rgb(0 0 0 / 0.6);
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-chip: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.5);
+    --seg-on: color-mix(in srgb, var(--ink) 12%, var(--surface-3));
+    --mesh-a: #143a36; --mesh-b: #1b2347; --mesh-c: #2d1626; --mesh-mid: #121a1c; --glass-shade: #050807;
+    --accent-2: #63c7e6;
+    --glass-pane-a: 62%; --glass-sheet-a: 86%;
+    --glass-line: rgb(255 255 255 / 0.08);
+    --glass-hi: inset 0 1px 0 rgb(255 255 255 / 0.07);
+    --shadow-glass: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 44px -14px rgb(0 0 0 / 0.6);
+    --shadow-accent: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 6px 20px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+    --inverse-bg: color-mix(in srgb, var(--accent) 16%, #0b0c0f); --inverse-line: rgb(255 255 255 / 0.1);
+    --hatch: repeating-linear-gradient(135deg, var(--line-soft) 0 1px, transparent 1px 7px);
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
-  --bg: #12131a; --surface: #212224; --surface-2: #18191d; --surface-3: #2b2d33;
+  --bg: #0f0f13; --surface: #23242c; --surface-2: #18181e; --surface-3: #2c2e3a;
   --line: #4a4c56; --line-soft: #3a3c44; --line-strong: #686c76;
   --ink: #ffffff; --ink-2: #c4c6ca; --ink-3: #a4a7ad; --ink-4: #747881;
   --accent: #4fd6c4; --accent-hover: #7be3d5; --accent-soft: #143530; --accent-wash: #112421; --on-accent: #062622;
   --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
   --day: #b87a20; --day-ink: #f5b94a; --day-soft: #33270d;
-  --night: #7570e6; --night-soft: #23214d;
+  --night: #7570e6; --night-ink: #a5a1ff; --night-soft: #23214d;
   --party: #f58bb3; --party-soft: #3a1727;
   --cream: #322c1a;
   --me: #f2c14e; --mgr: #60a5fa;
@@ -148,9 +202,20 @@
   --cat-chump: #fb923c; --cat-cash: #4ade80; --cat-venmo: #67e8f9; --cat-consideration: #c4b5fd; --cat-overtime: #f472b6; --cat-wage: #60a5fa;
   --danger-soft: rgb(248 113 113 / 0.1); --danger-line: rgb(248 113 113 / 0.3);
   --warning-soft: rgb(251 191 36 / 0.16);
-  --overlay: rgb(0 0 0 / 0.62);
+  --overlay: rgb(0 0 0 / 0.5);
   --shadow-panel: 0 0 0 rgb(0 0 0 / 0);
   --shadow: 0 24px 60px rgb(0 0 0 / 0.6);
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-chip: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.5);
+  --seg-on: color-mix(in srgb, var(--ink) 12%, var(--surface-3));
+  --mesh-a: #143a36; --mesh-b: #1b2347; --mesh-c: #2d1626; --mesh-mid: #121a1c; --glass-shade: #050807;
+  --accent-2: #63c7e6;
+  --glass-pane-a: 62%; --glass-sheet-a: 86%;
+  --glass-line: rgb(255 255 255 / 0.08);
+  --glass-hi: inset 0 1px 0 rgb(255 255 255 / 0.07);
+  --shadow-glass: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 44px -14px rgb(0 0 0 / 0.6);
+  --shadow-accent: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 6px 20px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+  --inverse-bg: color-mix(in srgb, var(--accent) 16%, #0b0c0f); --inverse-line: rgb(255 255 255 / 0.1);
+  --hatch: repeating-linear-gradient(135deg, var(--line-soft) 0 1px, transparent 1px 7px);
   color-scheme: dark;
 }

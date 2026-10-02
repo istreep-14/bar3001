@@ -24,8 +24,12 @@ const PATHS = {
   edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z',
   users: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8',
   star: 'M12 3l2.4 5.6 6.1.5-4.6 4 1.4 6-5.3-3.2-5.3 3.2 1.4-6-4.6-4 6.1-.5z',
+  out: 'M7 17 17 7M8 7h9v9',
+  home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
   calendar: 'M4 5h16v15H4zM4 10h16M9 3v4M15 3v4',
   clock: 'M12 6v6l4 2M12 22a10 10 0 100-20 10 10 0 000 20z',
+  /* a shift's note: a speech bubble with two lines of text */
+  note: 'M20 15a2 2 0 01-2 2H8l-4 4V5a2 2 0 012-2h12a2 2 0 012 2zM8 8.5h8M8 12.5h5',
   up: 'M12 19V5M5 12l7-7 7 7',
   down: 'M12 5v14M19 12l-7 7-7-7',
   /* you, and a manager */

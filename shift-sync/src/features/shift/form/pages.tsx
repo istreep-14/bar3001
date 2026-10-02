@@ -68,7 +68,7 @@ function TipsField({ c, hideLabel = false }: { c: Ctx; hideLabel?: boolean }) {
   const { form, set, errors, err } = c;
   return (
     <label class="field"><span class={hideLabel ? 'sr-only' : 'label-text'}>Tips</span>
-      <input class="input num" type="number" inputMode="decimal" step="0.01" min="0" value={form.tips} placeholder="0.00" aria-invalid={!!errors.tips} onInput={e => set({ tips: e.currentTarget.value })} />
+      <input class="input num" id="shift-tips" name="shift-tips" type="number" inputMode="decimal" step="0.01" min="0" value={form.tips} placeholder="0.00" aria-invalid={!!errors.tips} onInput={e => set({ tips: e.currentTarget.value })} />
       {err('tips')}
     </label>
   );
@@ -114,7 +114,7 @@ export function DatePage({ c }: { c: Ctx }) {
     <div class={styles.pane} role="tabpanel">
       <div class={styles.dateline}>
         <label class="field"><span class="label-text">Date</span>
-          <input class="input" type="date" value={form.date} aria-invalid={!!errors.date} required onInput={e => set({ date: e.currentTarget.value })} />
+          <input class="input" id="shift-date" name="shift-date" type="date" value={form.date} aria-invalid={!!errors.date} required onInput={e => set({ date: e.currentTarget.value })} />
         </label>
         <p class={styles.datenote + (sameDay.length ? ' ' + styles.warn : '')}>
           {form.date ? (sameDay.length ? `This day already holds ${sameDay.map(v => (v.shift.shift_type ? (v.shift.shift_type === 'day' ? 'a day' : 'a night') : 'a')).join(' and ')} shift. A second one is fine.` : longDate(form.date)) : 'Pick a day.'}
@@ -205,14 +205,14 @@ export function OtherPage({ c }: { c: Ctx }) {
         {form.lines.map((l, i) => (
           <div class={styles.mrow} key={l.key} role="group" aria-label={`Other income ${i + 1}`}>
             <label class="field"><span class="label-text">Source</span>
-              <select class="input" value={l.category} onChange={e => setLine(l.key, { category: e.currentTarget.value as Category })}>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select>
+              <select class="input" id={`other-cat-${l.key}`} name={`other-cat-${l.key}`} value={l.category} onChange={e => setLine(l.key, { category: e.currentTarget.value as Category })}>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select>
             </label>
             <label class="field"><span class="label-text">Amount</span>
-              <input class="input num" type="number" inputMode="decimal" step="0.01" value={l.amount} placeholder="0.00" aria-invalid={!!errors['line' + l.key]} onInput={e => setLine(l.key, { amount: e.currentTarget.value })} />
+              <input class="input num" id={`other-amount-${l.key}`} name={`other-amount-${l.key}`} type="number" inputMode="decimal" step="0.01" value={l.amount} placeholder="0.00" aria-invalid={!!errors['line' + l.key]} onInput={e => setLine(l.key, { amount: e.currentTarget.value })} />
             </label>
             <button type="button" class="btn btn-quiet btn-icon" aria-label={`Remove other income ${i + 1}`} onClick={() => setForm(f => f && { ...f, lines: f.lines.filter(x => x.key !== l.key) })}><Icon name="trash" /></button>
             <label class={`field ${styles.note}`}><span class="label-text">Note</span>
-              <input class="input" type="text" value={l.note} onInput={e => setLine(l.key, { note: e.currentTarget.value })} />
+              <input class="input" id={`other-note-${l.key}`} name={`other-note-${l.key}`} type="text" value={l.note} onInput={e => setLine(l.key, { note: e.currentTarget.value })} />
             </label>
             {errors['line' + l.key] && <span class={`error ${styles.note}`}>{errors['line' + l.key]}</span>}
           </div>
@@ -267,7 +267,7 @@ export function PartyPage({ c }: { c: Ctx }) {
   return (
     <div class={styles.pane} role="tabpanel">
       <label class={styles.check}>
-        <input type="checkbox" checked={form.party} onChange={e => set({ party: e.currentTarget.checked })} />
+        <input type="checkbox" id="shift-party" name="shift-party" checked={form.party} onChange={e => set({ party: e.currentTarget.checked })} />
         <span><b>A party happened during this shift</b><span class={styles.hint}>The yes or no is what you compare shifts by. Put who and how many in the notes.</span></span>
       </label>
     </div>
@@ -279,7 +279,7 @@ export function NotesPage({ c }: { c: Ctx }) {
   return (
     <div class={styles.pane} role="tabpanel">
       <label class="field"><span class="label-text">Notes</span>
-        <textarea class="input" rows={6} value={form.notes} onInput={e => set({ notes: e.currentTarget.value })} />
+        <textarea class="input" id="shift-notes" name="shift-notes" rows={6} value={form.notes} onInput={e => set({ notes: e.currentTarget.value })} />
       </label>
     </div>
   );

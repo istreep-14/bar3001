@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import { Icon } from './Icon.tsx';
 import styles from './FilterMenu.module.css';
 
@@ -7,6 +7,7 @@ import styles from './FilterMenu.module.css';
 export function ColumnMenu<K extends string>({ options, hidden, onChange, icon }: { options: { key: K; label: string }[]; hidden: K[]; onChange: (hidden: K[]) => void; icon?: boolean }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const uid = useId();
   useEffect(() => {
     if (!open) return;
     const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
@@ -27,7 +28,7 @@ export function ColumnMenu<K extends string>({ options, hidden, onChange, icon }
           <div class={styles.checks}>
             {options.map(o => (
               <label key={o.key} class={styles.check}>
-                <input type="checkbox" checked={!hidden.includes(o.key)} onChange={e => onChange(e.currentTarget.checked ? hidden.filter(k => k !== o.key) : [...hidden, o.key])} />
+                <input type="checkbox" id={`${uid}-${o.key}`} name={`${uid}-${o.key}`} checked={!hidden.includes(o.key)} onChange={e => onChange(e.currentTarget.checked ? hidden.filter(k => k !== o.key) : [...hidden, o.key])} />
                 {o.label}
               </label>
             ))}

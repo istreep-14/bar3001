@@ -1,7 +1,10 @@
-.screen { max-width: var(--measure); display: grid; gap: var(--s-4); }
-/* one settings area: a bold title, then its own settings; areas are grey panels, their fields sit white on them */
-.area { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4); border-radius: var(--r-lg); background: var(--surface-2); scroll-margin-top: var(--s-3); }
-.area[data-current] { box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
+.screen { display: grid; gap: var(--s-2); }
+/* one settings area: a bold title, then its own settings. Each is a pane of glass with the side panel's corners; its
+   fields sit white on it. */
+.area { display: grid; gap: var(--s-2); padding: var(--s-4) var(--s-5); border: 1px solid var(--glass-line); border-radius: var(--r-side); background: var(--glass-pane); box-shadow: var(--glass-hi), var(--shadow-glass); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); scroll-margin-top: calc(var(--topbar-h) + var(--s-2)); }
+.area > * { max-width: var(--measure); }   /* full-width cards, readable lines inside */
+@media (min-width: 56rem) { .area { scroll-margin-top: 0; } }   /* only the page scrolls there, under its header card */
+.area[data-current] { box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar), var(--glass-hi), var(--shadow-glass); }
 .areaTitle { margin: 0; font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .effect { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface); }
 .stack { display: grid; gap: 0; }

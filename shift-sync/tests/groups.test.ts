@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Income, Shift } from '../src/core/core.generated.js';
-import { groupShifts, incomeParts, isPending, rowDay } from '../src/lib/groups.ts';
+import { bandLabel, groupCount, groupShifts, incomeParts, isPending, monthInRow, rowDay } from '../src/lib/groups.ts';
 import { toView } from '../src/lib/stats.ts';
 
 const shift = (o: Partial<Shift> = {}): Shift => ({ id: 'a', date: '2026-09-25', start: 1080, end: 150, tips: 329, notes: null, updated_at: 1, deleted: false, other: null, shift_type: 'night', party: false, ...o });
@@ -53,4 +53,25 @@ test('income parts come in a fixed order, skip zeros, and add up to the total', 
   assert.equal(parts.find(p => p.key === 'wage')!.estimated, true);
   assert.ok(Math.abs(parts.reduce((t, p) => t + p.amount, 0) - v.total) < 1e-9);
   assert.deepEqual(incomeParts(toView(shift({ tips: null, start: null, end: null }), [])), []);
+});
+
+test('a row names its month only where no band above already does', () => {
+  assert.equal(monthInRow('2026-09-25', 'none'), true);
+  assert.equal(monthInRow('2026-09-25', 'month'), false);
+  assert.equal(monthInRow('2026-09-25', 'week'), false);    // Sep 21 – 27 stays in September
+  assert.equal(monthInRow('2026-10-02', 'week'), true);     // Sep 28 – Oct 4 runs into October
+});
+
+test('bands carry a short name for the day column and the long one for their title', () => {
+  assert.deepEqual(bandLabel('2026-09-21', 'week'), { name: 'Sep 21 – 27', title: 'September 21 – 27, 2026' });
+  assert.deepEqual(bandLabel('2026-09-28', 'week'), { name: 'Sep 28 – Oct 4', title: 'September 28 – October 4, 2026' });
+  assert.equal(bandLabel('2020-03', 'month').name, 'March 2020');
+  assert.equal(bandLabel('2020-03', 'month').title, 'March 2020');
+});
+
+test('a band counts its shifts and says what is not counted yet only when there is some', () => {
+  const v = toView(shift(), []);
+  assert.equal(groupCount({ views: [v], worked: 0, scheduled: 0 }), '1 shift');
+  assert.equal(groupCount({ views: [v, v, v], worked: 1, scheduled: 1 }), '3 shifts · 1 awaiting tips · 1 upcoming');
+  assert.equal(groupCount({ views: [v, v], worked: 0, scheduled: 2 }), '2 shifts · 2 upcoming');
 });

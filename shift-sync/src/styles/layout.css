@@ -1,29 +1,33 @@
 /* ═══ Layout: the page's panel, its head and body, the table-page split with its side column, and the Calendar's
    day card. Everything a page is laid out with; what goes inside (charts, tiles, calendars) is in charts.css. ═══ */
 /* ---- panels -------------------------------------------------------------------
-   The page title sits on the grey canvas. The body steps up to --surface-2, one grey lighter
-   than the canvas, so the panel itself reads as a shape; a table or card inside it steps up
-   again to --surface (the lightest, most prominent grey) so content stands apart from its panel.
+   The page title sits on the canvas. The body is a pane of frosted glass (--glass-pane) so the panel reads as a shape;
+   a table or card inside it steps up to --surface (or the denser --glass-sheet) so content stands apart from its panel.
    A table page is .fill: the panel takes the rest of the screen and scrolls inside. */
 .panel { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 .panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); padding: 0 var(--s-1); border: 0; background: transparent; }
 .panel-head h2 { font-size: var(--fs-title); line-height: 1.2; font-weight: var(--fw-semi); letter-spacing: -0.02em; }
-.panel-body { display: grid; gap: var(--s-3); min-width: 0; padding: var(--s-3) var(--s-4) var(--s-4); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
+.panel-body { display: grid; gap: var(--s-3); min-width: 0; padding: var(--s-3) var(--s-4) var(--s-4); background: var(--glass-pane); border: 1px solid var(--glass-line); border-radius: var(--r-lg); box-shadow: var(--glass-hi), var(--shadow-glass); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); overflow: hidden; }
 .panel-body.side { padding: var(--s-3); }
 .panel-body.open { padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible; }
 @media (max-width: 45rem) {
   .panel-head, .panel-body { padding-inline: var(--s-3); }
 }
+/* a page the shell's header already names: its tools sit at the right of the row, with no title beside them */
+.panel-head[data-quiet] { justify-content: flex-end; }
 .panel-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-2) var(--s-4); min-width: 0; }
 /* a card whose body is one table: the rows run to the rounded edge */
 .panel-body.flush { padding: 0; gap: 0; }
 
-/* table pages: the list is the wide card, a short summary sits beside it. Below the breakpoint the summary stacks on top. */
+/* table pages: the list is the wide card, a short summary sits beside it. Below the breakpoint the summary follows the table. */
 .split { display: grid; gap: var(--shell-gap); align-items: start; min-width: 0; min-height: 0; }
-.split > .side { order: -1; }
+.split > .side { order: 1; position: relative; }
+.split-resize { position: absolute; top: var(--s-4); bottom: var(--s-4); left: 0; z-index: 2; width: 0.45rem; margin-left: -0.15rem; padding: 0; border: 0; background: transparent; cursor: col-resize; }
+.split-resize::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--line); opacity: 0; }
+.split-resize:hover::after, .split-resize:focus-visible::after { opacity: 1; }
 /* a page whose figures went to the second rail (SideStats `rail`) has no side column: its body takes the width */
 @media (min-width: 56rem) {
-  .split:has(> .side) { grid-template-columns: minmax(0, 1fr) 20rem; }
+  .split:has(> .side) { grid-template-columns: minmax(0, 1fr) 26rem; }
   .split > .side { order: 0; }
 }
 .side { align-content: start; gap: var(--s-5); }

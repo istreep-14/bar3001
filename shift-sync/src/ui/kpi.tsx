@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { DASH } from '../lib/format.ts';
 import { Icon } from './Icon.tsx';
 import type { IconName } from './Icon.tsx';
 
@@ -81,6 +82,21 @@ export function KpiStrip({ items, label = 'This period' }: { items: KpiItem[]; l
         </div>
       ))}
     </div>
+  );
+}
+
+/** A comparison against the period before: the label, a DeltaPill, and 'from $5,080' on the right. Full width of a side card. */
+export function CompareList({ rows }: { rows: { label: string; pct: number | null; from: string; neutral?: boolean }[] }) {
+  return (
+    <dl class="cmp">
+      {rows.map(r => (
+        <div key={r.label}>
+          <dt>{r.label}</dt>
+          <dd>{r.pct != null ? <DeltaPill pct={r.pct} neutral={r.neutral} /> : <span class="nil">{DASH}</span>}</dd>
+          <span class="from">from {r.from}</span>
+        </div>
+      ))}
+    </dl>
   );
 }
 

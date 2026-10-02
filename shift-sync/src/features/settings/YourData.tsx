@@ -48,7 +48,7 @@ export function YourData() {
           <button class="btn" type="button" onClick={exportCsv} disabled={!liveViews.value.length}><Icon name="download" /> Export CSV</button>
           <label class="btn" style={{ cursor: 'pointer' }}>
             <Icon name="plus" /> Import shifts (JSON)
-            <input type="file" accept="application/json,.json" multiple onChange={importFiles} hidden />
+            <input type="file" id="import-shifts" name="import-shifts" accept="application/json,.json" multiple onChange={importFiles} hidden />
           </label>
         </div>
         <p class={styles.p}>Adds only what isn't here yet; nothing you already have is changed.</p>

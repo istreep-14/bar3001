@@ -90,3 +90,20 @@ test('clockParts: the hour padded to two characters, so colons line up', async (
   assert.deepEqual(clockParts(0), { hm: '12:00', ap: 'AM' });
   assert.deepEqual(clockParts(2 * 60 + 5), { hm: '\u20072:05', ap: 'AM' });
 });
+
+test('weekShort names a Monday-to-Sunday week briefly, the second month only when the week runs into it', async () => {
+  const { weekShort } = await import('../src/lib/format.ts');
+  assert.equal(weekShort('2026-09-25'), 'Sep 21 – 27');
+  assert.equal(weekShort('2026-09-21'), 'Sep 21 – 27');
+  assert.equal(weekShort('2026-09-27'), 'Sep 21 – 27');   // Sunday closes the week it belongs to
+  assert.equal(weekShort('2026-10-02'), 'Sep 28 – Oct 4');
+  assert.equal(weekShort('2025-12-31'), 'Dec 29 – Jan 4');
+});
+
+test('monthShort is the month alone in this year, with the year otherwise', async () => {
+  const { monthShort } = await import('../src/lib/format.ts');
+  const y = new Date().getFullYear();
+  assert.equal(monthShort(`${y}-09`), 'September');
+  assert.equal(monthShort(`${y}-09-30`), 'September');
+  assert.equal(monthShort('2020-03'), 'March 2020');
+});

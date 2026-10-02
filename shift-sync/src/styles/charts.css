@@ -55,7 +55,11 @@
 .xaxis-free .xl { position: absolute; transform: translateX(-50%); }
 .cols { position: absolute; inset: 0; display: flex; }
 .col { display: flex; flex: 1 1 0; align-items: flex-end; justify-content: center; min-width: 0; height: 100%; padding: 0 1px; border: 0; background: none; cursor: default; }
+.col.pick { cursor: pointer; }
+.col.gap .bar { min-height: 8px; background: none; box-shadow: inset 0 -1px 0 0 var(--line); }
+.col.gap .part { display: none; }
 .bar { position: relative; display: flex; flex-direction: column-reverse; gap: 2px; width: 100%; max-width: 24px; }
+.viz.bars-wide .bar { max-width: 44px; }
 .part { flex: 1 1 0; min-height: 2px; background: var(--k, var(--accent)); }
 .part:last-of-type { border-radius: 4px 4px 0 0; }
 .col:hover .bar, .col:focus-visible .bar { filter: brightness(1.14); }
@@ -128,6 +132,8 @@
 .datenote { margin: 0; padding-bottom: 10px; font-size: var(--fs-meta); color: var(--ink-2); }
 .datenote.warn { color: var(--warn); font-weight: var(--fw-med); }
 .cal { display: grid; gap: var(--s-3); min-width: 0; }
+/* the Calendar's week view: the week on one clock, then that week and the seven before it as income by source */
+.cal-week { display: grid; gap: var(--s-6); min-width: 0; }
 .calhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); }
 .caltitle { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-semi); }
 .calnav { display: flex; align-items: center; gap: var(--s-2); }
@@ -153,14 +159,28 @@
 /* browse: the cell IS the card. A day is a box holding one full-size button per shift (or one "log a shift" button),
    so the whole cell is the click target and carries the shift's figures. The shade is how much it earned; the type is one
    small sun or moon badge, not a fill colour. */
-.cal-browse .day { padding: 0; gap: 0; min-height: 7.75rem; overflow: hidden; background: var(--surface-2); }
-.cal-browse .day.has { border-color: var(--line); background: var(--surface); }
+/* Simple cells, no outlines: an empty day is a soft frosted square, a day outside the month is hatched, a day with a
+   shift is the shift's own card (shaded by rate when its money is in, outlined when it is still to come, hatched while it
+   waits on tips). Today has the accent ring. */
+.cal-browse .day { padding: 0; gap: 0; min-height: 7.75rem; overflow: hidden; border: 0; border-radius: var(--r-md); background: color-mix(in srgb, var(--surface) 45%, transparent); opacity: 1; }
+.cal-browse .day.out { background: var(--hatch); opacity: 0.6; }
+.cal-browse .day.has { background: var(--surface); box-shadow: var(--glass-hi), var(--shadow-chip); }
+.cal-browse .day.today { box-shadow: inset 0 0 0 2px var(--accent); }
 .cal-browse .sc, .cal-browse .dayhit { flex: 1; display: flex; flex-direction: column; gap: 1px; width: 100%; min-width: 0; padding: var(--s-2) var(--s-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .cal-browse .sc { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
 .cal-browse .sc[data-side='hi'] { background: color-mix(in srgb, var(--accent) calc(8% + var(--heat, 0) * 26%), var(--surface)); }
 .cal-browse .sc[data-side='lo'] { background: color-mix(in srgb, var(--warn) calc(8% + var(--heat, 0) * 24%), var(--surface)); }
-.cal-browse .sc + .sc { border-top: 1px solid var(--line); }
-.cal-browse .sc:hover, .cal-browse .dayhit:hover { background-color: var(--surface-3); }
+.cal-browse .sc[data-status='scheduled'] { background: color-mix(in srgb, var(--surface) 70%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); border-radius: var(--r-md); }
+.cal-browse .sc[data-status='scheduled'] .sc-total { color: var(--accent); font-size: var(--fs-title); white-space: nowrap; }
+.cal-browse .sc[data-status='worked'] .sc-total { font-size: var(--fs-title); }
+.cal-browse .sc[data-status='worked'] { background: var(--hatch), var(--surface); }
+/* the shift's span on the working day (10 AM to 4 AM), a hairline track with the shift as a short bar */
+.cal-browse .sc-bar { position: relative; display: block; height: 4px; margin-top: var(--s-1); border-radius: 2px; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.cal-browse .sc-bar i { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: var(--ink-2); }
+.cal-browse .sc[data-side='hi'] .sc-bar i { background: var(--accent); }
+.cal-browse .sc[data-status='scheduled'] .sc-bar i { background: var(--accent); opacity: 0.6; }
+.cal-browse .sc + .sc { box-shadow: inset 0 1px 0 var(--line-soft); }
+.cal-browse .dayhit:hover { background: var(--surface); }
 .cal-browse .sc:hover { filter: brightness(0.96); }
 .cal-browse .sc:focus-visible, .cal-browse .dayhit:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .cal-browse .sc-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-height: 1.5rem; }
@@ -194,6 +214,7 @@
 .chartgrid.three { grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); }
 .chartcard { min-width: 0; padding: var(--s-2) 0; }   /* a chart is a heading and a plot on the panel, not a box in a box */
 .k-party { --k: var(--party); --k-soft: var(--party-soft); }
+.side-block > .stats, .side-block > .cmp { justify-self: stretch; width: 100%; }
 .stats { display: grid; margin: 0; }
 .stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); padding: 0.3rem 0; border-top: 1px solid var(--line-soft); }
 .stats > div:first-child { border-top: 0; padding-top: 0; }
@@ -218,7 +239,16 @@
 .refline span { position: absolute; right: 0; bottom: 3px; padding: 0 var(--s-1); background: var(--surface); font-size: var(--fs-axis); color: var(--ink-2); }
 .insight { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface-2); font-size: var(--fs-body); }
 .insight b { font-weight: var(--fw-semi); }
-.ovtwo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
+/* Insights' widget row: three blocks, then income by week across the full width */
+.ov-blocks { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--shell-gap); }
+@media (min-width: 48rem) { .ov-blocks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 72rem) { .ov-blocks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ov-blocks > .ov-wide { grid-column: 1 / -1; }
+.ovtwo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+/* Insights' latest shifts: a small data sheet in its own frosted card, rows at the sheets' height */
+.ov-sheet { padding: var(--s-1) var(--s-4) var(--s-2); border: 1px solid var(--glass-line); box-shadow: var(--glass-hi), var(--shadow-glass); }
+.ov-sheet .tbl-log .tbl td { height: var(--sheet-row-h); }
+.ov-sheet .tbl-log .tbl :is(th, td).r { padding-inline: var(--s-3) 0; }
 @media (min-width: 64rem) { .ovtwo { grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); } }
 /* the small calendar: a month of days, shaded where a shift was worked */
 .mini { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -273,3 +303,14 @@
 .rk-lo, .rk-hi { width: 3rem; height: 0.625rem; border-radius: var(--r-pill); }
 .rk-lo { background: linear-gradient(90deg, color-mix(in srgb, var(--warn) 34%, var(--surface)), var(--surface)); }
 .rk-hi { background: linear-gradient(90deg, var(--surface), color-mix(in srgb, var(--accent) 36%, var(--surface))); }
+
+/* income sources, one colour each (the blocks' stacks, keys and tooltips): [data-src] on a mark, .k-<Source> on a tooltip key */
+[data-src='Tips'], .k-Tips { --c: var(--cat-tips); --k: var(--cat-tips); }
+[data-src='Wage'], .k-Wage { --c: var(--cat-wage); --k: var(--cat-wage); }
+[data-src='Chump'], .k-Chump { --c: var(--cat-chump); --k: var(--cat-chump); }
+[data-src='Cash'], .k-Cash { --c: var(--cat-cash); --k: var(--cat-cash); }
+[data-src='Venmo'], .k-Venmo { --c: var(--cat-venmo); --k: var(--cat-venmo); }
+[data-src='Consideration'], .k-Consideration { --c: var(--cat-consideration); --k: var(--cat-consideration); }
+[data-src='Overtime'], .k-Overtime { --c: var(--cat-overtime); --k: var(--cat-overtime); }
+[data-src='Other'], .k-Other { --c: var(--cat-other); --k: var(--cat-other); }
+.k-ink { --k: var(--ink-2); }

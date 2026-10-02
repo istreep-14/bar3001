@@ -45,9 +45,9 @@ export function Facts({ items }: { items: (Fact | null | false)[] }) {
 }
 
 /* ── tooltip: one per chart, values first, then what they are ── */
-interface TipRow { name: string; value: string; cls?: string }
+export interface TipRow { name: string; value: string; cls?: string }
 interface TipState { left: number; top: number; title: string; rows: TipRow[] }
-function useTip() {
+export function useTip() {
   const host = useRef<HTMLElement>(null);
   const [tip, setTip] = useState<TipState | null>(null);
   const bind = (title: string, rows: TipRow[]) => ({
@@ -193,9 +193,17 @@ export function Ribbon({ lanes, slim = true }: { lanes: Lane[]; slim?: boolean }
  *    line that carries the trend. Two measures on one chart is the one exception to "one measure per axis": each has
  *    its own labelled axis and its own key, and the tooltip and table give both. ── */
 export interface ComboDatum { xlabel: string; title: string; bar: number; line: number | null; smooth: number | null; partial?: boolean; rows: TipRow[] }
-export function ComboChart({ title, sub, data, fmtBar, fmtLine, barLabel, lineLabel, smoothLabel, height = 200, empty = 'Nothing logged in this range yet.' }: {
+export function ComboChart({ title, sub, data, fmtBar, fmtLine, barLabel, lineLabel, smoothLabel, height = 200, empty = 'Nothing logged in this range yet.', rowHead = 'Week', picked, onPick, headed = true, wide = false }: {
   title: string; sub?: string; data: ComboDatum[]; fmtBar: (v: number) => string; fmtLine: (v: number) => string;
   barLabel: string; lineLabel: string; smoothLabel: string; height?: number; empty?: string;
+  /** First column of View as table. */
+  rowHead?: string;
+  /** Index of the bar that is the selected shift, and the click that selects one. */
+  picked?: number; onPick?: (index: number) => void;
+  /** The block around the chart already names it. */
+  headed?: boolean;
+  /** Wider bars, for a chart that has the page to itself. */
+  wide?: boolean;
 }) {
   const t = useTip();
   const maxBar = Math.max(0, ...data.map(d => d.bar)), maxLine = Math.max(0, ...data.map(d => Math.max(d.line ?? 0, d.smooth ?? 0)));
@@ -207,15 +215,20 @@ export function ComboChart({ title, sub, data, fmtBar, fmtLine, barLabel, lineLa
   data.forEach((d, i) => { if (d.smooth == null) { pen = false; return; } path += `${pen ? 'L' : 'M'}${x(i).toFixed(2)},${yl(d.smooth).toFixed(2)} `; pen = true; });
   const every = Math.max(1, Math.ceil(data.length / 10));
   return (
-    <figure class="viz" role="group" aria-label={title} ref={t.host}>
-      <Cap title={title} sub={sub} />
+    <figure class={`viz${wide ? ' bars-wide' : ''}`} role="group" aria-label={title} ref={t.host}>
+      {headed && <Cap title={title} sub={sub} />}
       <div class="plot dual" style={{ '--plot-h': height + 'px' }}>
         <div class="yaxis" aria-hidden="true">{left.ticks.map(v => <span class="yt" key={v} style={{ bottom: (v / left.top) * 100 + '%' }}>{fmtBar(v)}</span>)}</div>
         <div class="area">
           {left.ticks.map(v => <div class="gl" key={v} style={{ bottom: (v / left.top) * 100 + '%' }} />)}
           <div class="cols">
-            {data.map(d => (
-              <button type="button" class={'col' + (d.partial ? ' partial' : '')} key={d.title} aria-label={`${d.title}: ${d.rows.map(r => `${r.name} ${r.value}`).join(', ')}`} {...t.bind(d.title, d.rows)}>
+            {data.map((d, i) => (
+              <button type="button" key={d.title}
+                class={'col' + (d.partial ? ' partial' : '') + (d.partial && d.bar === 0 ? ' gap' : '') + (onPick ? ' pick' : '') + (i === picked ? ' on' : '')}
+                aria-pressed={onPick ? i === picked : undefined}
+                aria-label={`${d.title}: ${d.rows.map(r => `${r.name} ${r.value}`).join(', ')}`}
+                {...t.bind(d.title, d.rows)}
+                onClick={onPick ? () => onPick(i) : undefined}>
                 <div class="bar" style={{ height: (d.bar / left.top) * 100 + '%' }}><i class="part k-acc" /></div>
               </button>
             ))}
@@ -227,7 +240,7 @@ export function ComboChart({ title, sub, data, fmtBar, fmtLine, barLabel, lineLa
         <div class="xaxis" aria-hidden="true">{data.map((d, i) => <span class="xl" key={d.title}>{i % every === 0 ? d.xlabel : ''}</span>)}</div>
       </div>
       <Legend items={[{ cls: 'k-acc', label: `${barLabel} (left axis)` }, { cls: 'key-dot', label: `${lineLabel} (right axis)` }, { cls: 'key-line', label: smoothLabel }]} />
-      <TableView headers={['Week', barLabel, lineLabel, smoothLabel]} rows={data.map(d => [d.title, fmtBar(d.bar), d.line == null ? '—' : fmtLine(d.line), d.smooth == null ? '—' : fmtLine(d.smooth)])} />
+      <TableView headers={[rowHead, barLabel, lineLabel, smoothLabel]} rows={data.map(d => [d.title, d.bar ? fmtBar(d.bar) : '—', d.line == null ? '—' : fmtLine(d.line), d.smooth == null ? '—' : fmtLine(d.smooth)])} />
       {t.node}
     </figure>
   );

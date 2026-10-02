@@ -1,0 +1,12 @@
+/* The chart controls (PeriodChart.tsx): the figure first, then grouping and range, then the filter; they wrap. */
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+.group { display: inline-flex; flex-wrap: wrap; gap: var(--s-2); }
+.chart { min-width: 0; }
+/* a phone: each choice is one row that scrolls sideways rather than wrapping a pill's label */
+.controls :global([role='radio']) { white-space: nowrap; }
+@media (max-width: 40rem) {
+  .controls { flex-wrap: nowrap; flex-direction: column; align-items: stretch; }
+  .controls > *, .group { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .group { gap: var(--s-2); }
+  .controls > :first-child { align-self: start; max-width: 100%; }
+}
