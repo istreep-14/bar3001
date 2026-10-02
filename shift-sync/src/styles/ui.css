@@ -41,7 +41,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .seg label { position: relative; }
 .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .seg span { display: flex; align-items: center; justify-content: center; gap: var(--s-2); min-height: calc(var(--ctl-h) - 6px); padding: 0 var(--s-3); border-radius: var(--r-sm); font-size: var(--fs-body); font-weight: var(--fw-med); color: var(--ink-2); white-space: nowrap; transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
-.seg input:checked + span { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.seg input:checked + span { background: var(--seg-on); color: var(--ink); box-shadow: var(--shadow-sm); }
 .seg input:focus-visible + span { outline: 2px solid var(--accent); }
 
 .icon { width: 1.125em; height: 1.125em; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
@@ -146,7 +146,7 @@ select.input { appearance: none; padding-right: var(--s-6);
    at the tone rules' own specificity (0,2,3), so a toned row's own background (below) still wins over this default
    one by simply coming later in the file — a band or separator row (one cell spanning every column) is excluded, or
    it would try to stick as if it were only the first column wide. */
-:where(.tbl-log) .tbl tbody tr:not(:where(.tbl-sep, .tbl-band)) > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+:where(.tbl-log) .tbl tbody tr:not(:where(.tbl-sep, .tbl-band)) > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--sheet-bg, var(--surface)); }
 :where(.tbl-log) .tbl thead th:first-child { position: sticky; left: 0; z-index: 2; }
 /* a row's tone (Table `tone`): yours has a faint gold fill, a manager's a faint blue one (yours wins if you're both); an inactive
    person's reads greyed out, the way an offline member does. The fill deepens on hover and when selected instead of being
@@ -159,32 +159,56 @@ select.input { appearance: none; padding-right: var(--s-6);
 .tbl-log .tbl tbody tr[data-tone='manager'][aria-current='true'] td { background: color-mix(in srgb, var(--mgr) 16%, var(--surface)); }
 .tbl tbody tr[data-tone='muted'] td, .tbl tbody tr[data-tone='muted'] :is(.who-name, .role-name) { color: var(--ink-3); }
 .tbl tbody tr[data-tone='muted'] :is(.avatar, .role) { opacity: 0.6; }
-.tbl-log .tbl tbody tr[data-row]:hover td { background: var(--surface-2); }
+.tbl-log .tbl tbody tr[data-row]:hover td { background: var(--row-hover, var(--surface-2)); }
 .tbl-log .tbl tbody tr[aria-current='true'] td { background: var(--sel-bg); }
 .tbl-log .tbl tbody tr[aria-current='true'] td:first-child { box-shadow: inset var(--sel-bar-w) 0 0 var(--sel-bar); }
 /* a rule marking where a column group starts (`groupStart`), the same idea as the grid's, just quieter at the Log's size */
 .tbl-log .tbl :is(th, td).gs { box-shadow: inset 1px 0 0 var(--line-soft); padding-left: calc(var(--s-3) - 1px); }
-/* A data sheet: the Shift table's density, for any list of records. One line, medium weight, columns that hug their text.
+/* A data sheet: the Shift table's density, for any list of records. One line, medium weight, rows tall enough for a 28px
+   face (tokens --sheet-*), columns that hug their text.
    The Log's cards do not use this. */
-.data-sheet .tbl-log { --log-band: 1rem; --log-head: 1.375rem; padding: 0 var(--s-2) var(--s-2); }
-.data-sheet .tbl-log .tbl { font-size: var(--fs-meta); line-height: 1rem; font-weight: var(--fw-med); letter-spacing: -0.011em; }
-.data-sheet .tbl-log .tbl :is(th, td) { padding: 0 0.3rem; }
-.data-sheet .tbl-log .tbl td { height: 1.625rem; }
-.data-sheet .tbl-log .tbl thead tr:not(.gh) th { height: 1.375rem; font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.01em; }
+/* The sheet sits bare on its card: the table takes the card's own fill (--sheet-bg; on a phone, with no card, it is a
+   panel of its own), its head is no band of colour, just a rule under it, and it runs to the card's padding. */
+.data-sheet { --sheet-bg: var(--surface-2); --row-hover: color-mix(in srgb, var(--ink) 4%, var(--surface-2)); }
+/* rows bleed 8px into the card's padding, so a row's fill and the selected row's bar have room while its words line up
+   with the controls above */
+.data-sheet .tbl-log { --log-band: 1.5rem; --log-head: var(--sheet-head-h); padding: 0; margin-inline: calc(-1 * var(--s-2)); }
+.data-sheet .tbl-wrap, .data-sheet .tbl-log .tbl { background: var(--sheet-bg); }
+.data-sheet .tbl-log .tbl thead th { background: var(--sheet-bg); box-shadow: inset 0 -1px 0 var(--line); border-bottom: 0; }
+/* the head's edge bleed matches the sheet's narrower side padding, or it sticks out and the sheet scrolls sideways */
+.data-sheet .tbl-log .tbl thead th:first-child::before, .data-sheet .tbl-log .tbl thead th:last-child::after { display: none; }
+.data-sheet .tbl-log .tbl { font-size: var(--fs-sheet); line-height: 1.2; font-weight: var(--fw-med); letter-spacing: -0.011em; }
+.data-sheet .tbl-log .tbl :is(th, td) { padding: 0 var(--sheet-cell-x); }
+.data-sheet .tbl-log .tbl td { height: var(--sheet-row-h); }
+.data-sheet .tbl-log .tbl tbody tr[data-tall] td { height: var(--sheet-row-tall); }   /* a name over a role (People) */
+.data-sheet .tbl-log .tbl thead tr:not(.gh) th { height: var(--sheet-head-h); font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: var(--fw-med); letter-spacing: 0.04em; text-transform: uppercase; color: var(--sheet-head-ink); }
+/* Few lines: one rule under the head and none between rows or column groups; the rows' rhythm and the group bands do
+   the separating. */
+.data-sheet.data-sheet .tbl-log .tbl tbody td::before { content: none; }
+.data-sheet .tbl-log .tbl :is(th, td).gs { box-shadow: none; padding-left: var(--sheet-cell-x); }
 .data-sheet .tbl-log .tbl thead tr.gh th {
   height: var(--log-band); padding-top: 0;
-  font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--ink-3); background: color-mix(in srgb, var(--ink) 5%, var(--th-bg));
-  box-shadow: inset 0 -1px 0 var(--line-soft);
+  font-size: var(--fs-micro); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--sheet-head-ink); font-weight: var(--fw-bold); background: var(--sheet-bg);
+  box-shadow: none;
 }
-.data-sheet .tbl-log .tbl thead tr.gh th:first-child { position: static; }
 .data-sheet .tbl-log .tbl :is(th, td):first-child { padding-left: var(--s-2); }
+.data-sheet .tbl-log .tbl :is(th, td):last-child { padding-right: var(--s-2); }
 .data-sheet .tbl-log .tbl tbody td:first-child,
 .data-sheet .tbl-log .tbl tbody td:last-child { border-radius: 0; }
-.data-sheet .who .avatar { width: 1.125rem; height: 1.125rem; font-size: var(--fs-micro); }
-.data-sheet .role-mark { width: 1rem; height: 1rem; }
+/* the sort arrow hangs just outside its head's words instead of reserving room, so a narrow figure column is as wide
+   as its figures, not its label plus a hidden arrow */
+.data-sheet .th-sort { position: relative; }
+/* ...on the side it hangs, a sortable head keeps just the arrow's room, so it never lands against the next label */
+.data-sheet .tbl-log .tbl thead tr:not(.gh) th:has(> .th-sort) { padding-right: calc(var(--sheet-cell-x) + 0.625rem); }
+.data-sheet .tbl-log .tbl thead tr:not(.gh) th.r:has(> .th-sort) { padding-right: var(--sheet-cell-x); padding-left: calc(var(--sheet-cell-x) + 0.625rem); }
+.data-sheet .th-sort .icon { position: absolute; top: 50%; left: calc(100% + 1px); translate: 0 -50%; }
+.data-sheet th.r .th-sort .icon { left: auto; right: calc(100% + 1px); }
+.data-sheet .who .avatar { width: var(--sheet-thumb); height: var(--sheet-thumb); font-size: var(--fs-micro); }
+.data-sheet .role-mark { width: 1.25rem; height: 1.25rem; }
+.data-sheet .role { font-weight: var(--fw-med); }
 .data-sheet .role-mark .icon { width: 0.7rem; height: 0.7rem; }
-.data-sheet .status-pill { min-height: 0; height: 0.9rem; padding: 0 0.28rem; gap: 0.25rem; font-size: var(--fs-micro); font-weight: var(--fw-med); }
+.data-sheet .status-pill { min-height: 0; height: 1.25rem; padding: 0 var(--s-2); gap: 0.3rem; font-size: var(--fs-meta); font-weight: var(--fw-med); }
 .data-sheet .idtag { min-height: 0.9rem; }
 
 /* Dressed list pages (Log, Crew, Income, People): white sheets on the canvas, comfortable rows, large avatars.
@@ -202,7 +226,7 @@ select.input { appearance: none; padding-right: var(--s-6);
 .list-sheet .tbl-log .tbl :is(th, td) { padding: 0 var(--s-3); }
 .list-sheet .tbl-log .tbl :is(th, td):first-child { padding-left: var(--s-4); }
 .list-sheet .tbl-log .tbl td { height: 3rem; } /* default ~48px */
-.list-sheet .tbl-log .tbl tbody tr[data-tall] td { height: 3.375rem; } /* people / avatar rows ~54px — roster-sheet overrides */
+.list-sheet .tbl-log .tbl tbody tr[data-tall] td { height: 3.375rem; } /* two-line avatar rows ~54px */
 .list-sheet .tbl-log .tbl thead tr:not(.gh) th {
   height: 2.25rem; font-size: var(--fs-meta); font-weight: var(--fw-med); letter-spacing: 0; text-transform: none;
   color: var(--ink-3); box-shadow: none; border-bottom: 1px solid var(--line-soft);
@@ -227,34 +251,64 @@ select.input { appearance: none; padding-right: var(--s-6);
   content: ''; position: absolute; top: 0; left: var(--s-4); right: var(--s-4); height: 1px; background: var(--line-soft);
 }
 .list-sheet .who .avatar, .list-sheet .who .avatar[data-size='md'] { width: 2rem; height: 2rem; font-size: var(--fs-meta); }
-/* People roster: two-line identity rows. Beats list-sheet (32px), tbl-log (26px), and data-sheet (18px) avatars. */
-.panel-body.list-sheet.roster-sheet .tbl-log .tbl :is(th, td) { padding: 0.75rem 1rem; }
-.panel-body.list-sheet.roster-sheet .tbl-log .tbl tbody tr[data-tall] td {
-  height: auto; min-height: 4.5rem; overflow: visible; white-space: normal;
-}
-.panel-body.list-sheet.roster-sheet .who { gap: var(--s-3); white-space: normal; }
-.panel-body.list-sheet.roster-sheet .who .avatar,
-.panel-body.list-sheet.roster-sheet .who .avatar[data-size='md'],
-.panel-body.list-sheet.roster-sheet .who .avatar-wrap,
-.panel-body.list-sheet.roster-sheet .who .avatar-wrap[data-size='md'],
-.panel-body.list-sheet.roster-sheet .who .avatar-wrap .avatar,
-.panel-body.list-sheet.roster-sheet .who .avatar-wrap[data-size='md'] .avatar {
-  width: 3rem; height: 3rem; font-size: var(--fs-body);
-}
-.panel-body.list-sheet.roster-sheet .who-name { font-weight: var(--fw-semi); font-size: var(--fs-body); }
-.panel-body.list-sheet.roster-sheet .who-sub { font-size: var(--fs-micro); }
 .list-sheet .status-pill { min-height: 1.375rem; height: auto; padding: 0 var(--s-2); font-size: var(--fs-meta); }
 .list-sheet .spot { height: 1.375rem; padding: 0 var(--s-2); font-size: var(--fs-meta); }
 .list-sheet .idtag { min-height: 1.25rem; }
 .list-sheet .role-mark { width: 1.375rem; height: 1.375rem; }
 
+/* ── table tabs: quick views on top of a table (TableTabs). The picked tab takes the table card's fill (--tab-fill) and runs
+   into it: no seam under it, a concave curve where it meets the card, and the card's corner squared under the first tab. ── */
+.tabbed { --tab-fill: var(--surface-2); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.tabbed > .data-sheet { flex: 1; min-height: 0; }
+/* tabs on the left, the sheet's own controls on the right of the same row. The tabs scroll; the controls stay put. */
+.tabhead { display: flex; align-items: flex-end; gap: var(--s-2); min-width: 0; }
+.tabhead > .ttabs { flex: 1 1 auto; }
+.sheet-tools { display: flex; flex: none; align-items: center; gap: 2px; height: 2.375rem; padding-bottom: 0.3rem; }
+.sheet-count { margin-right: var(--s-1); color: var(--ink-3); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* a sheet control: one size, an icon, and — when a choice is on — a few characters of that choice under the icon.
+   The button does not grow to name itself or to list what it filtered. */
+.tool-wrap { position: relative; display: inline-flex; }
+.tool {
+  position: relative; display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0;
+  border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-3); cursor: pointer;
+}
+.tool:hover, .tool[aria-expanded='true'] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.tool[data-on] { color: var(--ink); }
+.tool:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.tool[data-tone='add'] { background: var(--accent); color: var(--on-accent); }
+.tool[data-tone='add']:hover { background: var(--accent-hover); color: var(--on-accent); }
+.tool .icon { width: 0.95rem; height: 0.95rem; }
+.tool:has(.tool-mark:not(:empty)) { grid-template-rows: 1fr auto; padding: 2px 0 1px; }
+.tool-mark {
+  overflow: hidden; color: var(--accent); font-family: var(--font-mono); font-size: 0.5rem; font-weight: var(--fw-bold);
+  letter-spacing: -0.04em; line-height: 0.55rem; text-align: center; white-space: nowrap; pointer-events: none;
+}
+.tool-mark:empty { position: absolute; right: 0.28rem; bottom: 0.28rem; width: 0.3rem; height: 0.3rem; border-radius: 50%; background: var(--accent); }
+.tool[data-tone='add'] .tool-mark { color: var(--on-accent); }
+.tool-pop {
+  position: absolute; top: calc(100% + var(--s-1)); right: 0; z-index: var(--z-pop); width: 16rem; padding: var(--s-2);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow);
+}
+.ttabs { display: flex; align-items: flex-end; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ttab { position: relative; display: inline-flex; flex: none; align-items: center; gap: var(--s-2); height: 2.375rem; padding: 0 var(--s-4); border: 0; border-radius: var(--r-md) var(--r-md) 0 0; background: transparent; color: var(--ink-2); font-size: var(--fs-body); font-weight: var(--fw-med); cursor: pointer; }
+.ttab:hover { color: var(--ink); }
+.ttab[aria-checked='true'] { background: var(--tab-fill); color: var(--ink); font-weight: var(--fw-semi); }
+.ttab[aria-checked='true']::before, .ttab[aria-checked='true']::after { content: ''; position: absolute; bottom: 0; width: var(--r-md); height: var(--r-md); pointer-events: none; }
+.ttab[aria-checked='true']::before { right: 100%; background: radial-gradient(circle at 0 0, transparent calc(var(--r-md) - 0.5px), var(--tab-fill) var(--r-md)); }
+.ttab[aria-checked='true']::after { left: 100%; background: radial-gradient(circle at 100% 0, transparent calc(var(--r-md) - 0.5px), var(--tab-fill) var(--r-md)); }
+.ttab[aria-checked='true']:first-child::before { display: none; }
+.ttab:focus-visible { outline-offset: -2px; }
+.ttab-n { min-width: 1.375rem; padding: 0 0.4rem; border-radius: var(--r-pill); background: var(--surface-3); color: var(--ink-2); font-size: var(--fs-micro); font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; line-height: 1.25rem; text-align: center; }
+.ttab[aria-checked='true'] .ttab-n { background: var(--accent); color: var(--on-accent); }
+.tabbed:has(.ttabs > .ttab:first-child[aria-checked='true']) > .data-sheet { border-top-left-radius: 0; }
+
 .sheet-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-height: var(--ctl-h); }
-.sheet-bar > .input[type='search'] { width: min(22rem, 100%); flex: 1 1 12rem; }
+.sheet-bar > .input[type='search'] { width: min(22rem, 100%); flex: 1 1 9rem; min-width: 9rem; }
 .sheet-bar-end { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin-left: auto; }
 .spot { display: inline-flex; align-items: center; height: 0.9rem; padding: 0 0.28rem; border-radius: var(--r-pill); background: var(--surface-3); color: var(--ink-2); font-size: var(--fs-micro); font-weight: var(--fw-med); line-height: 1; vertical-align: middle; }
 .spot[data-spot='Main'] { background: var(--accent-soft); color: var(--accent); }
 .spot[data-spot='Deck'] { background: var(--day-soft); color: var(--day-ink); }
-.spot[data-spot='Upper'] { background: var(--night-soft); color: var(--night); }
+.spot[data-spot='Upper'] { background: var(--night-soft); color: var(--night-ink); }
 /* Table `separators`: a quieter rule between every column, not just where a group starts — several similar figures
    side by side (Income's Tips/Wage/Other/Total/Rate) blur into one run of numbers without it. Half as strong as
    `.gs` and lower specificity (2 classes + a plain adjacency vs. `.gs`'s 3 classes), so a real group boundary still

@@ -10,9 +10,10 @@ import { openSheet, sheet } from '../../router.ts';
 import { EmptyState } from '../../ui/EmptyState.tsx';
 import { Icon } from '../../ui/Icon.tsx';
 import { MixKey } from '../../ui/MixBar.tsx';
-import { PanelHead } from '../../ui/PanelHead.tsx';
 import { ScopeControl } from '../../ui/ScopeControl.tsx';
 import { SideStats } from '../../ui/SideStats.tsx';
+import { Switcher } from '../../ui/Switcher.tsx';
+import { TableTabs } from '../../ui/TableTabs.tsx';
 import { Table } from '../../ui/Table.tsx';
 import type { Column } from '../../ui/Table.tsx';
 import { AddToShift } from './AddToShift.tsx';
@@ -70,11 +71,8 @@ function linesOf(v: ShiftView): Row[] {
 
 export function HubIncome() {
   const all = liveViews.value, views = scopedViews(all);
-  const rows = views.flatMap(linesOf).filter(r => {
-    if (cat.value && r.category !== cat.value) return false;
-    if (typeFilter.value && (r.category !== 'Other' || r.type !== typeFilter.value)) return false;
-    return true;
-  });
+  const lines = views.flatMap(linesOf).filter(r => !typeFilter.value || (r.category === 'Other' && r.type === typeFilter.value));
+  const rows = lines.filter(r => !cat.value || r.category === cat.value);
   const sum = rows.reduce((a, r) => a + r.amount, 0);
   const shifts = new Set(rows.map(r => r.v.shift.id)).size;
 
@@ -101,27 +99,19 @@ export function HubIncome() {
         defaultSort={{ key: 'date', dir: 'desc' }} />;
 
   return (
-    <section class="panel fill" aria-labelledby="hi-title">
-      <PanelHead title="Income table" id="hi-title">
-        <label class={styles.filter}><span class="sr-only">Category</span>
-          <select class="input" value={cat.value} onChange={e => { cat.value = e.currentTarget.value as '' | Kind; if (e.currentTarget.value !== 'Other') typeFilter.value = ''; }} aria-label="Show one category">
-            <option value="">All categories</option>
-            {KINDS.map(k => <option key={k} value={k}>{k}</option>)}
-          </select>
-        </label>
-        <label class={styles.filter}><span class="sr-only">Type</span>
-          <select class="input" value={typeFilter.value} disabled={cat.value !== '' && cat.value !== 'Other'}
-            onChange={e => { typeFilter.value = e.currentTarget.value as '' | Category | 'Other'; }} aria-label="Show one other-income type">
-            <option value="">All types</option>
-            {CATEGORIES.map((c: string) => <option key={c} value={c}>{c}</option>)}
-            <option value="Other">Other</option>
-          </select>
-        </label>
-        <AddToShift views={views} page="misc" label="Add income to a shift" />
-        <ScopeControl />
-      </PanelHead>
+    <section class="panel fill" aria-label="Income table">
       <div class="split">
-        <div class={`panel-body flush data-sheet ${styles.body} ${styles.sheet}`}>{table}</div>
+        <div class="tabbed">
+          <TableTabs label="Which category" value={cat.value} onChange={v => { cat.value = v; if (v !== 'Other' && v !== '') typeFilter.value = ''; }}
+            tabs={[{ value: '' as '' | Kind, label: 'All', count: lines.length }, ...KINDS.map(k => ({ value: k, label: k, count: lines.filter(r => r.category === k).length }))]}
+            tools={<>
+              <Switcher compact icon="dollar" label="Type" mark={typeFilter.value ? typeFilter.value.slice(0, 3) : undefined} value={typeFilter.value} disabled={cat.value !== '' && cat.value !== 'Other'} onChange={v => { typeFilter.value = v; }}
+                choices={[{ value: '' as '' | Category | 'Other', label: 'All' }, ...CATEGORIES.map(c => ({ value: c, label: c })), { value: 'Other', label: 'Other' }]} />
+              <ScopeControl compact />
+              <AddToShift compact views={views} page="misc" label="Add income" />
+            </>} />
+          <div class={`data-sheet ${styles.body} ${styles.sheet}`}>{table}</div>
+        </div>
         <SideStats items={[{ label: 'Lines', value: rows.length }, { label: 'Shifts', value: shifts || DASH }, { label: 'Total', value: moneyWhole(sum) }]} />
       </div>
     </section>

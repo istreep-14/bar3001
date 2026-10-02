@@ -5,6 +5,8 @@
 .pick button:hover { background: var(--surface-2); color: var(--ink); }
 .pick :global(.icon) { width: 0.75rem; height: 0.75rem; }
 .panel { position: absolute; top: calc(100% + var(--s-2)); left: 0; z-index: var(--z-pop); display: grid; gap: var(--s-4); width: min(28rem, calc(100vw - 2rem)); max-height: 60vh; overflow: auto; padding: var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
+.end { left: auto; right: 0; }
+.picks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding-bottom: var(--s-3); border-bottom: 1px solid var(--line-soft); }
 .facet { display: grid; gap: var(--s-2); }
 .options { display: flex; flex-wrap: wrap; gap: var(--s-1); }
 .options :global(.tog) { min-height: 2rem; }

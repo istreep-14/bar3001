@@ -21,8 +21,9 @@
 /* table pages: the list is the wide card, a short summary sits beside it. Below the breakpoint the summary stacks on top. */
 .split { display: grid; gap: var(--shell-gap); align-items: start; min-width: 0; min-height: 0; }
 .split > .side { order: -1; }
-@media (min-width: 64rem) {
-  .split { grid-template-columns: minmax(0, 1fr) 18rem; }
+/* a page whose figures went to the second rail (SideStats `rail`) has no side column: its body takes the width */
+@media (min-width: 56rem) {
+  .split:has(> .side) { grid-template-columns: minmax(0, 1fr) 20rem; }
   .split > .side { order: 0; }
 }
 .side { align-content: start; gap: var(--s-5); }
@@ -36,11 +37,8 @@
 .day-card-actions { display: flex; gap: var(--s-2); }
 @media (min-width: 56rem) {
   .fill { flex: 1; min-height: 0; }
-  .fill > .split { flex: 1; min-height: 0; align-items: stretch; grid-template-rows: auto minmax(0, 1fr); }
+  .fill > .split { flex: 1; min-height: 0; align-items: stretch; grid-template-rows: minmax(0, 1fr); }
   .fill > .panel-body { flex: 1; min-height: 0; }
   .fill .body { min-height: 0; display: flex; flex-direction: column; }
-}
-@media (min-width: 64rem) {
-  .fill > .split { grid-template-rows: minmax(0, 1fr); }
   .fill .side { align-self: start; max-height: 100%; overflow: auto; }
 }

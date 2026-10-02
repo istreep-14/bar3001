@@ -1,0 +1,20 @@
+/* A dropdown switcher: the same bordered button as Filter, "Label  Value ▾", over a panel of options. */
+.wrap { position: relative; display: inline-flex; }
+.button { gap: var(--s-2); padding: 0 var(--s-3); font-weight: var(--fw-med); }
+.button[aria-expanded='true'] { border-color: var(--accent); }
+.label { color: var(--ink-3); font-weight: var(--fw-normal); }
+.value { color: var(--ink); font-weight: var(--fw-semi); }
+.note { color: var(--ink-3); font-size: var(--fs-meta); font-weight: var(--fw-normal); }
+.chev { display: inline-flex; color: var(--ink-3); transform: rotate(90deg); }
+.chev :global(.icon) { width: 0.875rem; height: 0.875rem; }
+.panel { position: absolute; top: calc(100% + var(--s-1)); left: 0; z-index: var(--z-pop); display: grid; gap: var(--s-2); min-width: 12rem; padding: var(--s-1); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow); }
+.right { left: auto; right: 0; }
+.options { display: grid; gap: 1px; max-height: min(50vh, 20rem); overflow-y: auto; overscroll-behavior: contain; }
+.option { display: flex; align-items: center; gap: var(--s-2); min-height: 2rem; padding: 0 var(--s-3) 0 var(--s-2); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-2); font-size: var(--fs-body); text-align: left; cursor: pointer; white-space: nowrap; }
+.option:hover { background: var(--surface-2); color: var(--ink); }
+.option[aria-checked='true'] { color: var(--ink); font-weight: var(--fw-semi); }
+.tick { display: inline-flex; width: 1rem; color: var(--accent); }
+.tick :global(.icon) { width: 0.875rem; height: 0.875rem; stroke-width: 2.25; }
+.optLabel { flex: 1; }
+.hint { color: var(--ink-3); font-size: var(--fs-meta); }
+.extra { display: grid; gap: var(--s-2); padding: var(--s-2) var(--s-2) var(--s-1); border-top: 1px solid var(--line-soft); }

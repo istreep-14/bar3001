@@ -1,65 +1,58 @@
-/* The same toolbar as People: search, Filter, and a count, over the table. */
-.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); }
-.search { width: min(22rem, 100%); }
-.count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .body { display: flex; flex-direction: column; min-height: 0; }
 
-/* A sheet, not a list of cards. Type is Poppins at the small size, medium weight, so a long table stays tight
-   without going thin. Rows stay one line high and square, and the columns hug their text. */
-.sheet :global(.tbl-log) { --log-band: 1rem; padding: 0 var(--s-2) var(--s-2); }
-.sheet :global(.tbl-log) :global(.tbl) { font-size: var(--fs-meta); line-height: 1rem; font-weight: var(--fw-med); letter-spacing: -0.011em; }
-.sheet :global(.tbl-log) :global(.tbl) :is(th, td) { padding: 0 0.3rem; }
-.sheet :global(.tbl-log) :global(.tbl) td { height: 1.625rem; }
-.sheet :global(.tbl-log) :global(.tbl) thead tr:not(:global(.gh)) th { height: 1.375rem; font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.01em; }
-/* The block names (Shift, Time, Pay, Rate, Crew) sit in a short strip above the columns they cover.
-   The first of those cells spans several columns, so it does not stick: only the Day column does. */
+/* A sheet, not a list of cards. Type is Poppins at the body size, medium weight. Rows stay one line, tall enough for a
+   28px face (tokens --sheet-*), and the columns hug their text. */
+.sheet :global(.tbl-log) { --log-band: 1.5rem; padding: 0; }
+.sheet :global(.tbl-log) :global(.tbl) { font-size: var(--fs-sheet); line-height: 1.2; font-weight: var(--fw-med); letter-spacing: -0.011em; }
+.sheet :global(.tbl-log) :global(.tbl) :is(th, td) { padding: 0 var(--sheet-cell-x); }
+.sheet :global(.tbl-log) :global(.tbl) td { height: var(--sheet-row-h); }
+.sheet :global(.tbl-log) :global(.tbl) thead tr:not(:global(.gh)) th { height: var(--sheet-head-h); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
+/* The block names (Shift, Time, Pay, Rate, Crew) sit in a short strip above the columns they cover. The first of
+   those cells spans several columns (Shift covers Day, Type and Party) but stays frozen along with the Day column
+   beneath it, the same as the head row below it — otherwise scrolling leaves a blank patch over the frozen column. */
 .sheet :global(.tbl-log) :global(.tbl) thead :global(tr.gh) th {
   height: var(--log-band); padding-top: 0;
-  font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--ink-3); background: color-mix(in srgb, var(--ink) 5%, var(--th-bg));
-  box-shadow: inset 0 -1px 0 var(--line-soft);
+  font-size: var(--fs-micro); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--sheet-head-ink); font-weight: var(--fw-bold); background: var(--sheet-bg);
+  box-shadow: none;
 }
-.sheet :global(.tbl-log) :global(.tbl) thead :global(tr.gh) th:global(.gs) { box-shadow: inset 1px 0 0 var(--line), inset 0 -1px 0 var(--line-soft); }
-.sheet :global(.tbl-log) :global(.tbl) thead :global(tr.gh) th:first-child { position: static; }
 .sheet :global(.tbl-log) :global(.tbl) :is(th, td):first-child { padding-left: var(--s-2); }
 .sheet :global(.tbl-log) :global(.tbl) :is(th, td):global(.gs) { padding-left: 0.5rem; }
 .sheet :global(.tbl-log) :global(.tbl) tbody td:first-child,
 .sheet :global(.tbl-log) :global(.tbl) tbody td:last-child { border-radius: 0; }
-/* Number heads sit over their figures. The sort arrow stays on the inner side. */
-.sheet :global(.tbl-log) :global(th.r) :global(.th-sort) { display: flex; width: 100%; flex-direction: row-reverse; justify-content: flex-start; }
-/* A hairline between shifts, including under a band. The log draws one only when the table is not grouped. */
-.sheet :global(.tbl-log) :global(.tbl)[data-grouped] tbody tr[data-row] + tr[data-row] td::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--line-soft);
-}
+/* Number heads sit over their figures; the sort arrow hangs on the inner side (ui.css .data-sheet .th-sort). */
 
-/* Day: the weekday is monospaced and three letters wide, so the date always starts in the same place. The date
-   itself is one phrase ("Oct 3", or "3"), not a day number pushed to its own edge. */
-.day { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; vertical-align: middle; }
-.wd { display: inline-block; width: 3ch; font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: var(--fw-med); letter-spacing: 0; color: var(--ink-3); }
+/* Overview: two lines in the shift, so the row is taller, and the sheet has no rules between columns or under the head. */
+.overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) td { height: 3.125rem; }
+.overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) thead th { box-shadow: none; }
+.overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) tfoot td { height: auto; padding-block: 0.4rem; }
+.overview:global(.data-sheet) :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td { height: var(--sheet-head-h); }
+
+/* The shift: weekday and date on the first line, the hours it ran quieter underneath. */
+.shift { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; vertical-align: middle; }
+.shiftTop { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.wd { font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: var(--fw-med); letter-spacing: 0; color: var(--ink-3); }
 .date { font-weight: var(--fw-semi); font-variant-numeric: tabular-nums; color: var(--ink); }
 .year { font-weight: var(--fw-med); color: var(--ink-4); }
-.mid { text-align: center; }
-.kind { display: inline-flex; vertical-align: middle; color: var(--ink-3); }
-.kind[data-kind='day'] { color: var(--day-ink); }
-.kind[data-kind='night'] { color: var(--night); }
-.kind[data-kind='party'] { color: var(--party); }
-.kind :global(.icon) { width: 0.7rem; height: 0.7rem; }
-/* Stations as marks, still one line and still their own column. */
-.pills { display: inline-flex; align-items: center; gap: 0.2rem; vertical-align: middle; }
-.pill { display: inline-flex; align-items: center; height: 0.9rem; padding: 0 0.28rem; border-radius: 999px; background: var(--surface-3); color: var(--ink-2); font-size: var(--fs-micro); font-weight: var(--fw-med); line-height: 1; }
-.pill[data-spot='Main'] { background: var(--accent-soft); color: var(--accent); }
-.pill[data-spot='Deck'] { background: var(--day-soft); color: var(--day-ink); }
-.pill[data-spot='Upper'] { background: var(--night-soft); color: var(--night); }
-/* Pay's picture of itself: a fixed-width bar so the column stays one line and the same width down the page. */
-.mix { display: flex; width: 2.5rem; height: 4px; margin-inline: auto; overflow: hidden; border-radius: 999px; background: var(--surface-3); }
+.type { display: inline-flex; color: var(--ink-3); }
+.type[data-kind='day'] { color: var(--day-ink); }
+.type[data-kind='night'] { color: var(--night-ink); }
+.type :global(.icon), .party :global(.icon) { width: 0.8rem; height: 0.8rem; }
+.party { display: inline-flex; color: var(--party); }
+.when { color: var(--ink-3); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+/* Tips, with the rate in quieter type under the figure. */
+.money { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.rate { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-med); font-variant-numeric: tabular-nums; }
+.tipsTd { vertical-align: middle; }
+/* Pay's mix, full width of the side panel. */
+.mix { display: flex; width: 100%; height: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-3); }
 .mix span { display: block; height: 100%; min-width: 2px; }
-.mixTd { text-align: center; }
 .sheet :global(.nil) { color: var(--ink-4); }
 
 /* A period band: the name and the count on the left, the total in the Total column, same padding as the figures
    under it so the number lines up. */
 .sheet :global(.tbl-log) :global(.tbl) :global(tr.tbl-band) td {
-  height: 1.5rem; padding: 0 0.3rem; white-space: nowrap;
+  height: var(--sheet-head-h); padding: 0 var(--sheet-cell-x); white-space: nowrap;
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
   box-shadow: inset 0 -1px 0 var(--line-soft);
 }
@@ -68,9 +61,10 @@
 .bandName { font-weight: var(--fw-semi); color: var(--ink); }
 .bandMeta { color: var(--ink-3); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
 
-/* Crew: a one-line stack of faces. The row is short, so the circles are the small size and tuck tightly. */
-.crew { --av-overlap: 0.35rem; vertical-align: middle; }
-.crew :global(.avatar) { width: 1.125rem; height: 1.125rem; font-size: var(--fs-micro); }
+/* Crew: a one-line stack of faces at the sheet's thumbnail size, tucked so a full crew still fits the column. */
+.crew { --av-overlap: 0.3rem; vertical-align: middle; }
+.crewSm { --av-overlap: 0.4rem; }
+.crewSm :global(.avatar) { width: 1.25rem; height: 1.25rem; font-size: 0.5625rem; }
 .crewTd { overflow: visible; }
 
 /* The hover card: everyone on the shift, with their own hours. */
@@ -86,7 +80,7 @@
 /* The shifts on screen that count, pinned under the sheet in the same columns. */
 .footLabel { color: var(--ink-3); font-size: var(--fs-micro); font-weight: var(--fw-semi); letter-spacing: 0.04em; text-transform: uppercase; }
 .sheet :global(.tbl-log) :global(.tbl) tfoot td {
-  position: sticky; bottom: 0; z-index: 1; height: 1.5rem;
-  background: var(--th-bg); box-shadow: inset 0 1px 0 var(--th-line); font-weight: var(--fw-semi);
+  position: sticky; bottom: 0; z-index: 1; height: var(--sheet-head-h);
+  background: var(--sheet-bg); box-shadow: inset 0 1px 0 var(--line); font-weight: var(--fw-semi);
 }
 .sheet :global(.tbl-log) :global(.tbl) tfoot td:first-child { z-index: 2; }

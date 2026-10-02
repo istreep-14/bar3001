@@ -1,23 +1,6 @@
-.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); padding: 0; }
-.search { width: min(22rem, 100%); }
-.count { font-size: var(--fs-body); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.long { display: none; }
-.body { display: flex; flex-direction: column; min-height: 0; }   /* the toolbar keeps its height; the list takes the rest */
-@media (min-width: 56rem) { .long { display: inline; } }
+.body { display: flex; flex-direction: column; min-height: 0; }
 
 .list { border-top: 1px solid var(--line); }
-.body :global(.tbl-log .tbl tbody tr[data-tall] td) {
-  height: auto; min-height: 4.5rem; padding: 0.75rem 1rem; overflow: visible; white-space: normal;
-}
-.body :global(.who) { gap: var(--s-3); white-space: normal; }
-.body :global(.who .avatar),
-.body :global(.who .avatar[data-size='md']),
-.body :global(.who .avatar-wrap),
-.body :global(.who .avatar-wrap[data-size='md']),
-.body :global(.who .avatar-wrap .avatar) {
-  width: 3rem; height: 3rem; font-size: var(--fs-body);
-}
-.body :global(.who-name) { font-weight: var(--fw-semi); font-size: var(--fs-body); }
 
 .item { width: 100%; display: flex; align-items: center; gap: var(--s-4); min-height: 4.5rem; padding: var(--s-3) var(--inset-x); text-align: left; background: transparent; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-soft); }
 .item :global(.who .avatar),

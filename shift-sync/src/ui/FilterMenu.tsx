@@ -8,9 +8,10 @@ import styles from './FilterMenu.module.css';
 export interface Facet { key: string; label: string; options: { value: string; label?: string; count: number }[] }
 
 /** "Filter": a button that opens a panel of every facet's values as toggles (any picked value of a facet passes; every facet
- *  with picks must pass), and a removable chip for each pick beside it. Driven by props: the page holds the picks and applies them
- *  (`applyFilters` in lib/filters.ts). */
-export function FilterMenu({ facets, value, onChange }: { facets: Facet[]; value: Filters; onChange: (f: Filters) => void }) {
+ *  with picks must pass), and a removable chip for each pick beside it. `compact` is the sheet-row form: a fixed icon
+ *  button with the count under it. The chips move into the panel, so the row does not grow with each pick. Driven by
+ *  props: the page holds the picks and applies them (`applyFilters` in lib/filters.ts). */
+export function FilterMenu({ facets, value, onChange, compact }: { facets: Facet[]; value: Filters; onChange: (f: Filters) => void; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const picked = facets.flatMap(f => (value[f.key] ?? []).map(v => ({ f, v })));
@@ -22,19 +23,34 @@ export function FilterMenu({ facets, value, onChange }: { facets: Facet[]; value
     document.addEventListener('mousedown', away); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
   }, [open]);
+  const chips = picked.map(({ f, v }) => (
+    <span key={f.key + v} class={`chip ${styles.pick}`}>{f.label}: {name(f, v)}
+      <button type="button" aria-label={`Stop filtering by ${f.label} ${name(f, v)}`} onClick={() => onChange(toggleFilter(value, f.key, v))}><Icon name="x" /></button>
+    </span>
+  ));
+  const titled = picked.length > 0 ? `Filter, ${picked.length}` : 'Filter';
   return (
-    <div class={styles.wrap} ref={root}>
-      <button type="button" class="btn" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <Icon name="log" /> Filter{picked.length > 0 && <span class={styles.count}>{picked.length}</span>}
-      </button>
-      {picked.map(({ f, v }) => (
-        <span key={f.key + v} class={`chip ${styles.pick}`}>{f.label}: {name(f, v)}
-          <button type="button" aria-label={`Stop filtering by ${f.label} ${name(f, v)}`} onClick={() => onChange(toggleFilter(value, f.key, v))}><Icon name="x" /></button>
-        </span>
-      ))}
-      {picked.length > 1 && <button type="button" class="linkbtn" onClick={() => onChange({})}>Clear all</button>}
+    <div class={compact ? 'tool-wrap' : styles.wrap} ref={root}>
+      {compact ? (
+        <button type="button" class="tool" data-on={picked.length > 0 ? '' : undefined} aria-expanded={open} aria-label={titled} title={titled} onClick={() => setOpen(!open)}>
+          <Icon name="filter" />
+          {picked.length > 0 && <span class="tool-mark">{picked.length}</span>}
+        </button>
+      ) : (
+        <button type="button" class="btn" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <Icon name="log" /> Filter{picked.length > 0 && <span class={styles.count}>{picked.length}</span>}
+        </button>
+      )}
+      {!compact && chips}
+      {!compact && picked.length > 1 && <button type="button" class="linkbtn" onClick={() => onChange({})}>Clear all</button>}
       {open && (
-        <div class={styles.panel} role="dialog" aria-label="Filter">
+        <div class={`${styles.panel} ${compact ? styles.end : ''}`} role="dialog" aria-label="Filter">
+          {compact && picked.length > 0 && (
+            <div class={styles.picks}>
+              {chips}
+              <button type="button" class="linkbtn" onClick={() => onChange({})}>Clear</button>
+            </div>
+          )}
           {facets.map(f => (
             <div key={f.key} class={styles.facet} role="group" aria-label={f.label}>
               <span class="label-text">{f.label}</span>
